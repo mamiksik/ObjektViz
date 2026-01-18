@@ -36,6 +36,10 @@ We have exported processed some OCEL dataset into EKG and generated aggregated v
    ```
 > IMPORTANT: Do **not** use streamlit run from the command line directly, as this will lead to issues with imports.
 
+> INFO: Using Chrome is strongly recommended. Mozilla Firefox and Safari should also work. (Although Safari does not support token replay.)
+
+> INFO: Token Reaplay for now requires APOC library and is thus not avaible with KuzuDB
+
 <p align="center">
     <img src="assets/generic_ocel_visualizer.png" alt="OCEL" width="750px" align='center'/>
 </p>
