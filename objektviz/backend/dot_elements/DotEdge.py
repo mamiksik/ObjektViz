@@ -114,7 +114,3 @@ class DotEdge(AbstractDotElement):
             return "CROSS_ENTITY"
 
         return super().shader_key
-
-    @property
-    def waiting_time(self):
-        return self.entity.get("waitingTime", "0")
