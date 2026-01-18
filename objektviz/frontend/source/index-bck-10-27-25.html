@@ -1,0 +1,502 @@
+<html>
+<!--https://github.com/asehmi/streamlit-toggle-buttons-component/blob/main/frontend/__init__.py-->
+<head>
+<!--    <script-->
+<!--            type="text/javascript"-->
+<!--            src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"-->
+<!--    ></script>-->
+<style type="text/css">
+        #graph {
+            padding: 1px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            /*background-color: rgba(240, 242, 246, 0.4);*/
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+
+<body>
+    <script src="//d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/@hpcc-js/wasm@2.20.0/dist/graphviz.umd.js"></script>
+    <script src="https://unpkg.com/d3-graphviz@5.6.0/build/d3-graphviz.js"></script>
+    <div id="graph"></div>
+</body>
+
+<script type="text/javascript">
+    const SET_COMPONENT_VALUE = "streamlit:setComponentValue"
+    const RENDER = "streamlit:render"
+    const COMPONENT_READY = "streamlit:componentReady"
+    const SET_FRAME_HEIGHT = "streamlit:setFrameHeight"
+    // ----------------------------------------------------
+
+    const SAFE_AREA = 350
+    const HIGHLIGHT_COLOR = '#10069F'
+
+    const SELECTED_HIGHLIGHT_COLOR = '#fb2c36'
+    const PROCESS_EXECUTION_HIGHLIGHT_COLOR = '#00a63e'
+
+    let graphviz = null;
+    let currentDotSrc = null;
+
+    let edgeNodeMap = null
+    let nodeEdgeMap = null
+    let nodeNodeMap = null
+
+    let selectedElement = null
+    let selectedElementIdProp = null
+
+    let tokenAnimation = {
+        isEnabled: null,
+        tokens: null,
+        speed: null,
+        alignment: null,
+        fixedDuration: null,
+    }
+
+    let activePathsAnimation = {
+        isEnabled: null,
+        new: null,
+        current: null,
+    }
+
+    const render = (props) => {
+        const dotSrc = props.dot_source;
+
+        edgeNodeMap = props.edge_node_map
+        nodeEdgeMap = props.node_edge_map
+        nodeNodeMap = props.node_node_map
+        selectedElementIdProp = props.selected_element_id
+        // console.log("ASDSADSAD", selectedElementIdProp)
+
+        activePathsAnimation = {
+            ...activePathsAnimation,
+            isEnabled: props.animation_preferences.animate_active_elements_flag,
+            new: props.active_element_ids
+        }
+        // console.debug(activePathsAnimation)
+
+        tokenAnimation = {
+            isEnabled: props.animation_preferences.animate_tokens_flag,
+            tokens: props.tokens,
+            speed: props.animation_preferences.token_animation_speed,
+            alignment:  props.animation_preferences.token_animation_alignment,
+            fixedDuration: props.animation_preferences.fixed_animation_duration,
+        }
+        console.debug(tokenAnimation)
+
+        if (graphviz === null) {
+            graphviz = d3
+                .select('#graph')
+                .graphviz({
+                    tweenShapes: true,
+                    tweenPrecision: '10%',
+                    growEnteringEdges: false,
+                })
+                .transition(function () {
+                    return d3.transition("main")
+                        .ease(d3.easeLinear)
+                        .delay(300)
+                        .duration(500);
+                })
+
+            setFrameHeight(screen.height - SAFE_AREA)
+            graphviz.height(screen.height - SAFE_AREA - 20)
+
+            addEventListener("resize", (event) => {
+                setFrameHeight(screen.height - SAFE_AREA)
+                graphviz.height(screen.height - SAFE_AREA - 20)
+            })
+        }
+
+        console.debug(dotSrc, currentDotSrc)
+        currentDotSrc = dotSrc
+        graphviz
+            .renderDot(currentDotSrc)
+            .on("end", onRenderEnd)
+    }
+
+    function selectElementsOnID(context, ids, invert = false) {
+        return context.filter((elem, i) => {
+            if (invert) {
+                return !ids.includes(elem.attributes['id'])
+            } else {
+                return ids.includes(elem.attributes['id'])
+            }
+        })
+    }
+
+    function onRenderEnd() {
+
+        d3.selectAll('.node')
+            .style('filter', 'drop-shadow( 0px 0px 2px rgba(0, 0, 0, .35))')
+            .selectAll('path')
+            .attr('data-original-stroke', function () {
+                return d3.select(this).attr('stroke')
+            })
+            .attr('data-original-stroke-dasharray', function () {
+                return d3.select(this).attr('stroke-dasharray')
+        })
+
+        const allEdges = d3.selectAll('.edge')
+        allEdges.selectAll('path')
+            .attr('data-original-stroke', function () {
+                return d3.select(this).attr('stroke')
+            })
+            .attr('data-original-stroke-dasharray', function () {
+                return d3.select(this).attr('stroke-dasharray')
+            })
+
+        allEdges.selectAll('polygon')
+            .attr('data-original-fill', function () {
+                return d3.select(this).attr('fill')
+            })
+            .attr('data-original-stroke', function () {
+                return d3.select(this).attr('stroke')
+            })
+
+        const allElements = d3.selectAll('.node,.edge');
+        allElements.on("click", function () {
+            const context = d3.select(this)
+            onClick(context)
+        })
+
+        if (selectedElementIdProp !== null) {
+            let x = d3.select(document.getElementById(selectedElementIdProp))
+            console.log(document.getElementById(selectedElementIdProp))
+            console.log(x)
+            refreshIsSelectedElement(x)
+        }
+
+        allElements
+            .on('mouseover', function (d, i) {
+                const context = d3.select(this)
+                onHoverStart(context)
+            })
+            .on('mouseout', function (d, i) {
+                const context = d3.select(this)
+                onHoverEnd(context)
+            })
+
+
+        animateProcessExecution()
+
+        d3.selectAll('circle').interrupt('TokenAnimation')
+        if (tokenAnimation.isEnabled && tokenAnimation.tokens !== null) {
+            for (const token of tokenAnimation.tokens) {
+                const marker = marketFactory(token['elementId'], token['color'])
+                const callback = () => animateTokenFlow(token['elementId'], token['segments'], marker)
+                if (tokenAnimation.alignment === 'At-once') {
+                    callback()
+                } else if (tokenAnimation.alignment === "Real-time") {
+                    let startOffset = transitionDuration(token['startOffset'])
+                    d3.timeout(callback, startOffset)
+                } else {
+                    throw Error("Unknown time alignment")
+                }
+            }
+        }
+    }
+    function marketFactory(elementId, color) {
+        return d3
+            .select('svg')
+            .select('g')
+            .append("circle")
+            .attr('id', elementId)
+            .attr('r','10px')
+            .style('fill', color)
+            .attr('stroke', 'black')
+            .attr('stroke-width', '2px')
+    }
+      function animateTokenFlow(elementId, segments, marker) {
+        if (segments === null || segments.length === 0) {
+            marker.remove()
+            return
+        }
+
+        // console.log(segments)
+        let processSegment = segments[0]
+        segments = segments.slice(1)
+
+        let raw = document.getElementById(processSegment.ProcletEdgeElementId) // UUID is non-compliant with query selector, we have to use getById
+        if (raw === null) {
+            console.warn(`Path with id ${processSegment} not found, skipping...`)
+            animateTokenFlow(elementId, segments, marker)
+        }
+
+        let edge = d3.select(raw).selectAll('path')
+        let startPoint = pathStartPoint(edge);
+        let duration = transitionDuration(processSegment.TransitionDurationInMinutes)
+
+        marker
+            // .attr('opacity', 1)
+            .style("transform", "translate(" + startPoint[0] + " " + startPoint[1] +")")
+            .transition("TokenAnimation")
+            .ease(d3.easeLinear)
+            .duration(duration)
+            .attrTween("transform", translateAlong(edge.node()))
+            .on("end", () => {
+                animateTokenFlow(elementId, segments, marker)
+            });
+    }
+
+    function transitionDuration(durationInMinutes) {
+        return tokenAnimation.fixedDuration ?
+            tokenAnimation.speed * 1000 * 2
+            : (1 / tokenAnimation.speed) * (durationInMinutes / 1440) * 1000 * 10
+    }
+
+    function pathStartPoint(path) {
+        let d = path.attr("d")
+        let dsplitted = d.split(" ");
+        return dsplitted[1].split(",");
+    }
+
+    function translateAlong(path) {
+        const l = path.getTotalLength();
+        return function (d) {
+          return function (t) {
+            const p = path.getPointAtLength(t * l);
+            return "translate(" + p.x + "," + p.y + ")";//Move marker
+          }
+        }
+      }
+
+    function animateProcessExecution() {
+        if (activePathsAnimation.current !== null) {
+            const oldElements = selectElementsOnID(
+                d3.selectAll('.edge'),
+                activePathsAnimation.current
+            )
+            setState(oldElements, 'data-is-showing-execution', null)
+            stopPathAnimation(oldElements, 'process-execution-anim')
+        }
+
+        if (!activePathsAnimation.isEnabled) { return }
+
+        if (activePathsAnimation.new !== null) {
+            const newElements = selectElementsOnID(
+                d3.selectAll('.edge'),
+                activePathsAnimation.new
+            )
+            setState(newElements, 'data-is-showing-execution', true)
+
+            startPathAnimation(newElements, 'process-execution-anim')
+        }
+
+        activePathsAnimation.current = activePathsAnimation.new
+    }
+
+    function onClick(context) {
+        refreshIsSelectedElement(context)
+        notifyHost({
+            value: {
+                'type': selectedElement.attr('class'),
+                'elementId': selectedElement.attr('id')
+            },
+            dataType: 'json'
+        })
+    }
+
+    function refreshIsSelectedElement(element) {
+        if (selectedElement !== null) {
+            setState(selectedElement, 'data-is-selected', null)
+            resetEdgeColor(selectedElement)
+        }
+
+        setState(element, 'data-is-selected', true)
+        setEdgeColor(element, SELECTED_HIGHLIGHT_COLOR)
+        selectedElement = element
+    }
+
+    function onHoverStart(context) {
+        const id = context.attr('id')
+
+        if (context.attr('class') === 'edge') {
+            startPathAnimation(context, 'hover-animation')
+            const relatedElementsIds = edgeNodeMap[id].concat([id])
+            const excludedElements = selectElementsOnID(d3.selectAll('.node,.edge'), relatedElementsIds, true)
+            excludedElements
+                .transition()
+                .duration('100')
+                .attr('opacity', '.25')
+
+
+        } else if (context.attr('class') === 'node') {
+            const paths = selectElementsOnID(d3.selectAll('.edge'), nodeEdgeMap[id])
+            startPathAnimation(paths, 'hover-animation')
+            paths.style('filter', 'drop-shadow( 0px 0px 2px rgba(0, 0, 0, .15))')
+
+            const relatedElementsIds = nodeEdgeMap[id].concat(nodeNodeMap[id]).concat([id])
+            const excludedElements = selectElementsOnID(d3.selectAll('.node,.edge'), relatedElementsIds, true)
+            excludedElements
+                .transition()
+                .duration('100')
+                .attr('opacity', '.25')
+        }
+    }
+
+    function onHoverEnd(context) {
+        const id = context.attr('id')
+        if (context.attr('class') === 'edge') {
+            stopPathAnimation(context, 'hover-animation')
+            const relatedElementsIds = edgeNodeMap[id].concat([id])
+            const excludedElements = selectElementsOnID(d3.selectAll('.node,.edge'), relatedElementsIds, true)
+            excludedElements
+                .transition()
+                .duration('100')
+                .attr('opacity', '1')
+
+        } else if (context.attr('class') === 'node') {
+            const paths = selectElementsOnID(d3.selectAll('.edge'), nodeEdgeMap[id])
+            stopPathAnimation(paths, 'hover-animation')
+            paths.style('filter', null)
+            const relatedElementsIds = nodeEdgeMap[id].concat(nodeNodeMap[id]).concat([id])
+            const excludedElements = selectElementsOnID(d3.selectAll('.node,.edge'), relatedElementsIds, true)
+            excludedElements
+                .transition()
+                .duration('100')
+                .attr('opacity', '1')
+        }
+    }
+
+    function stopPathAnimation(context, name) {
+        context.selectAll('path').interrupt(name)
+        resetEdgeColor(context)
+    }
+
+    function startPathAnimation(context, name) {
+        setEdgeColor(context)
+        context.selectAll('path')
+            .attr("stroke-dasharray", function () {
+                const strokeSize = d3.select(this).attr('stroke-width')
+                return strokeSize + " " + strokeSize
+            })
+            .attr("stroke-dashoffset", function () {
+                return d3.select(this).node().getTotalLength();
+            })
+            .transition(name)
+            .ease(d3.easeLinear)
+            .attr("stroke-dashoffset", 0)
+            .duration(function () {
+                return 60 * d3.select(this).node().getTotalLength();
+            })
+            .on("end", () => startPathAnimation(context));
+    }
+
+    function setState(context, attr, value) {
+        context
+            .selectAll('polygon, path')
+            .attr(attr, value)
+    }
+
+    function setEdgeColor(context) {
+        const getColor = (context) => {
+            if (context.attr('data-is-selected')) {
+                return SELECTED_HIGHLIGHT_COLOR
+            }
+
+            return context.attr('data-is-showing-execution') ? PROCESS_EXECUTION_HIGHLIGHT_COLOR : HIGHLIGHT_COLOR;
+        }
+
+        context.selectAll('polygon')
+            .attr("stroke", function () {
+                return getColor(d3.select(this))
+            })
+            .attr("fill", function () {
+                return getColor(d3.select(this))
+            })
+
+        context.selectAll('path')
+            .attr('stroke', function () {
+                return getColor(d3.select(this))
+            })
+    }
+
+    function resetEdgeColor(context) {
+        const getColor = (context, attrName) => {
+            if (context.attr('data-is-selected')) {
+                return SELECTED_HIGHLIGHT_COLOR
+            }
+
+            return context.attr('data-is-showing-execution') ? PROCESS_EXECUTION_HIGHLIGHT_COLOR : context.attr(attrName);
+        }
+
+
+        context.selectAll('path')
+            .attr("stroke-dasharray", function () {
+                return getColor(d3.select(this), 'data-original-stroke-dasharray')
+            })
+            .attr("stroke", function () {
+                return getColor(d3.select(this), 'data-original-stroke')
+            })
+
+        context.selectAll('polygon')
+            .attr("stroke", function () {
+                return getColor(d3.select(this), 'data-original-stroke')
+            })
+            .attr("fill", function () {
+                return getColor(d3.select(this), 'data-original-fill')
+            })
+    }
+
+
+    initialize([render])
+
+    // ----------------------------------------------------
+
+    function _sendMessage(type, data) {
+        // copy data into object
+        var outboundData = Object.assign({
+            isStreamlitMessage: true,
+            type: type,
+        }, data)
+
+        if (type == SET_COMPONENT_VALUE) {
+            console.debug("_sendMessage data: " + JSON.stringify(data))
+            console.debug("_sendMessage outboundData: " + JSON.stringify(outboundData))
+        }
+
+        window.parent.postMessage(outboundData, "*")
+    }
+
+    function initialize(pipeline) {
+
+        // Hook Streamlit's message events into a simple dispatcher of pipeline handlers
+        window.addEventListener("message", (event) => {
+            if (event.data.type == RENDER) {
+                // The event.data.args dict holds any JSON-serializable value
+                // sent from the Streamlit client. It is already deserialized.
+                pipeline.forEach(handler => {
+                    handler(event.data.args)
+                })
+            }
+        })
+
+        _sendMessage(COMPONENT_READY, {apiVersion: 1});
+
+        // Component should be mounted by Streamlit in an iframe, so try to autoset the iframe height.
+        window.addEventListener("load", () => {
+            window.setTimeout(function () {
+                setFrameHeight(document.documentElement.clientHeight)
+            }, 0)
+        })
+
+        // Optionally, if auto-height computation fails, you can manually set it
+        // (uncomment below)
+        //setFrameHeight(200)
+    }
+
+    function setFrameHeight(height) {
+        _sendMessage(SET_FRAME_HEIGHT, {height: height})
+    }
+
+    // The `data` argument can be any JSON-serializable value.
+    function notifyHost(data) {
+        _sendMessage(SET_COMPONENT_VALUE, data)
+    }
+
+</script>
+
+</html>

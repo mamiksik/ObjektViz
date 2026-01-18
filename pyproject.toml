@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=77.0.3", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "objektviz"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "graphviz>=0.21",
+    "kuzu>=0.11.3",
+    "matplotlib>=3.10.7",
+    "neo4j>=6.0.3",
+    "scikit-learn>=1.7.2",
+    "streamlit>=1.51.0",
+    "watchdog>=6.0.0",
+]
+
+
+[tool.setuptools.packages.find]
+include = ["objektviz_frontend*"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+objektviz_frontend = ["frontend/build/**/*", "pyproject.toml"]

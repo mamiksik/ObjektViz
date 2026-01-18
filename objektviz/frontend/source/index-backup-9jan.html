@@ -1,0 +1,865 @@
+<html>
+<!--https://github.com/asehmi/streamlit-toggle-buttons-component/blob/main/frontend/__init__.py-->
+<head>
+<style type="text/css">
+
+        /*.shadow {*/
+        /*    -webkit-filter: drop-shadow( 3px 3px 2px rgba(0, 0, 0, .7));*/
+        /*    filter: drop-shadow( 3px 3px 2px rgba(0, 0, 0, .7));*/
+        /*}*/
+
+        #graph {
+            padding: 1px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            width: 100%;
+            height: calc(100% - 100px);
+            max-height: 100%;
+            max-width: 100%;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .node:hover, .edge:hover {
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+    <script src="//d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/d3-simple-slider"></script>
+    <script src="https://unpkg.com/@hpcc-js/wasm@2.20.0/dist/graphviz.umd.js"></script>
+    <script src="https://unpkg.com/d3-graphviz@5.6.0/build/d3-graphviz.js"></script>
+    <div id="graph"></div>
+    <div id="slider-container"></div>
+    <div id="playback-controls-container" style="width: 100%; display: flex; justify-content: center; gap: 14px; margin-top: 14px">
+    </div>
+</body>
+
+<script type="text/javascript">
+    const SET_COMPONENT_VALUE = "streamlit:setComponentValue"
+    const RENDER = "streamlit:render"
+    const COMPONENT_READY = "streamlit:componentReady"
+    const SET_FRAME_HEIGHT = "streamlit:setFrameHeight"
+    // ----------------------------------------------------
+    let SAFE_AREA = 150
+
+    const GRAPH_DIV_ID = "graph"
+
+    const defaultConfig = {
+        colorHovering: '#10069F',
+        colorSelected: '#fb2c36',
+        colorTraceAnimation: '#00a63e',
+        twiningTransitionFce: function () {
+            return d3.transition("main")
+                .ease(d3.easeLinear)
+                .delay(300)
+                .duration(500);
+        }
+    }
+
+    window.d3 = d3;
+
+    const d3Helpers = {
+        storeOriginalStroke: (selection) => selection.attr('data-original-stroke', function () {
+            return d3.select(this).attr('stroke')
+        }),
+        storeOriginalFill: (selection) => selection.attr('data-original-fill', function () {
+            return d3.select(this).attr('fill')
+        }),
+        storeOriginalDashArray: (selection) => selection.attr('data-original-stroke-dasharray', function () {
+            return d3.select(this).attr('stroke-dasharray')
+        }),
+        setNodeStyle: (selection) =>  selection.style('filter', 'drop-shadow( 0px 0px 2px rgba(0, 0, 0, .35))'),
+        setElementStyle: (selection, color) => {
+            selection.selectAll('polygon')
+                .attr("stroke", function () {
+                    return color
+                })
+                .attr("fill", function () {
+                    return color
+                })
+
+            selection.selectAll('path')
+            .attr('stroke', function () {
+                return color
+            })
+        },
+        restoreElementStyle: (selection) => {
+            selection.selectAll('path').attr("stroke-dasharray", function () {
+                return d3.select(this).attr('data-original-stroke-dasharray')
+            }).attr("stroke", function () {
+                return d3.select(this).attr('data-original-stroke')
+            })
+
+            selection.selectAll('polygon').attr("stroke", function () {
+                return d3.select(this).attr('data-original-stroke')
+            }).attr("fill", function () {
+                return d3.select(this).attr('data-original-fill')
+            })
+        },
+        selectElementsOnID(selection, ids, invert = false) {
+            return selection.filter((elem, i) => {
+                if (invert) {
+                    return !ids.includes(elem.attributes['id'])
+                } else {
+                    return ids.includes(elem.attributes['id'])
+                }
+            })
+        },
+        stopDashedLineAnimation(context, name) {
+            // d3Helpers.restoreElementStyle(context)
+            context.selectAll('path').interrupt(name)
+        },
+        startDashedLineAnimation(context, name) {
+            context.selectAll('path')
+                .attr("stroke-dasharray", function () {
+                    const strokeSize = d3.select(this).attr('stroke-width')
+                    return strokeSize + " " + strokeSize
+                })
+                .attr("stroke-dashoffset", function () {
+                    return d3.select(this).node().getTotalLength();
+                })
+                .transition(name)
+                .ease(d3.easeLinear)
+                .attr("stroke-dashoffset", 0)
+                .duration(function () {
+                    return 60 * d3.select(this).node().getTotalLength();
+                })
+                .on("end", () => d3Helpers.startDashedLineAnimation(context));
+        }
+    }
+
+    class ClickInteractionPlugin {
+        selectedElementId = null
+        objektviz = null
+
+        selectedElement() {
+            return d3.select(document.getElementById(this.selectedElementId))
+        }
+
+        install(target, objektviz) {
+            this.objektviz = objektviz
+            const that = this;
+            target.selectAll('.node,.edge')
+                .on("click", function () {
+                    console.log(this, target)
+                    that.onClick(d3.select(this)) //TODO: replace with SelectAll
+                })
+        }
+
+        setPayload(payload) {
+            this.setSelectedElement(payload.selected_element_id)
+            console.log("Payload", this.selectedElementId)
+        }
+
+        setSelectedElement(id) {
+            if (this.selectedElementId !== null && this.selectedElementId !== id) {
+                d3Helpers.restoreElementStyle(this.selectedElement())
+            }
+            this.selectedElementId = id
+        }
+
+        onClick(target) {
+            let id = target.attr('id')
+            if (id === this.selectedElementId) {
+                id = null;
+            }
+
+            this.setSelectedElement(id)
+            notifyHost({ value: {
+                'type': target.attr('class'),
+                'elementId': id
+            }, dataType: 'json'})
+            dispatchEvent(new CustomEvent("objektviz:applyStyles"))
+        }
+
+        applyStyles() {
+            const selectedElement = this.selectedElement()
+            d3Helpers.setElementStyle(selectedElement, defaultConfig.colorSelected)
+        }
+    }
+
+    class HoverInteractionPlugin {
+        objektviz = null
+        nodeEdgeMap = null
+        edgeNodeMap = null
+        nodeNodeMap = null
+
+        isHovering = false
+        relatedElementsIds = null;
+        excludedElements = null;
+        pathsToAnimate = null;
+        pathEffectsEnabled = true;
+
+        install(target, objektviz) {
+            this.objektviz = objektviz
+            const that = this;
+            target.selectAll('.node,.edge')
+                .on('mouseover', function (d, i) {
+                    const context = d3.select(this)
+                    that.onHoverStart(context)
+                })
+                .on('mouseout', function (d, i) {
+                    const context = d3.select(this)
+                    that.onHoverEnd(context)
+                })
+        }
+
+        setPayload(payload) {
+            this.edgeNodeMap = payload.edge_node_map
+            this.nodeEdgeMap = payload.node_edge_map
+            this.nodeNodeMap = payload.node_node_map
+            this.pathEffectsEnabled = payload.enable_path_effects_on_hover
+        }
+
+        applyStyles() {
+            if (this.isHovering) {
+                if (this.pathEffectsEnabled) {
+                    d3Helpers.startDashedLineAnimation(this.pathsToAnimate, 'hover-animation')
+                }
+
+                this.excludedElements
+                    .transition()
+                    .duration('100')
+                    .attr('opacity', '.25')
+            }
+        }
+
+        onHoverStart(context) {
+            const id = context.attr('id')
+            this.isHovering = true;
+
+            if (context.attr('class') === 'edge') {
+                this.pathsToAnimate = context;
+                this.relatedElementsIds = this.edgeNodeMap[id].concat([id])
+                this.excludedElements = d3Helpers.selectElementsOnID(d3.selectAll('.node,.edge'), this.relatedElementsIds, true)
+            } else if (context.attr('class') === 'node') {
+                this.pathsToAnimate = d3Helpers.selectElementsOnID(d3.selectAll('.edge'), this.nodeEdgeMap[id])
+                this.relatedElementsIds = this.nodeEdgeMap[id].concat(this.nodeNodeMap[id]).concat([id])
+                this.excludedElements = d3Helpers.selectElementsOnID(d3.selectAll('.node,.edge'), this.relatedElementsIds, true)
+            }
+
+            dispatchEvent(new CustomEvent("objektviz:applyStyles"))
+        }
+
+        onHoverEnd() {
+            this.isHovering = false;
+            this.excludedElements
+                .transition()
+                .duration('100')
+                .attr('opacity', '1')
+            d3Helpers.stopDashedLineAnimation(this.pathsToAnimate, 'hover-animation')
+            this.excludedElements = null
+            this.relatedElementsIds = null
+            this.pathsToAnimate = null
+            dispatchEvent(new CustomEvent("objektviz:applyStyles"));
+        }
+    }
+
+    class TraceHighlightPlugin {
+        objektviz = null
+        isEnabled = false
+        traceElementIds = null
+
+        install(target, objektviz) {
+            this.objektviz = objektviz
+        }
+
+        setPayload(payload) {
+            this.isEnabled = payload.animation_preferences.animate_active_elements_flag
+            if (this.traceElementIds !== null && this.traceElementIds !== payload.active_element_ids) {
+                const oldElements = d3Helpers.selectElementsOnID(
+                    d3.selectAll('.edge'),
+                    this.traceElementIds
+                )
+                d3Helpers.restoreElementStyle(oldElements)
+                d3Helpers.stopDashedLineAnimation(oldElements, 'process-trace-animation')
+            }
+
+            this.traceElementIds = payload.active_element_ids
+        }
+
+        applyStyles() {
+            if (this.isEnabled && this.traceElementIds != null) {
+                const traceElements = d3Helpers.selectElementsOnID(
+                    d3.selectAll('.edge'),
+                    this.traceElementIds
+                )
+
+                d3Helpers.setElementStyle(traceElements, defaultConfig.colorTraceAnimation)
+                d3Helpers.startDashedLineAnimation(traceElements, 'process-trace-animation')
+            }
+        }
+    }
+
+    class TokenReplayPlugin {
+        objektviz = null
+        isEnabled = false
+        tokens = null
+        speed = null
+        alignment = null
+        fixedDuration = null
+        install(target, objektviz) {
+            this.objektviz = objektviz
+        }
+
+        setPayload(payload) {
+            this.isEnabled = payload.animation_preferences.animate_tokens_flag
+            this.tokens = payload.tokens
+            this.speed = payload.animation_preferences.token_animation_speed
+            this.alignment =  payload.animation_preferences.token_animation_alignment
+            this.fixedDuration= payload.animation_preferences.fixed_animation_duration
+
+            this.startReplay()
+        }
+
+        startReplay() {
+            d3.selectAll('.process-token').interrupt('TokenAnimation')
+            d3.selectAll('.process-token').remove()
+
+            if (!this.isEnabled) {return}
+            if (this.tokens == null) {return}
+
+            for (const token of this.tokens) {
+                const marker = this.tokenFactory(token['elementId'], token['color'])
+                const callback  = () => this.animateTokenOnSegment(token['elementId'], token['segments'], marker)
+                if (this.alignment === 'At-once') {
+                    callback()
+                } else if (this.alignment === "Real-time") {
+                    let startOffset = this.transitionDuration(token['startOffset'])
+                    d3.timeout(callback, startOffset)
+                } else {
+                    throw Error("Unknown time alignment")
+                }
+            }
+        }
+
+        applyStyles() {}
+
+        transitionDuration(durationInMinutes) {
+            return this.fixedDuration ?
+                this.speed * 1000 * 2
+                : (1 / this.speed) * (durationInMinutes / 1440) * 1000 * 10
+        }
+
+        animateTokenOnSegment(elementId, segments, token) {
+            if (segments === null || segments.length === 0) {
+                token.remove()
+                return
+            }
+
+
+            let processSegment = segments[0]
+            segments = segments.slice(1)
+
+            let raw = document.getElementById(processSegment.ProcletEdgeElementId) // UUID is non-compliant with query selector, we have to use getById
+            if (raw === null) {
+                console.warn(`Path with id ${processSegment} not found, skipping...`)
+                animateTokenFlow(elementId, segments, token)
+            }
+
+            let edge = d3.select(raw).selectAll('path')
+            let startPoint = this.pathStartPoint(edge);
+            let duration = this.transitionDuration(processSegment.TransitionDurationInMinutes)
+
+            const that = this
+            token
+                .style("transform", "translate(" + startPoint[0] + " " + startPoint[1] +")")
+                .transition("TokenAnimation")
+                .ease(d3.easeLinear)
+                .duration(duration)
+                .attrTween("transform", this.translateAlong(edge.node()))
+                .on("end", () => that.animateTokenOnSegment(elementId, segments, token));
+        }
+
+        pathStartPoint(path) {
+            let d = path.attr("d")
+            let dsplitted = d.split(" ");
+            return dsplitted[1].split(",");
+        }
+
+        translateAlong(path) {
+            const l = path.getTotalLength();
+            return function (d) {
+              return function (t) {
+                const p = path.getPointAtLength(t * l);
+                return "translate(" + p.x + "," + p.y + ")";//Move marker
+              }
+            }
+          }
+
+        tokenFactory(elementId, color) {
+            return d3
+                .select('svg')
+                .select('g')
+                .append("circle")
+                .attr('class', 'process-token')
+                .attr('id', elementId)
+                .attr('r','10px')
+                .style('fill', color)
+                .attr('stroke', 'black')
+                .attr('stroke-width', '2px')
+        }
+    }
+
+    class AdvancedTokenReplayPlugin {
+        // The advanced replay is inspired by
+        // https://github.com/bupaverse/processanimateR/blob/master/docs/articles/use-token_scales_files/processanimater-libs-1.0.0/animation_tokens.js#L29
+        BASE_SPEED_MULTIPLIER = 100000
+
+        toCleanup = []
+        svgNode = null
+        svgSelection = null
+
+        settings = null
+
+        // totalDuration = null;
+        isEnabled = false
+        tokens = null
+        speed = null
+        alignment = null
+        fixedDuration = null
+        replayMetadata = null
+        graphviz = null
+        container = null
+
+        install(target, objektviz) {
+            // console.log(objektviz, target)
+            this.svgSelection = target
+            this.svgNode = target.node();
+            this.container = target
+                .append("g")
+                .attr("id", "token-replay-group");
+
+            const graphGroup = target.selectAll('#graph0')
+            this.container.attr('transform', graphGroup.attr('transform'))
+            const callback = () => {
+                this.container.attr('transform',  graphGroup.attr('transform'))
+            };
+            const observer = new MutationObserver(callback);
+            observer.observe(graphGroup.node(), { attributes: true });
+
+            requestAnimationFrame(() => this.pollCurrentTime());
+        }
+
+        setPayload(payload) {
+            this.container.html('')
+            d3.selectAll('#slider-container').selectAll('svg').remove()
+
+            this.toCleanup.forEach((clb) => clb())
+            this.toCleanup = []
+            console.log(payload)
+
+            this.settings = payload.animation_preferences
+            if (!this.settings.animate_tokens_flag) return
+
+            if (payload.replay_metadata === null) return
+            this.replayMetadata = payload.replay_metadata
+
+            if (payload.tokens === null) return
+            this.tokens = payload.tokens
+
+
+            this.toCleanup.concat(this.setupSlider())
+            this.setupReplay()
+        }
+
+        PLAYBACK_DURATION_SEC = 6
+
+        // replaySpeed() {
+        //     return (this.replayMetadata.total_duration_sec) * 60
+            // return this.BASE_SPEED_MULTIPLIER * this.settings.token_animation_speed
+        // }
+
+        scaleDuration(sec) {
+            return (sec / this.replayMetadata.total_duration_sec) * (this.PLAYBACK_DURATION_SEC * this.settings.token_animation_speed)
+        }
+
+        unscaleDuration(sec) {
+            return (sec / (this.PLAYBACK_DURATION_SEC * this.settings.token_animation_speed)) * this.replayMetadata.total_duration_sec
+        }
+
+        pollCurrentTime() {
+            if (this.replayMetadata !== null){
+                this.slider.silentValue(this.playBackProgress())
+                // Loop back to start, if we reached end of the playback
+                if (this.svgNode.getCurrentTime() > this.scaleDuration(this.replayMetadata.total_duration_sec)) {
+                    this.svgNode.setCurrentTime(0)
+                }
+            }
+
+            requestAnimationFrame(() => this.pollCurrentTime());
+        }
+
+        playBackProgress() {
+            const currentTime = this.svgNode.getCurrentTime();
+            if (!this.isRealtimeAlignment()) {
+                // return currentTime / this.scaleDuration(this.replayMetadata.total_duration_sec) * 100;
+                return currentTime / this.scaleDuration(this.replayMetadata.total_duration_sec) * 100;
+            }
+
+            const startDate = new Date(this.replayMetadata.start_date);
+            const elapesMs = (startDate.getTime()) + this.unscaleDuration(currentTime) * 1000
+            return new Date(elapesMs)
+        }
+
+        isRealtimeAlignment () {
+            return this.settings.token_animation_alignment === "Real-time"
+        }
+
+        setupSlider() {
+            this.slider = d3.sliderHorizontal()
+                .ticks(1200 / 100)
+                .displayValue(true);
+
+            if (this.isRealtimeAlignment()) {
+                this.slider = this.slider
+                    .min(new Date(this.replayMetadata['start_date']))
+                    .max(new Date(this.replayMetadata['end_date']))
+                    .displayFormat(d3.timeFormat("%x %X"))
+            } else {
+                this.slider = this.slider
+                    .min(0)
+                    .max(100)
+                    .displayFormat(d => `${d3.format(".0f")(d)}%`)
+            }
+
+            // On user interaction, set the svg setCurrentTime to the selected value
+            this.slider.on('onchange', (val) => {
+                const startDate = new Date(this.replayMetadata.start_date)
+                const elapsedSec = this.isRealtimeAlignment()
+                    ? this.scaleDuration((val - startDate) / 1000)
+                    : (val / 100) * (this.PLAYBACK_DURATION_SEC * this.settings.token_animation_speed);
+                this.svgNode.setCurrentTime(elapsedSec)
+            })
+
+            const sliderContainer = d3.selectAll("#slider-container")
+                .append("svg")
+                .attr("class", "processanimater-control")
+                .attr("width", 1200 - 50)
+                .attr("height", 70);
+
+            const sliderGroup  = sliderContainer
+                .append("g")
+                .attr('transform', 'translate(60, 30)')
+                .call(this.slider);
+
+            const playbackControlGroup = sliderContainer
+                .append("g")
+                .attr("transform", "translate(0,12)");
+
+            // Inspired by https://gist.github.com/guilhermesimoes/fbe967d45ceeb350b765
+            const
+                playIcon = "M11,10 L18,13.74 18,22.28 11,26 M18,13.74 L26,18 26,18 18,22.28",
+                pauseIcon = "M11,10 L17,10 17,26 11,26 M20,10 L26,10 26,26 20,26";
+
+            const playPauseButton = playbackControlGroup
+                .append("g")
+                .attr("style", "pointer-events: bounding-box")
+                .append("path")
+                .attr("d", this.svgNode.animationsPaused() ? playIcon : pauseIcon)
+                .on('mouseenter', (event, d) => {
+                    playPauseButton
+                        .attr('transform', 'translate(-2, -2) scale(1.1)')
+                })
+                .on('mouseout', () => {
+                    playPauseButton
+                        .attr('transform', 'translate(0, 0) scale(1)')
+                })
+
+            playPauseButton.on("click", () => {
+                let icon = null
+                if (this.svgNode.animationsPaused()) {
+                    this.svgNode.unpauseAnimations()
+                    icon = pauseIcon
+                } else {
+                    this.svgNode.pauseAnimations()
+                    icon = playIcon
+                }
+
+                playPauseButton
+                    .transition()
+                    .duration(100)
+                    .attr("d", icon);
+            });
+
+            // Lastly on screen change recompute the slider size and ticks count
+            const resizeObserver = new ResizeObserver((entries) => {
+                const width = entries[0].contentRect.width
+                sliderContainer.attr('width', width)
+                this.slider = this.slider
+                    .width(width - 80)
+                    .ticks(width / 100)
+                sliderGroup.call(this.slider)
+            })
+
+            resizeObserver.observe(document.getElementById(GRAPH_DIV_ID))
+            return [() => resizeObserver.disconnect()]
+        }
+
+        setupReplay() {
+            this.svgSelection
+                .selectAll("g.edge")
+                .each(function (parent) {
+                    d3.select(this).selectAll("path").attr("id", `${parent.attributes.id}-path` )
+                })
+
+            const tokens = this.container
+                .selectAll('g.token-group')
+                .data(this.tokens)
+                .enter()
+                .append('g')
+                .classed('token-group', true)
+                .attr("data-entity-id", (d) => d['entity_id'])
+                .attr('display', "none")
+
+            tokens
+                .selectAll(null)
+                .data((d) => {return d.segments})
+                .enter()
+                .append('set')
+                .attr('attributeName', "display")
+                .attr('to', "block")
+                .attr('begin', (d) => `${this.scaleDuration(d.start_offset_sec)}s`)
+                .attr('fill', "freeze")
+
+            // Add tokens
+            const circles = tokens
+                .append("circle")
+                .attr('id', (d) => {return d['element_id']})
+                .attr('r','10px')
+                .attr('fill', 'black')
+                .attr('stroke', 'black')
+                .attr('stroke-width', '2px')
+
+            circles
+                .selectAll(null)
+                .data((d) => { return d.segments})
+                .enter()
+                .append('set')
+                .attr('attributeName', "fill")
+                .attr('to', (d) => d.color)
+                .attr('begin', (d) => `${this.scaleDuration(d.start_offset_sec)}s`)
+                .attr('fill', "freeze")
+
+            circles
+                    .append("title")
+                    .text((d) => d['entity_id'])
+
+            // Add path tracking
+            tokens
+                .selectAll(null)
+                .data((d) => { return d.segments})
+                .enter()
+                .append('animateMotion')
+                .attr('begin', (d) => `${this.scaleDuration(d.start_offset_sec)}s`)
+                .attr('dur', (d) => {return `${this.scaleDuration(d.duration_sec)}s`})
+                .attr('fill', "freeze")
+                .attr('rotate', "auto")
+                .append("mpath")
+                .attr("href", (d) => "#" + d.dfc_element_id + "-path");
+
+        }
+
+
+        transitionDuration(durationInMinutes) {
+            return this.fixedDuration ? 1 : durationInMinutes
+        }
+
+        applyStyles() {
+
+        }
+    }
+
+    class ObjektViz {
+        graphviz = null;
+        config = defaultConfig
+        plugins = []
+        isBusy = false
+
+        constructor(targetHtmlNode, plugins) {
+            this.plugins = plugins
+            this.graphviz = d3
+                .select(targetHtmlNode)
+                .graphviz({
+                    tweenShapes: true,
+                    tweenPrecision: '10%',
+                    growEnteringEdges: false,
+                })
+                // .fit(true)
+                // .scale(.8)
+                .transition(this.config.twiningTransitionFce);
+
+            // console.log(this.plugins)
+            addEventListener("objektviz:applyStyles", () => this.applyStyles())
+        }
+
+        setHeight(height) {
+            this.graphviz.height(height)
+        }
+
+        setWidth(width) {
+            this.graphviz.width(width)
+        }
+
+        setupNewProcessModel(dotSource, payload) {
+            this.isBusy = true
+            d3Helpers.restoreElementStyle(d3.selectAll('.node,.edge'))
+            console.info("[RENDERING DOT]")
+
+            this.graphviz
+            .renderDot(dotSource)
+            .on("end", () => {
+                console.info("[RENDERING DONE]")
+                d3.selectAll('title').text('')
+
+                const nodes = d3.selectAll('.node');
+                d3Helpers.setNodeStyle(nodes)
+                d3Helpers.storeOriginalStroke(nodes.selectAll('path'))
+                d3Helpers.storeOriginalFill(nodes.selectAll('path'))
+
+                const edges = d3.selectAll('.edge');
+                d3Helpers.storeOriginalStroke(edges.selectAll('path'))
+                d3Helpers.storeOriginalFill(edges.selectAll('path'))
+
+                const arrowsOnEdges = edges.selectAll('polygon')
+                d3Helpers.storeOriginalFill(arrowsOnEdges)
+                d3Helpers.storeOriginalDashArray(arrowsOnEdges)
+
+                this.isBusy = false;
+                const svgSelection = d3.select("#graph").selectWithoutDataPropagation("svg")
+
+                const width = d3.select("#graph").node().getBoundingClientRect().width
+                const height = d3.select("#graph").node().getBoundingClientRect().height
+
+                this.setHeight(height)
+                this.setWidth(width)
+                // svgSelection
+                //     .attr('width', width)
+                //     .attr('height', height)
+
+                // svgSelection
+                //     .attr('width', width)
+                //     .attr('height', height)
+                console.log(width, height)
+
+                for (const plugin of this.plugins) {
+                    plugin.install(svgSelection, this)
+                }
+
+                objektviz.setPayload(payload)
+                objektviz.applyStyles()
+            })
+        };
+
+        setPayload(payload) {
+            if (this.isBusy) {return}
+
+            for (const plugin of this.plugins) {
+                plugin.setPayload(payload)
+            }
+        }
+
+        applyStyles() {
+            if (this.isBusy) {return}
+
+            d3Helpers.restoreElementStyle(d3.selectAll('.node,.edge'))
+            for (const plugin of this.plugins) {
+                plugin.applyStyles()
+            }
+        }
+    }
+
+    let objektviz = null
+    let dotSource = null
+    const render = (props) => {
+        if (objektviz === null) {
+            objektviz = new ObjektViz(document.getElementById("graph"), [
+                new TraceHighlightPlugin(),
+                new HoverInteractionPlugin(),
+                new ClickInteractionPlugin(),
+                // new TokenReplayPlugin(),
+                new AdvancedTokenReplayPlugin(),
+            ])
+
+            const resize = new ResizeObserver((entries) => {
+                const width = entries[0].contentRect.width
+                const height = entries[0].contentRect.height
+                objektviz.setHeight(height)
+                objektviz.setWidth(width)
+
+            })
+
+            addEventListener("resize", () => setFrameHeight(parent.window.innerHeight - SAFE_AREA))
+            resize.observe(document.getElementById("graph"))
+
+        }
+
+
+
+        if (dotSource !== props.dot_source) {
+            console.info("Dot source changed")
+            dotSource = props.dot_source
+            objektviz.setupNewProcessModel(dotSource, props)
+        } else {
+            objektviz.setPayload(props)
+            objektviz.applyStyles()
+        }
+    }
+
+    initialize([render])
+
+    // ----------------------------------------------------
+
+    function _sendMessage(type, data) {
+        // copy data into object
+        var outboundData = Object.assign({
+            isStreamlitMessage: true,
+            type: type,
+        }, data)
+
+        if (type == SET_COMPONENT_VALUE) {
+            console.debug("_sendMessage data: " + JSON.stringify(data))
+            console.debug("_sendMessage outboundData: " + JSON.stringify(outboundData))
+        }
+
+        window.parent.postMessage(outboundData, "*")
+    }
+
+    function initialize(pipeline) {
+
+        // Hook Streamlit's message events into a simple dispatcher of pipeline handlers
+        window.addEventListener("message", (event) => {
+            if (event.data.type == RENDER) {
+                // The event.data.args dict holds any JSON-serializable value
+                // sent from the Streamlit client. It is already deserialized.
+                pipeline.forEach(handler => {
+                    handler(event.data.args)
+                })
+            }
+        })
+
+        _sendMessage(COMPONENT_READY, {apiVersion: 1});
+
+        // Component should be mounted by Streamlit in an iframe, so try to autoset the iframe height.
+        window.addEventListener("load", () => {
+            window.setTimeout(function () {
+                setFrameHeight(document.documentElement.clientHeight)
+            }, 0)
+        })
+    }
+
+    function setFrameHeight(height) {
+        _sendMessage(SET_FRAME_HEIGHT, {height: height})
+    }
+
+    // The `data` argument can be any JSON-serializable value.
+    function notifyHost(data) {
+        _sendMessage(SET_COMPONENT_VALUE, data)
+    }
+
+</script>
+
+</html
