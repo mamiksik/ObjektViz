@@ -174,7 +174,7 @@ with objektviz_sidebar:
                 label="Frequency filter",
                 min_value=1,
                 max_value=10000,
-                value=(1, 10000),
+                value=(100, 10000),
                 label_visibility="collapsed",
             ),
         )
@@ -193,7 +193,7 @@ with objektviz_sidebar:
         )
 
         operator = st.pills(
-            "Operator", options=["OR", "AND"], default="OR", selection_mode="single"
+            "Operator", options=["OR", "AND"], default="AND", selection_mode="single"
         )
 
         node_filter_frequency = ov_filters.RangeFilter.new(
@@ -203,7 +203,7 @@ with objektviz_sidebar:
                 label="Event Class Frequency",
                 min_value=1,
                 max_value=10000,
-                value=(1, 10000),
+                value=(100, 10000),
                 # label_visibility="",
                 key="node_frequency_filter",
             ),
