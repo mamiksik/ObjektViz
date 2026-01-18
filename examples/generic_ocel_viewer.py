@@ -1,9 +1,11 @@
 import os
 import pathlib
 
+import numpy as np
 import streamlit as st
 
 import kuzu
+from matplotlib import pyplot as plt
 
 import objektviz.streamlit.components as ov_components
 import objektviz.backend.filters as ov_filters
@@ -73,7 +75,7 @@ PROCLET_TYPES = ["EventType,EntityType"]
 # and assign a color to each of them dynamically
 # In real project, you might want to have more control over this mapping / manually define entity types
 entity_types = queries.get_entity_types(None)
-ENTITY_TYPES = entity_types
+ENTITY_TYPES = sorted(entity_types, key=lambda s: s.lower())
 
 # The instances provide sensible defaults for the visualizer preferences in the sidebar
 # but they may not fit your project needs, or they might not even work on your data at all
@@ -126,6 +128,11 @@ with objektviz_sidebar:
         shader_factory,
     ) = ov_components.general_preferences(PROCLET_TYPES)
 
+# ----------------------------------------------------------------------------
+# Query the data from the database (We fetch the data here, so we can use the values to populate the sidebar filters)
+event_classes_db, dfc_db = queries.proclet(class_type)
+# ----------------------------------------------------------------------------
+
 # This tab is defined in between to have access to the class_type variable
 # but be rendered before we start querying the data, so that we can see it
 # even if we encounter errors later on
@@ -167,19 +174,28 @@ with objektviz_sidebar:
     # Below is just an example of how to add filters to the sidebar for frequency
     # Refer to the documentation for more information about available filters and how to compose them
     with st.expander("DFC Filters", expanded=False):
+
+        # Histogram of frequency values to help select filter range
+        values = [x['frequency'] for x in dfc_db if 'frequency' in x]
+        fig, ax = plt.subplots()
+        ax.hist(values, bins=100, color='blue')
+        st.pyplot(fig)
+
+        median_freq = int(np.median(values))
         root_edge_filter = ov_filters.RangeFilter.new(
             attribute="frequency",
             is_enabled=True,
             rng=st.slider(
                 label="Frequency filter",
-                min_value=1,
-                max_value=10000,
-                value=(100, 10000),
+                min_value=min(values),
+                max_value=max(values),
+                value=(median_freq, max(values)),
                 label_visibility="collapsed",
             ),
         )
 
     with st.expander("Event Class Filters", expanded=True):
+
         node_filter_entity_type = ov_filters.MatchFilter.new(
             attribute="EntityType",
             is_enabled=True,
@@ -196,14 +212,21 @@ with objektviz_sidebar:
             "Operator", options=["OR", "AND"], default="AND", selection_mode="single"
         )
 
+        # Histogram of frequency values to help select filter range
+        values = [x['frequency'] for x in event_classes_db if 'frequency' in x]
+        fig, ax = plt.subplots()
+        ax.hist(values, bins=100, color='blue')
+        st.pyplot(fig)
+
+        median_freq = int(np.median(values))
         node_filter_frequency = ov_filters.RangeFilter.new(
             attribute="frequency",
             is_enabled=True,
             rng=st.slider(
                 label="Event Class Frequency",
-                min_value=1,
-                max_value=10000,
-                value=(100, 10000),
+                min_value=min(values),
+                max_value=max(values),
+                value=(median_freq, max(values)),
                 # label_visibility="",
                 key="node_frequency_filter",
             ),
@@ -238,15 +261,14 @@ objektviz_config = BackendConfig(
 )
 
 # Generate the dot source from the proclet data
-nodes, edges = queries.proclet(class_type)
-wrapped_values = ov_kuzu.from_kuzu_to_dot_elements(nodes, edges, objektviz_config)
+wrapped_values = ov_kuzu.from_kuzu_to_dot_elements(event_classes_db, dfc_db, objektviz_config)
 dot_src, edge_node_map, node_edge_map, node_node_map = generate_dot_source(
     *wrapped_values
 )
 
 # Log the raw data in the debug tab
 with debug_tab:
-    ov_components.debug_objektviz_backend(objektviz_config, nodes, edges, dot_src)
+    ov_components.debug_objektviz_backend(objektviz_config, event_classes_db, dfc_db, dot_src)
 
 # Prepare the payload for the frontend graph component
 graphviz_payload = GraphFrontendPayload(
