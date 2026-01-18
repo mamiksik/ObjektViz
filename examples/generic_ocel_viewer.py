@@ -74,8 +74,7 @@ PROCLET_TYPES = ["EventType,EntityType"]
 # To generalize to all entity types, we load the entity types from database
 # and assign a color to each of them dynamically
 # In real project, you might want to have more control over this mapping / manually define entity types
-entity_types = queries.get_entity_types(None)
-ENTITY_TYPES = sorted(entity_types, key=lambda s: s.lower())
+ENTITY_TYPES = sorted(queries.get_entity_types(None), key=lambda s: s.lower())
 
 # The instances provide sensible defaults for the visualizer preferences in the sidebar
 # but they may not fit your project needs, or they might not even work on your data at all
@@ -84,7 +83,6 @@ DEFAULT_LAYOUT_PREFERENCES = DefaultLayoutPreferences()
 DEFAULT_CONNECTION_PREFERENCES = DefaultConnectionPreferences()
 DEFAULT_EVENT_CLASS_PREFERENCES = DefaultEventClassPreferences()
 
-# st.write(entity_types)
 avaible_colors = [
     "Blues",
     "Oranges",
@@ -96,8 +94,9 @@ avaible_colors = [
     "YlOrRd",
     "PuRd",
 ]
+
 color_map = {
-    et: avaible_colors[i % len(avaible_colors)] for i, et in enumerate(entity_types)
+    et: avaible_colors[i % len(avaible_colors)] for i, et in enumerate(ENTITY_TYPES)
 }
 
 SHADING_PREFERENCES = DefaultShadingPreferences(
