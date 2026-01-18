@@ -25,8 +25,8 @@ from objektviz.frontend import GraphFrontendPayload
 PATH = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
 OCEL_DATASETS = PATH / "datasets" / "kuzudb"
 DATASETS = {
-    "Order Management": OCEL_DATASETS / "order_managment.kuzu",
     "Container Logistics": OCEL_DATASETS / "container_logistics.kuzu",
+    "Order Management": OCEL_DATASETS / "order_managment.kuzu",
 }
 
 # ----------------------------------------------------------------------------
