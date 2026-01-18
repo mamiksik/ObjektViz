@@ -89,7 +89,7 @@ avaible_colors = [
     "Reds",
     "Greens",
     "Purples",
-    "Greys",
+    # "Greys",
     "YlGnBu",
     "YlOrRd",
     "PuRd",
