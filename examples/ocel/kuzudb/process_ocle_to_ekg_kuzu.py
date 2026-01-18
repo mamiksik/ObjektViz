@@ -2,8 +2,8 @@ import pathlib
 
 import kuzu
 
-from ocel.ocel2_import import OcelImport
-from ocel.ocel2_proclet_queries import OcelProcletQueryLibrary
+from examples.ocel.kuzudb.ocel2_import import OcelImport
+from examples.ocel.kuzudb.ocel2_proclet_queries import OcelProcletQueryLibrary
 
 
 def import_ocel_to_kuzu(ocel_json_path: pathlib.Path, database_path: pathlib.Path):
