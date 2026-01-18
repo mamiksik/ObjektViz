@@ -1,5 +1,9 @@
 # 📦 ObjektViz
-![ObjektViz Screenshot](assets/objektviz.png)
+
+<div style="display:flex; justify-content:center;">
+    <img src="assets/objektviz.png" alt="ObjektViz Screenshot" style="width:100%; max-width:500px; height:auto;" />
+</div>
+
 > ObjektViz is visualizer for object-centric process models that enables users to explore and analyze even _very complex_ processes involving multiple interacting objects.
 
 ## Features
