@@ -12,7 +12,7 @@ if typing.TYPE_CHECKING:
 
 @dataclasses.dataclass
 class AbstractShader:
-    config: 'BackendConfig' = dataclasses.field(repr=False)
+    config: "BackendConfig" = dataclasses.field(repr=False)
     cmap: str
     leading_attribute: str
 
@@ -28,8 +28,9 @@ class AbstractShader:
     def update_bounds(self, entity: neo4j.graph.Entity):
         pass
 
-
     def get_color(self, normalized_value):
         colormap = plt.get_cmap(self.cmap)
-        color = colormap(float(normalized_value))  # Ensure the value is int, int(1) will maps to 0.0 color equivalent
+        color = colormap(
+            float(normalized_value)
+        )  # Ensure the value is int, int(1) will maps to 0.0 color equivalent
         return matplotlib.colors.rgb2hex(color)

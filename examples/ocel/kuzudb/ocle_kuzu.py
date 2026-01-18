@@ -5,6 +5,7 @@ import kuzu
 from ocel.ocel2_import import OcelImport
 from ocel.ocel2_proclet_queries import OcelProcletQueryLibrary
 
+
 def import_ocel_to_kuzu(ocel_json_path: pathlib.Path, database_path: pathlib.Path):
     # Delete existing database file if exists
     if pathlib.Path(database_path).exists():
@@ -12,7 +13,6 @@ def import_ocel_to_kuzu(ocel_json_path: pathlib.Path, database_path: pathlib.Pat
 
     db = kuzu.Database(database_path)
     conn = kuzu.Connection(db)
-
 
     oi = OcelImport(conn)
     oi.readJsonOcel(ocel_json_path)
@@ -60,15 +60,24 @@ def discover_proclet_kuzu(database_path: pathlib.Path):
 if __name__ == "__main__":
     # parse command line arguments
     import argparse
-    parser = argparse.ArgumentParser(description="Import OCEL JSON file into Kuzu database and discover proclet model.")
-    parser.add_argument("ocel_json", type=pathlib.Path, help="Path to the OCEL JSON file.")
-    parser.add_argument("database", type=pathlib.Path, help="Path to the Kuzu database file.")
+
+    parser = argparse.ArgumentParser(
+        description="Import OCEL JSON file into Kuzu database and discover proclet model."
+    )
+    parser.add_argument(
+        "ocel_json", type=pathlib.Path, help="Path to the OCEL JSON file."
+    )
+    parser.add_argument(
+        "database", type=pathlib.Path, help="Path to the Kuzu database file."
+    )
     args = parser.parse_args()
 
     # Ask for confirmation if database file exists
     if args.database.exists():
-        response = input(f"Database file {args.database} already exists. Overwrite? (y/n): ")
-        if response.lower() != 'y':
+        response = input(
+            f"Database file {args.database} already exists. Overwrite? (y/n): "
+        )
+        if response.lower() != "y":
             print("Aborting.")
             exit(0)
 

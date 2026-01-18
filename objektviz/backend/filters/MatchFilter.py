@@ -12,8 +12,19 @@ class MatchFilter(AbstractFilter):
     values: list[str]
 
     @classmethod
-    def new(cls, attribute: str, values: list[str], is_enabled: bool = True, skip_on_empty: bool = True):
-        return cls(attribute=attribute, is_enabled=is_enabled, values=values, skip_on_empty=skip_on_empty)
+    def new(
+        cls,
+        attribute: str,
+        values: list[str],
+        is_enabled: bool = True,
+        skip_on_empty: bool = True,
+    ):
+        return cls(
+            attribute=attribute,
+            is_enabled=is_enabled,
+            values=values,
+            skip_on_empty=skip_on_empty,
+        )
 
     def is_passing(self, entity: neo4j.graph.Entity):
         if not self.is_enabled:
@@ -22,7 +33,7 @@ class MatchFilter(AbstractFilter):
         if not self.values and self.skip_on_empty:
             return True
 
-        if self.attribute == 'element_id':
+        if self.attribute == "element_id":
             value = entity.element_id
         else:
             value = entity.get(self.attribute, None)

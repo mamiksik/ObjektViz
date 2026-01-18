@@ -84,7 +84,6 @@ class OcelProcletQueryLibrary:
             SET c.frequency = cnt
         """
 
-
     def q_mark_start_end_events(self) -> str:
         return """
             MATCH (n:Entity)<-[:CORR]-(e:Event)

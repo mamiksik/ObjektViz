@@ -26,9 +26,15 @@ class AbstractDotElement(ABC):
     DotNode/DotEdge and pass instances of your subclass instead
 
     """
+
     fontname = "Helvetica"
 
-    def __init__(self, entity: neo4j.graph.Entity, shaders: dict[str, AbstractShader], config: BackendConfig):
+    def __init__(
+        self,
+        entity: neo4j.graph.Entity,
+        shaders: dict[str, AbstractShader],
+        config: BackendConfig,
+    ):
         self.entity = entity
         self.shaders = shaders
         self.config = config
@@ -62,4 +68,4 @@ class AbstractDotElement(ABC):
     @property
     def frequency(self) -> int:
         # -1 is sentinel value meaning the frequency is undefined
-        return self.entity.get('count', -1)
+        return self.entity.get("count", -1)

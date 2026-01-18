@@ -11,14 +11,19 @@ import objektviz.backend.adaptors.kuzudb as ov_kuzu
 from kuzu_example_helpers import generate_token_animation_segments
 
 from objektviz.backend.BackendConfig import BackendConfig
-from objektviz.streamlit.utils import DefaultConnectionPreferences, DefaultEventClassPreferences, \
-    DefaultShadingPreferences, DefaultLayoutPreferences, TokenReplayManager
+from objektviz.streamlit.utils import (
+    DefaultConnectionPreferences,
+    DefaultEventClassPreferences,
+    DefaultShadingPreferences,
+    DefaultLayoutPreferences,
+    TokenReplayManager,
+)
 from objektviz.backend.dot_graph_builder import generate_dot_source
 
 from objektviz.frontend import GraphFrontendPayload
 
 PATH = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
-OCEL_DATASETS = PATH / 'datasets' / 'kuzudb'
+OCEL_DATASETS = PATH / "datasets" / "kuzudb"
 DATASETS = {
     "Order Management": OCEL_DATASETS / "order_managment.kuzu",
     "Container Logistics": OCEL_DATASETS / "container_logistics.kuzu",
@@ -28,9 +33,13 @@ DATASETS = {
 # DB Connection [EDIT AS NEEDED]
 # ----------------------------------------------------------------------------
 with st.sidebar:
-    st.selectbox(label="Dataset", options=DATASETS.keys(), key="kuzu_dataset_selector",)
+    st.selectbox(
+        label="Dataset",
+        options=DATASETS.keys(),
+        key="kuzu_dataset_selector",
+    )
 
-if 'kuzu_dataset_selector' not in st.session_state:
+if "kuzu_dataset_selector" not in st.session_state:
     st.session_state.kuzu_dataset_selector = next(iter(DATASETS.keys()))
 
 database_path = DATASETS[st.session_state.kuzu_dataset_selector]
@@ -49,7 +58,9 @@ objektviz_sidebar = ov_components.setup_objektviz_page()
 # Trace Variants tab contains trace variants for selected class type (TODO)
 # Debug tab contains raw data for debugging purposes
 # Sidebar contains all possible configuration options for the ObjektViz
-process_model_tab, ekg_stats_tab, trace_variants_tab, debug_tab = st.tabs(["📦 Process Model", "ℹ️ EKG Stats", '➡️ Trace Variants', "⚙️ Debug tab"])
+process_model_tab, ekg_stats_tab, trace_variants_tab, debug_tab = st.tabs(
+    ["📦 Process Model", "ℹ️ EKG Stats", "➡️ Trace Variants", "⚙️ Debug tab"]
+)
 
 # ----------------------------------------------------------------------------
 # CONFIG SECTION [EDIT AS NEEDED]
@@ -72,19 +83,32 @@ DEFAULT_CONNECTION_PREFERENCES = DefaultConnectionPreferences()
 DEFAULT_EVENT_CLASS_PREFERENCES = DefaultEventClassPreferences()
 
 # st.write(entity_types)
-avaible_colors = ['Blues', 'Oranges', 'Reds', 'Greens', 'Purples', 'Greys', 'YlGnBu', 'YlOrRd', 'PuRd']
-color_map = {et: avaible_colors[i % len(avaible_colors)] for i, et in enumerate(entity_types)}
+avaible_colors = [
+    "Blues",
+    "Oranges",
+    "Reds",
+    "Greens",
+    "Purples",
+    "Greys",
+    "YlGnBu",
+    "YlOrRd",
+    "PuRd",
+]
+color_map = {
+    et: avaible_colors[i % len(avaible_colors)] for i, et in enumerate(entity_types)
+}
 
 SHADING_PREFERENCES = DefaultShadingPreferences(
-    group_by='EntityType',
-    color_map=color_map
+    group_by="EntityType", color_map=color_map
 )
 
 TOKEN_UI_ANIMATION_PREFERENCES = TokenReplayManager(
     samplers={
-        'All': lambda class_type, sample_size: queries.entity_sample(class_type, sample_size),
+        "All": lambda class_type, sample_size: queries.entity_sample(
+            class_type, sample_size
+        ),
     },
-    token_animation_generator=generate_token_animation_segments
+    token_animation_generator=generate_token_animation_segments,
 )
 
 
@@ -94,7 +118,13 @@ TOKEN_UI_ANIMATION_PREFERENCES = TokenReplayManager(
 # This can be edited to add project specific configuration options (especially in terms of filters)
 
 with objektviz_sidebar:
-    class_type, is_process_start_end_visualized, start_end_nodes_per_cluster, enable_path_effects_on_hover, shader_factory = ov_components.general_preferences(PROCLET_TYPES)
+    (
+        class_type,
+        is_process_start_end_visualized,
+        start_end_nodes_per_cluster,
+        enable_path_effects_on_hover,
+        shader_factory,
+    ) = ov_components.general_preferences(PROCLET_TYPES)
 
 # This tab is defined in between to have access to the class_type variable
 # but be rendered before we start querying the data, so that we can see it
@@ -103,19 +133,30 @@ with ekg_stats_tab:
     ov_components.ekg_stats(queries, class_type)
 
 with objektviz_sidebar:
-    layout_preferences, connection_preferences, event_class_preferences, show_only_sampled_elements, token_replay_preferences = ov_components.preferences_group(
+    (
+        layout_preferences,
+        connection_preferences,
+        event_class_preferences,
+        show_only_sampled_elements,
+        token_replay_preferences,
+    ) = ov_components.preferences_group(
         queries=queries,
         class_type=class_type,
         default_layout_preferences_input=DEFAULT_LAYOUT_PREFERENCES,
         default_connection_visuals=DEFAULT_CONNECTION_PREFERENCES,
-        default_event_class_visuals=DEFAULT_EVENT_CLASS_PREFERENCES
+        default_event_class_visuals=DEFAULT_EVENT_CLASS_PREFERENCES,
     )
 
-    active_element_trace_filter, token_animation_segments, replay_metadata, active_element_ids = ov_components.token_replay_input(
+    (
+        active_element_trace_filter,
+        token_animation_segments,
+        replay_metadata,
+        active_element_ids,
+    ) = ov_components.token_replay_input(
         queries=queries,
         class_type=class_type,
         ui_preferences=TOKEN_UI_ANIMATION_PREFERENCES,
-        token_replay_preferences=token_replay_preferences
+        token_replay_preferences=token_replay_preferences,
     )
 
     with debug_tab:
@@ -134,8 +175,8 @@ with objektviz_sidebar:
                 min_value=1,
                 max_value=10000,
                 value=(1, 10000),
-                label_visibility="collapsed"
-            )
+                label_visibility="collapsed",
+            ),
         )
 
     with st.expander("Event Class Filters", expanded=True):
@@ -143,10 +184,17 @@ with objektviz_sidebar:
             attribute="EntityType",
             is_enabled=True,
             skip_on_empty=True,
-            values=st.pills("Entity types to show", options=ENTITY_TYPES, default=ENTITY_TYPES,selection_mode='multi')
+            values=st.pills(
+                "Entity types to show",
+                options=ENTITY_TYPES,
+                default=ENTITY_TYPES,
+                selection_mode="multi",
+            ),
         )
 
-        operator = st.pills("Operator", options=["OR", "AND"], default="OR", selection_mode='single')
+        operator = st.pills(
+            "Operator", options=["OR", "AND"], default="OR", selection_mode="single"
+        )
 
         node_filter_frequency = ov_filters.RangeFilter.new(
             attribute="frequency",
@@ -157,8 +205,8 @@ with objektviz_sidebar:
                 max_value=10000,
                 value=(1, 10000),
                 # label_visibility="",
-                key="node_frequency_filter"
-            )
+                key="node_frequency_filter",
+            ),
         )
         # node_filter_frequency = ov_filters.MatchFilter.new(
         #     attribute="EntityType",
@@ -167,13 +215,12 @@ with objektviz_sidebar:
         #     values=st.pills("Entity types to show", options=ENTITY_TYPES, default=ENTITY_TYPES,selection_mode='multi')
         # )
 
-        compound_filter = ov_filters.OrFilter if operator == "OR" else ov_filters.AndFilter
-        root_node_filter = compound_filter.new([
-            node_filter_entity_type,
-            node_filter_frequency
-        ])
-
-
+        compound_filter = (
+            ov_filters.OrFilter if operator == "OR" else ov_filters.AndFilter
+        )
+        root_node_filter = compound_filter.new(
+            [node_filter_entity_type, node_filter_frequency]
+        )
 
 
 # Backend Visualizer Configuration
@@ -193,7 +240,9 @@ objektviz_config = BackendConfig(
 # Generate the dot source from the proclet data
 nodes, edges = queries.proclet(class_type)
 wrapped_values = ov_kuzu.from_kuzu_to_dot_elements(nodes, edges, objektviz_config)
-dot_src, edge_node_map, node_edge_map, node_node_map = generate_dot_source(*wrapped_values)
+dot_src, edge_node_map, node_edge_map, node_node_map = generate_dot_source(
+    *wrapped_values
+)
 
 # Log the raw data in the debug tab
 with debug_tab:
@@ -210,7 +259,9 @@ graphviz_payload = GraphFrontendPayload(
     edge_node_map=edge_node_map,
     node_edge_map=node_edge_map,
     node_node_map=node_node_map,
-    selected_element_id=st.session_state.selected_edge if st.session_state.selected_node is None else st.session_state.selected_node
+    selected_element_id=st.session_state.selected_edge
+    if st.session_state.selected_node is None
+    else st.session_state.selected_node,
 )
 
 # Log the raw data in the debug tab
@@ -224,7 +275,7 @@ with process_model_tab:
         edges=wrapped_values[1],
         queries=queries,
         class_type=class_type,
-        token_animation_segments=token_animation_segments
+        token_animation_segments=token_animation_segments,
     )
 
 with trace_variants_tab:

@@ -12,8 +12,15 @@ class RangeFilter(AbstractFilter):
     upper_bound: int | float
 
     @classmethod
-    def new(cls, attribute: str, is_enabled: bool, rng: tuple[int|float, int|float]):
-        return cls(attribute=attribute, is_enabled=is_enabled, lower_bound=rng[0], upper_bound=rng[1])
+    def new(
+        cls, attribute: str, is_enabled: bool, rng: tuple[int | float, int | float]
+    ):
+        return cls(
+            attribute=attribute,
+            is_enabled=is_enabled,
+            lower_bound=rng[0],
+            upper_bound=rng[1],
+        )
 
     def is_passing(self, entity: neo4j.graph.Entity):
         if not self.is_enabled:
@@ -21,6 +28,8 @@ class RangeFilter(AbstractFilter):
 
         value = entity.get(self.attribute, None)
         if value is None:
-            raise ValueError(f"Expected value for attribute {self.attribute} but found Null [{entity} {self}]")
+            raise ValueError(
+                f"Expected value for attribute {self.attribute} but found Null [{entity} {self}]"
+            )
 
         return self.lower_bound <= value <= self.upper_bound

@@ -14,7 +14,9 @@ class PercentileShader(NormalizedShader):
         value = entity.get(self.leading_attribute, self.lower_bound)
 
         if not (isinstance(value, float) or isinstance(value, int)):
-            raise ValueError(f"Attribute {self.leading_attribute} must be float or int, not {type(value)}")
+            raise ValueError(
+                f"Attribute {self.leading_attribute} must be float or int, not {type(value)}"
+            )
 
         self.values.append(value)
         self.lower_bound = np.percentile(self.values, self.percentile_range[0])

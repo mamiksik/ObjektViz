@@ -7,23 +7,24 @@ from objektviz.backend.utils import to_lbl
 
 
 class DotNode(AbstractDotElement):
-    """ Takes care of producing dot descriptor code for node (see parent class doc) """
+    """Takes care of producing dot descriptor code for node (see parent class doc)"""
+
     entity: neo4j.graph.Node
-    shape = 'rect'
-    style = 'rounded,filled'
+    shape = "rect"
+    style = "rounded,filled"
 
     @property
     def dot_descriptor(self):
         return {
-            'fontname': self.fontname,
-            'id': self.element_id,
-            'margin': '0.05',
-            'name': to_lbl(self.element_id),
-            'label': self.descriptive_label,
-            'shape': self.shape,
-            'style': self.style,
-            'color': self.color,
-            'fillcolor': self.fillcolor,
+            "fontname": self.fontname,
+            "id": self.element_id,
+            "margin": "0.05",
+            "name": to_lbl(self.element_id),
+            "label": self.descriptive_label,
+            "shape": self.shape,
+            "style": self.style,
+            "color": self.color,
+            "fillcolor": self.fillcolor,
         }
 
     @property
@@ -38,23 +39,25 @@ class DotNode(AbstractDotElement):
 
         def get_caption(attr, alignment):
             caption = self.entity.get(attr, -1)
-            icon = self.config.event_class_preferences.icon_map.get(attr, {}).get(caption, "")
+            icon = self.config.event_class_preferences.icon_map.get(attr, {}).get(
+                caption, ""
+            )
             if isinstance(caption, int) or isinstance(caption, float):
                 return f'<td align="{alignment}" ><font point-size="14" color="#31333f">{icon}{caption:,}</font></td>'
             else:
                 return f'<td align="{alignment}" ><font point-size="14" color="#31333f">{icon}{caption}</font></td>'
 
         caption_left = get_caption(
-            self.config.event_class_preferences.caption_left,
-            "left"
+            self.config.event_class_preferences.caption_left, "left"
         )
         caption_right = get_caption(
-            self.config.event_class_preferences.caption_right,
-            "right"
+            self.config.event_class_preferences.caption_right, "right"
         )
 
-        title = self.entity.get(self.config.event_class_preferences.title, '')
-        icon = self.config.event_class_preferences.icon_map.get(self.config.event_class_preferences.title, {}).get(title, "")
+        title = self.entity.get(self.config.event_class_preferences.title, "")
+        icon = self.config.event_class_preferences.icon_map.get(
+            self.config.event_class_preferences.title, {}
+        ).get(title, "")
         title = f"{icon}{title}"
 
         return f"""<
@@ -67,19 +70,18 @@ class DotNode(AbstractDotElement):
             </table>
         >"""
 
-
     @property
     def fillcolor(self):
-        return '#f9fafb'
+        return "#f9fafb"
 
     @property
     def color(self):
-        return '#d1d5db'
+        return "#d1d5db"
 
     @property
     def activity_name(self) -> str:
         # return self.entity.get('Name', '')
-        return self.entity['EventType']
+        return self.entity["EventType"]
 
     @property
     def is_visible(self):
@@ -87,9 +89,8 @@ class DotNode(AbstractDotElement):
 
     @property
     def process_start_count(self) -> int | None:
-        return self.entity.get('StartCount', None)
+        return self.entity.get("StartCount", None)
 
     @property
     def process_end_count(self) -> int | None:
-        return self.entity.get('EndCount', None)
-
+        return self.entity.get("EndCount", None)

@@ -9,8 +9,10 @@ type TokenAnimationSamplerT = callable[[str, str], list[str]]
 # (token traces, start_date, end_date, animation_preferences) -> active element IDs, tokens, replay metadata
 # active element IDs -> what ActivityClasses and DFCs are involved in the token flows
 # TODO define traces format
-type TokenAnimationGeneratorT = callable[[list[dict], str, str, TokenReplayPreferences], tuple[list[str], list[Token], ReplayMetadata]]
-
+type TokenAnimationGeneratorT = callable[
+    [list[dict], str, str, TokenReplayPreferences],
+    tuple[list[str], list[Token], ReplayMetadata],
+]
 
 
 @dataclass
@@ -20,10 +22,13 @@ class TokenReplayManager:
     samplers: Dict[str, TokenAnimationSamplerT]
     token_animation_generator: TokenAnimationGeneratorT
 
+
 @dataclass
 class DefaultLayoutPreferences:
-    allowed_clustering_attributes: list[str] = field(default_factory=lambda: ['EntityType', 'EventType'])
-    default_clustering_attribute: str = 'EntityType'
+    allowed_clustering_attributes: list[str] = field(
+        default_factory=lambda: ["EntityType", "EventType"]
+    )
+    default_clustering_attribute: str = "EntityType"
 
 
 @dataclass
@@ -39,14 +44,18 @@ class DefaultShadingPreferences:
 @dataclass
 class DefaultConnectionPreferences:
     pen_range: tuple[int, int] = (2, 10)  # Edge line thickness range
-    title: str = 'frequency'  # Title shows DFC Type by default
-    shading: str = 'frequency'  # Attributes used for edge shading (must be numeric)
+    title: str = "frequency"  # Title shows DFC Type by default
+    shading: str = "frequency"  # Attributes used for edge shading (must be numeric)
 
 
 @dataclass
 class DefaultEventClassPreferences:
-    title: str = 'EventType'  # Title shows EventType by default
-    shading_attr: str = 'frequency'  # Attributes used for node shading (must be numeric)
-    small_caption_left: str = 'EntityType'  # Left caption shows EntityType by default
-    small_caption_right: str = 'frequency'  # Right caption shows frequency by default
-    icon_map: Dict[str, Dict[str, str]] = field(default_factory=dict)  # ATTR NAME -> ATTR VALUE -> ICON
+    title: str = "EventType"  # Title shows EventType by default
+    shading_attr: str = (
+        "frequency"  # Attributes used for node shading (must be numeric)
+    )
+    small_caption_left: str = "EntityType"  # Left caption shows EntityType by default
+    small_caption_right: str = "frequency"  # Right caption shows frequency by default
+    icon_map: Dict[str, Dict[str, str]] = field(
+        default_factory=dict
+    )  # ATTR NAME -> ATTR VALUE -> ICON

@@ -15,10 +15,10 @@ class OcelImport:
     ocelData = dict()
     dataset_baseName = str()
 
-    csv_objects : str
-    csv_events : str
-    csv_object_attributes : str
-    csv_relations_e2o : str
+    csv_objects: str
+    csv_events: str
+    csv_object_attributes: str
+    csv_relations_e2o: str
 
     K_OBJECT_TYPES = "objectTypes"
     K_EVENT_TYPES = "eventTypes"
@@ -29,10 +29,9 @@ class OcelImport:
     K_RELATIONSHIPS = "relationships"
 
     def readJsonOcel(self, file: str):
-
-        with open(file, 'r', encoding='utf-8') as jsonOcel:
+        with open(file, "r", encoding="utf-8") as jsonOcel:
             self.ocelData = json.loads(jsonOcel.read())
-            self.dataset_baseName = str(file)[:-len(".json")]
+            self.dataset_baseName = str(file)[: -len(".json")]
 
         # # dataset is a file with 'jsconocel.zip' extension
         # self.dataset_baseName = dataset[:-len(".jsonocel.zip")]
@@ -49,25 +48,35 @@ class OcelImport:
         #             if isinstance(d, dict):
         #                 self.ocelData = d
 
-
     def prepare_objects(self):
         o = self.ocelData[OcelImport.K_OBJECTS]
 
         # generate table for all objects: id and type
         data_o = pd.json_normalize(o)
-        data_o = data_o[["id","type"]] 
+        data_o = data_o[["id", "type"]]
 
         # generate table for all object attributes: id, attribute name, value, timestmap
-        o_attr = [d for d in o if OcelImport.K_ATTRIBUTES in d.keys()] # first drop all records without attributes
+        o_attr = [
+            d for d in o if OcelImport.K_ATTRIBUTES in d.keys()
+        ]  # first drop all records without attributes
         data_o_attr = pd.json_normalize(o_attr, OcelImport.K_ATTRIBUTES, ["id"])
         data_o_attr = data_o_attr[["id", "name", "value", "time"]]
 
-        self.csv_objects = self.dataset_baseName+".ocel."+OcelImport.K_OBJECTS+".csv"
-        print("Writing "+self.csv_objects)
+        self.csv_objects = (
+            self.dataset_baseName + ".ocel." + OcelImport.K_OBJECTS + ".csv"
+        )
+        print("Writing " + self.csv_objects)
         data_o.to_csv(self.csv_objects, index=False)
 
-        self.csv_object_attributes = self.dataset_baseName+".ocel."+OcelImport.K_OBJECTS+"."+OcelImport.K_ATTRIBUTES+".csv"
-        print("Writing "+self.csv_object_attributes)
+        self.csv_object_attributes = (
+            self.dataset_baseName
+            + ".ocel."
+            + OcelImport.K_OBJECTS
+            + "."
+            + OcelImport.K_ATTRIBUTES
+            + ".csv"
+        )
+        print("Writing " + self.csv_object_attributes)
         data_o_attr.to_csv(self.csv_object_attributes, index=False)
 
     def prepare_events(self):
@@ -78,7 +87,7 @@ class OcelImport:
         e_normalized = list()
         for ev in e:
             # the OCEL event stores attributes as a list of [ { "name":<attributeName>, "value":<actualValue>} ]
-            # transalte into normalized event that stores attribute directly as key/value pair  
+            # transalte into normalized event that stores attribute directly as key/value pair
             ev_normalized = dict()
             ev_normalized["id"] = ev["id"]
             ev_normalized["type"] = ev["type"]
@@ -102,18 +111,29 @@ class OcelImport:
 
         # generate table for all events: id, type, time, and its attributes
         data_e = pd.json_normalize(e_normalized)
-        #print(data_e)
+        # print(data_e)
 
         # generate table for all relationships
         data_r = pd.json_normalize(relationships)
-        #print(data_r)
+        # print(data_r)
 
-        self.csv_events = self.dataset_baseName+".ocel."+OcelImport.K_EVENTS+".csv"
-        print("Writing "+self.csv_events)
+        self.csv_events = (
+            self.dataset_baseName + ".ocel." + OcelImport.K_EVENTS + ".csv"
+        )
+        print("Writing " + self.csv_events)
         data_e.to_csv(self.csv_events, index=False)
 
-        self.csv_relations_e2o = self.dataset_baseName+".ocel."+OcelImport.K_RELATIONSHIPS+"."+OcelImport.K_EVENTS+"-"+OcelImport.K_OBJECTS+".csv"
-        print("Writing "+self.csv_relations_e2o)
+        self.csv_relations_e2o = (
+            self.dataset_baseName
+            + ".ocel."
+            + OcelImport.K_RELATIONSHIPS
+            + "."
+            + OcelImport.K_EVENTS
+            + "-"
+            + OcelImport.K_OBJECTS
+            + ".csv"
+        )
+        print("Writing " + self.csv_relations_e2o)
         data_r.to_csv(self.csv_relations_e2o, index=False)
 
     # execute a query
@@ -136,8 +156,8 @@ class OcelImport:
 
     # import records from 'csv' file as nodes with label 'node_label'
     def _import_nodes(self, csv, node_label):
-        print("Import "+node_label+" from "+csv)
-        
+        print("Import " + node_label + " from " + csv)
+
         # need full path to csv file for correct import query for neo4j
         full_path = os.path.realpath(csv)
         # need csv header to generate load query
@@ -163,16 +183,17 @@ class OcelImport:
 
     # import ocel2 object attributes from prepared attribute table csv
     def import_object_attributes(self):
-        # import attribute nodes        
+        # import attribute nodes
         self._import_nodes(self.csv_object_attributes, "EntityAttribute")
         # link attribute nodes to object nodes
-        link_query = ql.q_link_node_to_node("Entity", "id", "HAS_ATTRIBUTE", "EntityAttribute", "id")
+        link_query = ql.q_link_node_to_node(
+            "Entity", "id", "HAS_ATTRIBUTE", "EntityAttribute", "id"
+        )
         self._run_query(link_query)
 
     # import ocel2 event-object relation from relation tabel csv
     def import_e2o_relation(self):
-
-        print("Import relation from "+self.csv_relations_e2o)
+        print("Import relation from " + self.csv_relations_e2o)
 
         # need full path to csv file for correct import query for neo4j
         full_path = os.path.realpath(self.csv_relations_e2o)
@@ -186,7 +207,17 @@ class OcelImport:
 
         df = pd.read_csv(self.csv_relations_e2o)
 
-        load_query = ql.q_load_csv_as_relation(full_path, "eventId", "Event", "id", "qualifier", "CORR", "objectId", "Entity", "id")
+        load_query = ql.q_load_csv_as_relation(
+            full_path,
+            "eventId",
+            "Event",
+            "id",
+            "qualifier",
+            "CORR",
+            "objectId",
+            "Entity",
+            "id",
+        )
         self._run_query(load_query, {"dataframe": df})
         # for query in load_query:
         #     self._run_query(query)

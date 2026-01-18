@@ -2,35 +2,39 @@ from typing import Literal
 
 import neo4j
 
-from objektviz.backend.dot_elements.AbstractDotElement import AbstractDotElement, CROSS_CLUSTER_SENTINEL
+from objektviz.backend.dot_elements.AbstractDotElement import (
+    AbstractDotElement,
+    CROSS_CLUSTER_SENTINEL,
+)
 from objektviz.backend.utils import to_lbl
 
 
 class DotEdge(AbstractDotElement):
-    """ Takes care of producing dot descriptor code for edge (see parent class doc) """
+    """Takes care of producing dot descriptor code for edge (see parent class doc)"""
+
     entity: neo4j.graph.Relationship
-    style = 'solid'
+    style = "solid"
 
     @property
     def dot_descriptor(self):
-        label_attr = 'label'
+        label_attr = "label"
         if self.config.connection_preferences.use_x_labels:
-            label_attr = 'xlabel'
+            label_attr = "xlabel"
 
         return {
-            'id': self.element_id,
-            'tail_id': self.start_element_id,
-            'head_id': self.end_element_id,
-            'head_name': to_lbl(self.end_element_id),
-            'tail_name': to_lbl(self.start_element_id),
+            "id": self.element_id,
+            "tail_id": self.start_element_id,
+            "head_id": self.end_element_id,
+            "head_name": to_lbl(self.end_element_id),
+            "tail_name": to_lbl(self.start_element_id),
             label_attr: self.descriptive_label,
-            'forcelabels':str(True),
-            'fontname': self.fontname,
-            'penwidth': str(self.penwidth),
-            'arrowsize': '2',
-            'color': self.color,
-            'style': self.style,
-            'dir': self.dir,
+            "forcelabels": str(True),
+            "fontname": self.fontname,
+            "penwidth": str(self.penwidth),
+            "arrowsize": "2",
+            "color": self.color,
+            "style": self.style,
+            "dir": self.dir,
             # 'constraint': str(not self.is_sync_edge),
             # 'fontsize':'18',
             # 'labeldistance':'4.5',
@@ -75,9 +79,9 @@ class DotEdge(AbstractDotElement):
     @property
     def dir(self):
         if self.is_sync_edge:
-            return 'none'
+            return "none"
 
-        return 'forward'
+        return "forward"
 
     @property
     def penwidth(self):
@@ -89,7 +93,7 @@ class DotEdge(AbstractDotElement):
     @property
     def color(self):
         if self.is_sync_edge:
-            return '#4A4A4A50'
+            return "#4A4A4A50"
 
         return self.shaders[self.shader_key].shading_color(self.entity)
 

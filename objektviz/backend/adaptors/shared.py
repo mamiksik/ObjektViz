@@ -25,7 +25,9 @@ class AbstractEKGRepository(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_process_executions(self, class_type: str, entity_ids: list[str]) -> tuple[list[dict], datetime, datetime]:
+    def get_process_executions(
+        self, class_type: str, entity_ids: list[str]
+    ) -> tuple[list[dict], datetime, datetime]:
         pass
 
     @abstractmethod
@@ -34,11 +36,11 @@ class AbstractEKGRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def count_classes(self, class_type: str) -> int:
-      pass
+        pass
 
     @abstractmethod
     def count_dfc(self, class_type: str) -> int:
-      pass
+        pass
 
     @abstractmethod
     def count_sync(self, class_type: str) -> int:
@@ -46,16 +48,15 @@ class AbstractEKGRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def proclet_types(self):
-       pass
+        pass
 
     @abstractmethod
     def count_start_activities(self, class_type: str) -> int:
-     pass
+        pass
 
     @abstractmethod
     def count_end_activities(self, class_type: str) -> int:
         pass
-
 
     @abstractmethod
     def get_entities_for_dfc_count(self, dfc_id: str) -> int:
@@ -70,5 +71,7 @@ class AbstractEKGRepository(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_entities_for_event_class(self, class_id: str, limit: int, skip: int) -> list[dict]:
+    def get_entities_for_event_class(
+        self, class_id: str, limit: int, skip: int
+    ) -> list[dict]:
         pass

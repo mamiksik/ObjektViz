@@ -27,6 +27,7 @@ class AbstractFilter(ABC):
 
 
     """
+
     is_enabled: bool = True
 
     @abstractmethod
