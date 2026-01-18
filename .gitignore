@@ -28,3 +28,7 @@ wheels/
 /.idea/ObjektViz.iml
 /.idea/prettier.xml
 /.idea/vcs.xml
+
+#MAC OS generated files
+.DS_Store
+**/.DS_Store
