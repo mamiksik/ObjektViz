@@ -39,3 +39,28 @@ We have exported processed some OCEL dataset into EKG and generated aggregated v
 <p align="center">
     <img src="assets/generic_ocel_visualizer.png" alt="OCEL" width="750px" align='center'/>
 </p>
+
+
+
+## Import your own OCEL dataset
+To import your own OCEL dataset, you need to convert it into EKG format first and then generate aggregated views (i.e., process models) from it.
+We provide scripts to help you with this process in the `examples` folder.
+
+1. Convert OCEL to EKG and infer aggregated views:
+   ```bash
+   uv run python examples/ocel/kuzudb/process_ocel_to_kuzudb.py path/to/your/ocel.json path/to/save/ekg.kuzu
+   ```
+2. Copy the example dashboard script and modify it to point to your newly created EKG database. The line to change is where the database is initialized:
+    ```python
+    db = kuzu.Database("path/to/save/ekg.kuzu")
+    ```
+3. Run your modified dashboard:
+    ```bash
+    uv run python -m streamlit run path/to/your/custom_dashboard.py
+    ```
+
+# ObejktViz Proclet Metamodel
+<p align="center">
+    <img src="assets/metamodel-objektviz.png" alt="Proclet Metamodel" width="550px" align='center'/>
+</p>
+
