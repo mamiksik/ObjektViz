@@ -1,8 +1,8 @@
 # 📦 ObjektViz
 
-<div style="display:flex; justify-content:center;">
-    <img src="assets/objektviz.png" alt="ObjektViz Screenshot" style="width:100%; max-width:500px; height:auto;" />
-</div>
+<p align="center">
+    <img src="assets/objektviz.png" alt="ObjektViz Screenshot" width="550px" align='center'/>
+</p>
 
 > ObjektViz is visualizer for object-centric process models that enables users to explore and analyze even _very complex_ processes involving multiple interacting objects.
 
@@ -22,20 +22,20 @@ We have exported processed some OCEL dataset into EKG and generated aggregated v
 
 1. Clone the repository:
    ```bash
-   git clone
+   git clone git@github.com:mamiksik/ObjektViz.git
 2. Navigate to the project directory:
    ```bash
-   cd objektviz
+   cd ObjektViz
 3. Install the required dependencies:
    ```bash
-   uv install
+   uv sync
 
 5. Run the example dashboard:
     ```bash
-   python -m streamlit run examples/generic_ocel_viewer.py
+   uv run python -m streamlit run examples/generic_ocel_viewer.py
    ```
 > IMPORTANT: Do **not** use streamlit run from the command line directly, as this will lead to issues with imports.
 
-<div style="display:flex; justify-content:center;">
-    <img src="assets/generic_ocel_visualizer.png" alt="OCEL" style="width:100%; max-width:500px; height:auto;" />
-</div>
+<p align="center">
+    <img src="assets/generic_ocel_visualizer.png" alt="OCEL" width="750px" align='center'/>
+</p>
