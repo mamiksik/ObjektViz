@@ -1,7 +1,6 @@
 import functools
 from typing import Callable
 
-import neo4j
 import streamlit as st
 
 from objektviz.backend.BackendConfig import LayoutPreferences, BackendConfig, ConnectionPreferences, EventClassPreferences
@@ -52,14 +51,16 @@ def general_preferences(proclet_types: list[str]) -> tuple[str, bool, bool, bool
 
 def builtin_shader_selector() -> Callable[['BackendConfig', str, str], ov_shaders.AbstractShader]:
     shader_type = st.selectbox("Shader type", options=['Percentile', 'Normalized', 'RobustScaler'])
+
+    # We know assigning lambdas to variables is not best practice, but here its just more handy
     if shader_type == 'Normalized':
-        shader_factory = lambda config, leading_attribute, cmap: ov_shaders.NormalizedShader(config=config, leading_attribute=leading_attribute, cmap=cmap)
+        shader_factory = lambda config, leading_attribute, cmap: ov_shaders.NormalizedShader(config=config, leading_attribute=leading_attribute, cmap=cmap) # noqa: E731
     elif shader_type == 'Percentile':
         shader_range = st.slider("Percentile range", min_value=0.0, max_value=100.0, value=(5.0, 95.0), step=2.5)
-        shader_factory = lambda shader_range, config, leading_attribute, cmap: ov_shaders.PercentileShader(config=config, leading_attribute=leading_attribute, cmap=cmap, percentile_range=shader_range)
+        shader_factory = lambda shader_range, config, leading_attribute, cmap: ov_shaders.PercentileShader(config=config, leading_attribute=leading_attribute, cmap=cmap, percentile_range=shader_range) # noqa: E731
         shader_factory = functools.partial(shader_factory, shader_range)
     elif shader_type == 'RobustScaler':
-        shader_factory = lambda config, leading_attribute, cmap: ov_shaders.RobustShader(config=config, leading_attribute=leading_attribute, cmap=cmap)
+        shader_factory = lambda config, leading_attribute, cmap: ov_shaders.RobustShader(config=config, leading_attribute=leading_attribute, cmap=cmap) # noqa: E731
     else:
         raise ValueError(f"Shader type {shader_type} not recognized")
 

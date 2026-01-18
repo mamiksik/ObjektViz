@@ -33,7 +33,7 @@ class DotNode(AbstractDotElement):
     @property
     def descriptive_label(self) -> str:
         color = self.shaders[self.shader_key].shading_color(self.entity)
-        full_color = color
+        # full_color = color
         # full_color = self.shaders[self.entity_type].get_color(0.5)
 
         def get_caption(attr, alignment):

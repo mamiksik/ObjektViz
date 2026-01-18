@@ -88,7 +88,7 @@ def generate_dot_source(
     node_edge_map = {}
     node_node_map = {}
     for edge in edges:
-        if edge.is_sync_edge and not (edge.end_element_id, edge.start_element_id) in sync_edges_ids:
+        if edge.is_sync_edge and (edge.end_element_id, edge.start_element_id) not in sync_edges_ids:
             continue
 
         if (

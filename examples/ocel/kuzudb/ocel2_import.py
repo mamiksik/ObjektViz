@@ -1,9 +1,9 @@
-from zipfile import ZipFile
 import json
 
 import kuzu
 import pandas as pd
-import csv,os
+import csv
+import os
 
 from .ocel2_import_queries import OcelImportQueryLibrary as ql
 

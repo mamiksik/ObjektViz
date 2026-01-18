@@ -10,7 +10,7 @@ import objektviz.backend.adaptors.neo4j as ov_neo4j
 from objektviz.backend.BackendConfig import BackendConfig
 from objektviz.backend.dot_graph_builder import generate_dot_source
 
-from objektviz.frontend import interactive_proclet_graph, GraphFrontendPayload, wire_graph_event, Token, ReplaySegment, \
+from objektviz.frontend import GraphFrontendPayload, Token, ReplaySegment, \
     ReplayMetadata, TokenReplayPreferences
 
 

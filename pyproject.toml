@@ -27,3 +27,8 @@ include-package-data = true
 
 [tool.setuptools.package-data]
 objektviz_frontend = ["frontend/build/**/*", "pyproject.toml"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.13",
+]
