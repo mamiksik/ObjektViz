@@ -26,7 +26,7 @@ We have exported processed some OCEL dataset into EKG and generated aggregated v
 2. Navigate to the project directory:
    ```bash
    cd ObjektViz
-3. Install the required dependencies:
+3. Install the required dependencies (we use [uv](https://docs.astral.sh/uv/) to manager python enviroment and dependencies):
    ```bash
    uv sync
 
