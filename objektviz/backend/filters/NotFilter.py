@@ -14,6 +14,4 @@ class NotFilter(AbstractFilter):
         return cls(filter=filter)
 
     def is_passing(self, entity: neo4j.graph.Entity):
-        if not self.filter.is_enabled:
-            return True
         return not self.filter.is_passing(entity)

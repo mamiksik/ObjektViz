@@ -5,8 +5,10 @@ import neo4j.graph
 from objektviz.backend.filters.AbstractFilter import AbstractFilter
 
 
-@dataclasses.dataclass
-class RangeFilter(AbstractFilter):
+@dataclasses.dataclass(kw_only=True)
+class RangeFilter:
+
+    is_enabled: bool
     attribute: str
     lower_bound: int | float
     upper_bound: int | float
@@ -16,8 +18,8 @@ class RangeFilter(AbstractFilter):
         cls, attribute: str, is_enabled: bool, rng: tuple[int | float, int | float]
     ):
         return cls(
-            attribute=attribute,
             is_enabled=is_enabled,
+            attribute=attribute,
             lower_bound=rng[0],
             upper_bound=rng[1],
         )

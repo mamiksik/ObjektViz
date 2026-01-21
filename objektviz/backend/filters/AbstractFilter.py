@@ -28,7 +28,6 @@ class AbstractFilter(ABC):
 
     """
 
-    is_enabled: bool = True
 
     @abstractmethod
     def is_passing(self, entity):

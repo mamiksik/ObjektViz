@@ -15,9 +15,6 @@ class AndFilter(AbstractFilter):
 
     def is_passing(self, entity: neo4j.graph.Entity):
         for fltr in self.filters:
-            if not fltr.is_enabled:
-                continue
-
             if not fltr.is_passing(entity):
                 return False
 

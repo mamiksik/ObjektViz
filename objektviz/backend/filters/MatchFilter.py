@@ -7,6 +7,7 @@ from objektviz.backend.filters.AbstractFilter import AbstractFilter
 
 @dataclasses.dataclass
 class MatchFilter(AbstractFilter):
+    is_enabled: bool
     attribute: str
     skip_on_empty: bool
     values: list[str]
