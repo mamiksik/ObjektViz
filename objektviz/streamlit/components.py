@@ -1,7 +1,9 @@
 import functools
 from typing import Callable
 
+import numpy as np
 import streamlit as st
+from matplotlib import pyplot as plt
 
 from objektviz.backend.BackendConfig import (
     LayoutPreferences,
@@ -18,9 +20,9 @@ from objektviz.streamlit.utils import (
     DefaultConnectionPreferences,
     DefaultEventClassPreferences,
     DefaultLayoutPreferences,
-    TokenReplayManager,
+    TokenReplayManager, assert_attribute_exists,
 )
-from objektviz.backend.dot_elements import DotNode, DotEdge
+
 from objektviz.frontend import (
     TokenReplayPreferences,
     Token,
@@ -349,35 +351,37 @@ def token_replay_input(
 
 def attribute_range_filter_input(
     label: str,
-    entity_type: str,
-    attr: str,
-    rng: tuple[int, int],
-    default_is_enabled=False,
+    for_entity_type: str,
+    on_attribute: str,
+    min_value: int | float,
+    max_value: int | float,
+    is_enabled_by_default: bool = False,
+    value: tuple[int | float, int | float] | None = None,
+    key:str=None,
 ):
-    range_filter = ov_filters.DummyFilter.new(is_passing=False)
-    if rng[0] is not None and rng[1] is not None and rng[0] != rng[1] and rng[1] != 1:
-        is_enabled = st.checkbox(label, value=default_is_enabled)
 
-        default = int((rng[1] - rng[0]) / 2)
+    is_enabled = st.checkbox(label, value=is_enabled_by_default, key=None if key is None else f"{key}_enabled")
+    if  min_value == max_value:
+        range_filter = ov_filters.DummyFilter.new(is_passing=True)
+    else:
         range_filter = ov_filters.RangeFilter.new(
-            attribute=attr,
+            attribute=on_attribute,
             is_enabled=is_enabled,
             rng=st.slider(
                 label=label,
                 disabled=not is_enabled,
-                min_value=1,
-                max_value=max(0, rng[0]),
-                value=(default, rng[1]),
+                min_value=max(0, min_value),
+                max_value=max_value,
+                value=value,
                 label_visibility="collapsed",
+                key=key,
             ),
         )
 
-    return ov_filters.OrFilter.new(
+    return ov_filters.AndFilter.new(
         [
-            ov_filters.NotFilter.new(
-                ov_filters.MatchFilter.new(attribute="EntityType", values=[entity_type])
-            ),
-            range_filter,
+            ov_filters.MatchFilter.new(attribute="EntityType", values=[for_entity_type]),
+            range_filter #if is_enabled else ov_filters.DummyFilter.new(is_passing=True)
         ]
     )
 
@@ -393,17 +397,16 @@ def animation_segments(token_animation_segments: list[Token]):
 
 
 def event_class_detail(
-    nodes: list[DotNode], class_attributes: list[str], selected_element_id: str
+    queries: AbstractEKGRepository, class_type, selected_element_id: str
 ):
-    node = next(
-        (node for node in nodes if node.element_id == selected_element_id), None
-    )
-    if node is None:
+    event_class = queries.get_event_class(selected_element_id)
+    if event_class is None:
         return
 
-    st.write("### Class detail")
-    data = {key: node.entity[key] for key in class_attributes}
-    data["ElementId"] = node.element_id
+    st.write("### Class Detail")
+    event_class_attributes = queries.class_attributes(class_type)
+    data = {key: event_class[key] for key in event_class_attributes}
+    data["ElementId"] = selected_element_id
     st.table(data)
 
 
@@ -440,17 +443,18 @@ def event_class_related_entities(
 
 
 def dfc_detail(
-    edges: list[DotEdge], dfc_attributes: list[str], selected_element_id: str
+    queries: AbstractEKGRepository,
+    class_type: str,
+    selected_element_id: str
 ):
-    edge = next(
-        (edge for edge in edges if edge.element_id == selected_element_id), None
-    )
+    edge = queries.get_dfc(selected_element_id)
     if edge is None:
         return
 
     st.write("### DFC Detail")
-    data = {key: edge.entity[key] for key in dfc_attributes}
-    data["ElementId"] = edge.element_id
+    dfc_attributes = queries.dfc_attributes(class_type)
+    data = {key: edge['dfc_relation'][key] for key in dfc_attributes}
+    data["ElementId"] = selected_element_id
     st.table(data)
 
 
@@ -496,18 +500,12 @@ def full_proclet_view(
 
         if st.session_state.selected_node:
             event_class_detail(
-                nodes,
-                queries.class_attributes(class_type),
-                st.session_state.selected_node,
+                queries, class_type, st.session_state.selected_node,
             )
             event_class_related_entities(queries, st.session_state.selected_node)
 
         if st.session_state.selected_edge:
-            dfc_detail(
-                edges,
-                queries.dfc_attributes(class_type),
-                st.session_state.selected_edge,
-            )
+            dfc_detail(queries, class_type, st.session_state.selected_edge)
             dfc_related_entities(queries, st.session_state.selected_edge)
 
     with tab2:
@@ -577,6 +575,133 @@ def debug_objektviz_backend(
     st.json(db_edges, expanded=False)
     with st.expander("Dot source"):
         st.text_area(final_dot_source, disabled=True)
+
+
+@st.cache_data
+def _cached_histogram(values: list[float], bins: int, color: str, title: str, use_log: bool):
+    fig, ax = plt.subplots(figsize=(6, 3))
+    ax.hist(values, bins=bins, color=color, edgecolor="black", alpha=0.8)
+    if use_log:
+        ax.set_yscale("log")
+    ax.set_title(title)
+    ax.set_xlabel("Frequency")
+    ax.set_ylabel("Count")
+    return fig
+
+
+def entity_distribution_plot(
+    nodes: list[dict],
+    edges: list[dict],
+    entity_types: list[str],
+):
+    # Validate edges have required attributes for this component to work
+    assert_attribute_exists(nodes, 'EntityType')
+    assert_attribute_exists(nodes, 'frequency')
+
+    assert_attribute_exists(edges, 'EntityType')
+    assert_attribute_exists(edges, 'frequency')
+
+    def _display_stats(stats: dict):
+        st.write(f"Count: {stats['count']}")
+        st.write(f"Mean: {stats['mean']:.2f}")
+        st.write(f"Median: {stats['median']:.2f}")
+        st.write(f"Min: {stats['min']:.0f}  Max: {stats['max']:.0f}")
+
+    def _stats(values: list[float]):
+        n = len(values)
+        if n == 0:
+            return {"count": 0, "mean": 0, "median": 0, "min": 0, "max": 0}
+        s = sum(values)
+        sv = sorted(values)
+        mean = s / n
+        median = sv[n // 2] if n % 2 == 1 else (sv[n // 2 - 1] + sv[n // 2]) / 2
+        return {"count": n, "mean": mean, "median": median, "min": sv[0], "max": sv[-1]}
+
+    bins = st.slider("Histogram bins", min_value=5, max_value=200, value=50, step=1, key="dist_bins")
+    log_scale = st.checkbox("Use log scale for y axis", value=False, key="dist_log")
+
+    # Nodes / EventType distributions
+    for entity_type in entity_types:
+        event_class_col, dfc_col = st.columns(2)
+        with event_class_col:
+            type_nodes = [node for node in nodes if node['EntityType'] == entity_type]
+            values = [float(x['frequency']) for x in type_nodes]
+            stats = _stats(values)
+
+            col_hist, col_stats = st.columns([3, 1])
+            with col_hist:
+                fig = _cached_histogram(values, bins, "tab:blue", f"EventType for {entity_type}", log_scale)
+                st.pyplot(fig, clear_figure=True)
+                plt.close(fig)
+            with col_stats:
+                _display_stats(stats)
+
+        with dfc_col:
+            type_edges = [edge for edge in edges if edge['EntityType'] == entity_type]
+            values = [float(x['frequency']) for x in type_edges]
+            stats = _stats(values)
+
+            col_hist, col_stats = st.columns([3, 1])
+            with col_hist:
+                fig = _cached_histogram(values, bins, "tab:green", f"DFC for {entity_type}", log_scale)
+                st.pyplot(fig, clear_figure=True)
+                plt.close(fig)
+            with col_stats:
+                _display_stats(stats)
+
+
+@st.cache_data
+def plot_frequency_distribution(values: list[int | float]):
+    fig, ax = plt.subplots(figsize=(6, 3), constrained_layout=True)
+    ax.hist(values, bins=100, color='tab:blue', edgecolor='black', alpha=0.8)
+    return fig
+
+
+
+def frequency_filter_per_entity_type(
+    entity_types: list[str],
+    elements: list[dict],
+    key_prefix: str = None,
+) -> ov_filters.AbstractFilter:
+
+    # Validate edges have required attributes for this component to work
+    assert_attribute_exists(elements, 'EntityType')
+    assert_attribute_exists(elements, 'frequency')
+
+    entity_types = sorted(entity_types)
+    filters = []
+
+    for entity_type in entity_types:
+        elements_of_type = [element for element in elements if element['EntityType'] == entity_type]
+        if not elements_of_type:
+            continue
+
+        max_freq = max(elements['frequency'] for elements in elements_of_type)
+        min_freq = min(elements['frequency'] for elements in elements_of_type)
+        values = [elements['frequency'] for elements in elements_of_type]
+
+        # fig, ax = plt.subplots(figsize=(6, 3), constrained_layout=True)
+        # ax.hist(values, bins=100, color='tab:blue', edgecolor='black', alpha=0.8)
+        fig = plot_frequency_distribution(values)
+        st.pyplot(fig)
+        plt.close(fig)
+
+        filter_label = f"Filter DFC for {entity_type} by frequency"
+        range_filter = attribute_range_filter_input(
+            label=filter_label,
+            for_entity_type=entity_type,
+            on_attribute="frequency",
+            min_value=min_freq,
+            max_value=max_freq,
+            value=(int(np.median(values)), max_freq),
+            is_enabled_by_default=True,
+            key=None if key_prefix is None else f"{key_prefix}_{entity_type}_frequency_filter",
+        )
+
+        filters.append(range_filter)
+
+    return ov_filters.OrFilter.new(filters)
+
 
 
 def trace_variants(*, class_type):

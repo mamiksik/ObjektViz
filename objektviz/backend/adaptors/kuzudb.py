@@ -59,10 +59,10 @@ def from_kuzu_to_dot_elements(
     """Wrapper around to_dot that consumes Neo4J query output rather than instances of DotAbstractElement"""
 
     if len(nodes) == 0:
-        warnings.warn("0 nodes were passed to neo4j_proclet_to_dot")
+        warnings.warn("0 nodes were passed to from_kuzu_to_dot_elements")
 
     if len(edges) == 0:
-        warnings.warn("0 edges were passed to neo4j_proclet_to_dot")
+        warnings.warn("0 edges were passed to from_kuzu_to_dot_elements")
 
     node_shaders, edge_shaders = shader_factory(config)
     _nodes = list(map(lambda node: KuzuDotNode(node, node_shaders, config), nodes))
@@ -128,6 +128,17 @@ class KuzuEKGRepository(AbstractEKGRepository):
                     {},
                 ).get_all()
             ]
+        return [
+            x[0]
+            for x in self.run_query(
+                """
+            MATCH (c: Class {type: $ClassType})
+            WITH DISTINCT c.EntityType as entityType
+            RETURN entityType
+        """,
+                {"ClassType": class_type,},
+            ).get_all()
+        ]
 
     def proclet(self, class_type: str) -> tuple[list[KuzuNode], list[KuzuRelationship], list[KuzuRelationship]]:
         result = self.run_query(
@@ -160,10 +171,8 @@ class KuzuEKGRepository(AbstractEKGRepository):
         _append_unique(x[1])
         _append_unique(x[2])
 
-        edges = x[3]
-        edges.extend(x[4])
-
-        return nodes, edges
+        # Nodes, DFC Edges, SYNC Edges
+        return nodes, x[3], x[4]
 
     # def get_process_executions(self, class_type, entity_ids: list[str], color_map: str | dict[str, str], animation_preferences: AnimationPreferences):
     def get_process_executions(
@@ -449,3 +458,46 @@ class KuzuEKGRepository(AbstractEKGRepository):
         )
 
         return [n[0] for n in result.get_all()]
+
+
+    def get_dfc(self, dfc_id: str) -> dict | None:
+        result = self.run_query(
+            """
+            MATCH (c1: Class)-[df_c:DF_C]->(c2: Class)
+            WHERE OFFSET(ID(df_c)) = $DFCId
+            RETURN c1, df_c, c2
+        """,
+            {
+                "DFCId": kuzu_internal_id_to_element_id(dfc_id),
+            },
+        )
+
+        records = result.get_all()
+        if len(records) == 0:
+            return None
+
+        record = records[0]
+        return {
+            "source_class": record[0],
+            "target_class": record[2],
+            "dfc_relation": record[1],
+        }
+
+
+    def get_event_class(self, event_class_id: str) -> dict | None:
+        result = self.run_query(
+            """
+            MATCH (c: Class)
+            WHERE OFFSET(ID(c)) = $ClassId
+            RETURN c
+        """,
+            {
+                "ClassId": kuzu_internal_id_to_element_id(event_class_id),
+            },
+        )
+
+        records = result.get_all()
+        if len(records) == 0:
+            return None
+
+        return records[0][0]

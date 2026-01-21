@@ -83,7 +83,7 @@ DEFAULT_LAYOUT_PREFERENCES = DefaultLayoutPreferences()
 DEFAULT_CONNECTION_PREFERENCES = DefaultConnectionPreferences()
 DEFAULT_EVENT_CLASS_PREFERENCES = DefaultEventClassPreferences()
 
-avaible_colors = [
+available_colors = [
     "Blues",
     "Oranges",
     "Reds",
@@ -96,7 +96,7 @@ avaible_colors = [
 ]
 
 color_map = {
-    et: avaible_colors[i % len(avaible_colors)] for i, et in enumerate(ENTITY_TYPES)
+    et: available_colors[i % len(available_colors)] for i, et in enumerate(ENTITY_TYPES)
 }
 
 SHADING_PREFERENCES = DefaultShadingPreferences(
@@ -129,7 +129,8 @@ with objektviz_sidebar:
 
 # ----------------------------------------------------------------------------
 # Query the data from the database (We fetch the data here, so we can use the values to populate the sidebar filters)
-event_classes_db, dfc_db = queries.proclet(class_type)
+event_classes_db, dfc_db, sync_db = queries.proclet(class_type)
+
 # ----------------------------------------------------------------------------
 
 # This tab is defined in between to have access to the class_type variable
@@ -173,75 +174,35 @@ with objektviz_sidebar:
     # Below is just an example of how to add filters to the sidebar for frequency
     # Refer to the documentation for more information about available filters and how to compose them
     with st.expander("DFC Filters", expanded=False):
-
-        # Histogram of frequency values to help select filter range
-        values = [x['frequency'] for x in dfc_db if 'frequency' in x]
-        fig, ax = plt.subplots()
-        ax.hist(values, bins=100, color='blue')
-        st.pyplot(fig)
-
-        median_freq = int(np.median(values))
-        root_edge_filter = ov_filters.RangeFilter.new(
-            attribute="frequency",
-            is_enabled=True,
-            rng=st.slider(
-                label="Frequency filter",
-                min_value=min(values),
-                max_value=max(values),
-                value=(median_freq, max(values)),
-                label_visibility="collapsed",
-            ),
+        # st.write(dfc_db)
+        root_edge_filter = ov_components.frequency_filter_per_entity_type(
+            queries.get_entity_types(class_type),
+            dfc_db,
+            key_prefix="dfc",
         )
 
     with st.expander("Event Class Filters", expanded=True):
 
-        node_filter_entity_type = ov_filters.MatchFilter.new(
+        node_filter_entity_type = ov_filters.NotFilter.new(ov_filters.MatchFilter.new(
             attribute="EntityType",
             is_enabled=True,
-            skip_on_empty=True,
+            skip_on_empty=False, # If no entity types are selected, filter should return false for all items
             values=st.pills(
-                "Entity types to show",
+                "Hide selected entity types",
                 options=ENTITY_TYPES,
-                default=ENTITY_TYPES,
+                default=[],
                 selection_mode="multi",
             ),
+        ))
+
+        event_class_frequency_filter = ov_components.frequency_filter_per_entity_type(
+            queries.get_entity_types(class_type),
+            event_classes_db,
+            key_prefix="event_class",
         )
 
-        operator = st.pills(
-            "Operator", options=["OR", "AND"], default="AND", selection_mode="single"
-        )
-
-        # Histogram of frequency values to help select filter range
-        values = [x['frequency'] for x in event_classes_db if 'frequency' in x]
-        fig, ax = plt.subplots()
-        ax.hist(values, bins=100, color='blue')
-        st.pyplot(fig)
-
-        median_freq = int(np.median(values))
-        node_filter_frequency = ov_filters.RangeFilter.new(
-            attribute="frequency",
-            is_enabled=True,
-            rng=st.slider(
-                label="Event Class Frequency",
-                min_value=min(values),
-                max_value=max(values),
-                value=(median_freq, max(values)),
-                # label_visibility="",
-                key="node_frequency_filter",
-            ),
-        )
-        # node_filter_frequency = ov_filters.MatchFilter.new(
-        #     attribute="EntityType",
-        #     is_enabled=True,
-        #     skip_on_empty=True,
-        #     values=st.pills("Entity types to show", options=ENTITY_TYPES, default=ENTITY_TYPES,selection_mode='multi')
-        # )
-
-        compound_filter = (
-            ov_filters.OrFilter if operator == "OR" else ov_filters.AndFilter
-        )
-        root_node_filter = compound_filter.new(
-            [node_filter_entity_type, node_filter_frequency]
+        root_node_filter = ov_filters.AndFilter.new(
+            [node_filter_entity_type, event_class_frequency_filter]
         )
 
 
@@ -260,7 +221,7 @@ objektviz_config = BackendConfig(
 )
 
 # Generate the dot source from the proclet data
-wrapped_values = ov_kuzu.from_kuzu_to_dot_elements(event_classes_db, dfc_db, objektviz_config)
+wrapped_values = ov_kuzu.from_kuzu_to_dot_elements(event_classes_db, dfc_db + sync_db, objektviz_config)
 dot_src, edge_node_map, node_edge_map, node_node_map = generate_dot_source(
     *wrapped_values
 )
@@ -298,6 +259,10 @@ with process_model_tab:
         class_type=class_type,
         token_animation_segments=token_animation_segments,
     )
+
+with ekg_stats_tab:
+    ov_components.entity_distribution_plot(event_classes_db, dfc_db, entity_types=queries.get_entity_types(class_type))
+
 
 with trace_variants_tab:
     ov_components.trace_variants(class_type=class_type)
