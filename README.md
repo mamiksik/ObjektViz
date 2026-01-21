@@ -56,6 +56,11 @@ We have exported and processed some OCEL datasets into EKG and generated aggrega
     <img src="assets/shader-types.png" alt="Custom Shaders" width="300px" align='center'/>
 </p>
 
+**Token Replay** - understand the dynamics of your process by replaying tokens through the process model. This feature allows you to visualize how different objects interact over time within the process.
+<p align="center">
+    <img src="assets/token-replay.gif" alt="Custom Shaders" width="300px" align='center'/>
+</p>
+
 ## Import your own OCEL dataset
 To import your own OCEL dataset, you need to convert it into EKG format first and then generate aggregated views (i.e., process models) from it.
 We provide scripts to help you with this process in the `examples` folder.
