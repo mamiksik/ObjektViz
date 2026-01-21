@@ -41,7 +41,7 @@ We have exported processed some OCEL dataset into EKG and generated aggregated v
 > INFO: Token Reaplay for now requires APOC library and is thus not avaible with KuzuDB
 
 <p align="center">
-    <img src="assets/generic_ocel_visualizer.png" alt="OCEL" width="750px" align='center'/>
+    <img src="assets/generic_ocel_visualizer.png" alt="Visualizer" width="750px" align='center'/>
 </p>
 
 
@@ -62,8 +62,19 @@ We provide scripts to help you with this process in the `examples` folder.
     ```bash
     uv run python -m streamlit run path/to/your/custom_dashboard.py
     ```
+## Feature spotlight 
 
-# ObejktViz Proclet Metamodel
+**Morphing and Animation ** - ObjektViz supports smooth morphing between different process model views. This allows users to transition seamlessly from one perspective to another, this helps to manage complexity and understand different aspects of the process.
+<p align="center">
+    <img src="assets/morphing.gif" alt="Morphing" width="300px" align='center'/>
+</p>
+
+**Shaders** - color lightness and thickness of edges play critical role in making a proces s model understandable. ObjektViz supports a variety of shaders that can be applied to nodes and edges to highlight different aspects of the process model or to deal with skewed distributions.
+<p align="center">
+    <img src="assets/shader-types.png" alt="Custom Shaders" width="300px" align='center'/>
+</p>
+
+# ObejktViz Proclet Metamodel (Work In Progress - Subject to Change)
 <p align="center">
     <img src="assets/metamodel-objektviz.png" alt="Proclet Metamodel" width="550px" align='center'/>
 </p>
