@@ -68,4 +68,4 @@ class AbstractDotElement(ABC):
     @property
     def frequency(self) -> int:
         # -1 is sentinel value meaning the frequency is undefined
-        return self.entity.get("count", -1)
+        return self.entity.get("frequency", -1)
