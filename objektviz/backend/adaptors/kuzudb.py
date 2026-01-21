@@ -129,18 +129,7 @@ class KuzuEKGRepository(AbstractEKGRepository):
                 ).get_all()
             ]
 
-        raise NotImplementedError(
-            "KuzuEKGRepository.get_entity_types with class_type is not implemented yet"
-        )
-        # return self.run_query("""
-        #     MATCH (c: Class {type: $ClassType})
-        #     WITH DISTINCT c.EntityType as entityType
-        #     RETURN entityType
-        # """, {
-        #     "ClassType": class_type,
-        # }).get_all()[0]
-
-    def proclet(self, class_type: str) -> tuple[list[KuzuNode], list[KuzuRelationship]]:
+    def proclet(self, class_type: str) -> tuple[list[KuzuNode], list[KuzuRelationship], list[KuzuRelationship]]:
         result = self.run_query(
             """
             MATCH (c1:Class)

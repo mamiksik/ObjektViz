@@ -21,7 +21,7 @@ class AbstractEKGRepository(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def proclet(self, class_type: str) -> tuple[list[Any], list[Any]]:
+    def proclet(self, class_type: str) -> tuple[list[Any], list[Any], list[Any]]:
         pass
 
     @abstractmethod
@@ -74,4 +74,12 @@ class AbstractEKGRepository(metaclass=ABCMeta):
     def get_entities_for_event_class(
         self, class_id: str, limit: int, skip: int
     ) -> list[dict]:
+        pass
+
+    @abstractmethod
+    def get_dfc(self, dfc_id: str) -> dict | None:
+        pass
+
+    @abstractmethod
+    def get_event_class(self, event_class_id: str) -> dict | None:
         pass
