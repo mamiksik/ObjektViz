@@ -136,11 +136,15 @@ class KuzuEKGRepository(AbstractEKGRepository):
             WITH DISTINCT c.EntityType as entityType
             RETURN entityType
         """,
-                {"ClassType": class_type,},
+                {
+                    "ClassType": class_type,
+                },
             ).get_all()
         ]
 
-    def proclet(self, class_type: str) -> tuple[list[KuzuNode], list[KuzuRelationship], list[KuzuRelationship]]:
+    def proclet(
+        self, class_type: str
+    ) -> tuple[list[KuzuNode], list[KuzuRelationship], list[KuzuRelationship]]:
         result = self.run_query(
             """
             MATCH (c1:Class)
@@ -459,7 +463,6 @@ class KuzuEKGRepository(AbstractEKGRepository):
 
         return [n[0] for n in result.get_all()]
 
-
     def get_dfc(self, dfc_id: str) -> dict | None:
         result = self.run_query(
             """
@@ -482,7 +485,6 @@ class KuzuEKGRepository(AbstractEKGRepository):
             "target_class": record[2],
             "dfc_relation": record[1],
         }
-
 
     def get_event_class(self, event_class_id: str) -> dict | None:
         result = self.run_query(

@@ -63,5 +63,7 @@ class DefaultEventClassPreferences:
 
 def assert_attribute_exists(lst: list[dict], attribute_name: str):
     if not all(attribute_name in item for item in lst):
-        raise AttributeError(f"Attribute '{attribute_name}' not found in all items. "
-                             f"This attribute is required for the component to render correctly.")
+        raise AttributeError(
+            f"Attribute '{attribute_name}' not found in all items. "
+            f"This attribute is required for the component to render correctly."
+        )

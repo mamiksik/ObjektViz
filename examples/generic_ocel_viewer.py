@@ -1,11 +1,9 @@
 import os
 import pathlib
 
-import numpy as np
 import streamlit as st
 
 import kuzu
-from matplotlib import pyplot as plt
 
 import objektviz.streamlit.components as ov_components
 import objektviz.backend.filters as ov_filters
@@ -182,18 +180,19 @@ with objektviz_sidebar:
         )
 
     with st.expander("Event Class Filters", expanded=True):
-
-        node_filter_entity_type = ov_filters.NotFilter.new(ov_filters.MatchFilter.new(
-            attribute="EntityType",
-            is_enabled=True,
-            skip_on_empty=False, # If no entity types are selected, filter should return false for all items
-            values=st.pills(
-                "Hide selected entity types",
-                options=ENTITY_TYPES,
-                default=[],
-                selection_mode="multi",
-            ),
-        ))
+        node_filter_entity_type = ov_filters.NotFilter.new(
+            ov_filters.MatchFilter.new(
+                attribute="EntityType",
+                is_enabled=True,
+                skip_on_empty=False,  # If no entity types are selected, filter should return false for all items
+                values=st.pills(
+                    "Hide selected entity types",
+                    options=ENTITY_TYPES,
+                    default=[],
+                    selection_mode="multi",
+                ),
+            )
+        )
 
         event_class_frequency_filter = ov_components.frequency_filter_per_entity_type(
             queries.get_entity_types(class_type),
@@ -221,14 +220,18 @@ objektviz_config = BackendConfig(
 )
 
 # Generate the dot source from the proclet data
-wrapped_values = ov_kuzu.from_kuzu_to_dot_elements(event_classes_db, dfc_db + sync_db, objektviz_config)
+wrapped_values = ov_kuzu.from_kuzu_to_dot_elements(
+    event_classes_db, dfc_db + sync_db, objektviz_config
+)
 dot_src, edge_node_map, node_edge_map, node_node_map = generate_dot_source(
     *wrapped_values
 )
 
 # Log the raw data in the debug tab
 with debug_tab:
-    ov_components.debug_objektviz_backend(objektviz_config, event_classes_db, dfc_db, dot_src)
+    ov_components.debug_objektviz_backend(
+        objektviz_config, event_classes_db, dfc_db, dot_src
+    )
 
 # Prepare the payload for the frontend graph component
 graphviz_payload = GraphFrontendPayload(
@@ -261,7 +264,9 @@ with process_model_tab:
     )
 
 with ekg_stats_tab:
-    ov_components.entity_distribution_plot(event_classes_db, dfc_db, entity_types=queries.get_entity_types(class_type))
+    ov_components.entity_distribution_plot(
+        event_classes_db, dfc_db, entity_types=queries.get_entity_types(class_type)
+    )
 
 
 with trace_variants_tab:

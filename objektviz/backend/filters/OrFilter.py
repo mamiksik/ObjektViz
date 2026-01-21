@@ -15,7 +15,6 @@ class OrFilter(AbstractFilter):
 
     def is_passing(self, entity: neo4j.graph.Entity):
         for fltr in self.filters:
-
             # Skip disabled filters, this is kinda a hacky way to do it, but dataclasses inheritance is annoying
             if hasattr(fltr, "is_enabled") and fltr.is_enabled is False:
                 continue

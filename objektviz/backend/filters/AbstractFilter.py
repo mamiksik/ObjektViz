@@ -28,7 +28,6 @@ class AbstractFilter(ABC):
 
     """
 
-
     @abstractmethod
     def is_passing(self, entity):
         raise NotImplementedError
