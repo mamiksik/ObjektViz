@@ -24,7 +24,7 @@ class NormalizedShader(AbstractShader):
             self.config.connection_preferences.pen_width_range[1],
         )
         if isclose(self.lower_bound, self.upper_bound, rel_tol=0.01):
-            return pen_min
+            return  (pen_max - pen_min) / 2
 
         value = entity.get(self.leading_attribute, pen_min)
         value = self.clamp(self.lower_bound, value, self.upper_bound)
