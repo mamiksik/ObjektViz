@@ -6,8 +6,7 @@ from objektviz.backend.filters.AbstractFilter import AbstractFilter
 
 
 @dataclasses.dataclass(kw_only=True)
-class RangeFilter:
-
+class RangeFilter(AbstractFilter):
     is_enabled: bool
     attribute: str
     lower_bound: int | float
