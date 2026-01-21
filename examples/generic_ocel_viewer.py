@@ -229,9 +229,9 @@ dot_src, edge_node_map, node_edge_map, node_node_map = generate_dot_source(
 
 # Log the raw data in the debug tab
 with debug_tab:
-    ov_components.debug_objektviz_backend(
-        objektviz_config, event_classes_db, dfc_db, dot_src
-    )
+    # TODO: I when this is split on multiple linces I get:
+    # "line 1 ov_components.debug_objektviz_backend( ^ SyntaxError: '(' was never closed"
+    ov_components.debug_objektviz_backend(objektviz_config, event_classes_db, dfc_db, dot_src)
 
 # Prepare the payload for the frontend graph component
 graphviz_payload = GraphFrontendPayload(
@@ -256,8 +256,6 @@ with debug_tab:
 with process_model_tab:
     ov_components.full_proclet_view(
         graph_payload=graphviz_payload,
-        nodes=wrapped_values[0],
-        edges=wrapped_values[1],
         queries=queries,
         class_type=class_type,
         token_animation_segments=token_animation_segments,

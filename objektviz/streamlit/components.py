@@ -96,7 +96,7 @@ def builtin_shader_selector() -> Callable[
 
     # We know assigning lambdas to variables is not best practice, but here its just more handy
     if shader_type == "Normalized":
-        shader_factory = ( # noqa: E731
+        shader_factory = (  # noqa: E731
             lambda config, leading_attribute, cmap: ov_shaders.NormalizedShader(
                 config=config, leading_attribute=leading_attribute, cmap=cmap
             )
@@ -109,7 +109,7 @@ def builtin_shader_selector() -> Callable[
             value=(5.0, 95.0),
             step=2.5,
         )
-        shader_factory = ( # noqa: E731
+        shader_factory = (  # noqa: E731
             lambda shader_range,
             config,
             leading_attribute,
@@ -122,7 +122,7 @@ def builtin_shader_selector() -> Callable[
         )
         shader_factory = functools.partial(shader_factory, shader_range)
     elif shader_type == "RobustScaler":
-        shader_factory = ( # noqa: E731
+        shader_factory = (  # noqa: E731
             lambda config, leading_attribute, cmap: ov_shaders.RobustShader(
                 config=config, leading_attribute=leading_attribute, cmap=cmap
             )
@@ -492,7 +492,7 @@ def dfc_related_entities(queries: AbstractEKGRepository, selected_element_id: st
 
 
 def full_proclet_view(
-    *, graph_payload, nodes, edges, queries, class_type, token_animation_segments
+    *, graph_payload, queries, class_type, token_animation_segments
 ):
     event = interactive_proclet_graph(graph_payload)
     wire_graph_event(event)
@@ -602,6 +602,8 @@ def entity_distribution_plot(
     edges: list[dict],
     entity_types: list[str],
 ):
+    st.write("## Entity Type Distributions")
+    st.info("Is looks like caching some many figures causes issues for the process model rendering, disable this component if you face such problems.", icon="⚠️")
     # Validate edges have required attributes for this component to work
     assert_attribute_exists(nodes, "EntityType")
     assert_attribute_exists(nodes, "frequency")
