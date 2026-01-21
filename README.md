@@ -4,7 +4,7 @@
     <img src="assets/objektviz.png" alt="ObjektViz Screenshot" width="550px" align='center'/>
 </p>
 
-> ObjektViz is visualizer for object-centric process models that enables users to explore and analyze even _very complex_ processes involving multiple interacting objects.
+> ObjektViz is a visualizer for object-centric process models that enables users to explore and analyze even _very complex_ processes involving multiple interacting objects.
 
 ## Features
 - 🔍 **Interactive Visualization**: Explore object-centric process models with intuitive visualizations.
@@ -15,10 +15,10 @@
 - 🔄 **Morphing Visualizations**: Smoothly transition between different views and representations of the process model to understand various aspects of the data.
 
 ## Quick Start
-ObjektViz has a lot of customization, and is build with the idea that you as a user will compose your own dashboard for the analysis you have on hand. However, to get you started quickly, we provide some example dashboards that you can run and explore.
+ObjektViz has a lot of customization, and is built with the idea that you as a user will compose your own dashboard for the analysis you have at hand. However, to get you started quickly, we provide some example dashboards that you can run and explore.
 
-In the examples we use KuzuDB, which works fine for small examples and the setup is easy. For real world datasets, you might use Neo4J, but that requires more setup.
-We have exported processed some OCEL dataset into EKG and generated aggregated views (i.e. process models) for you to explore in the examples.
+In the examples we use KuzuDB, which works fine for small examples and the setup is easy. For real-world datasets, you might use Neo4J, but that requires more setup.
+We have exported and processed some OCEL datasets into EKG and generated aggregated views (i.e. process models) for you to explore in the examples.
 
 1. Clone the repository:
    ```bash
@@ -26,7 +26,7 @@ We have exported processed some OCEL dataset into EKG and generated aggregated v
 2. Navigate to the project directory:
    ```bash
    cd ObjektViz
-3. Install the required dependencies (we use [uv](https://docs.astral.sh/uv/) to manager python enviroment and dependencies):
+3. Install the required dependencies (we use [uv](https://docs.astral.sh/uv/) to manage the Python environment and dependencies):
    ```bash
    uv sync
 
@@ -38,7 +38,7 @@ We have exported processed some OCEL dataset into EKG and generated aggregated v
 
 > INFO: Using Chrome is strongly recommended. Mozilla Firefox and Safari should also work. (Although Safari does not support token replay.)
 
-> INFO: Token Reaplay for now requires APOC library and is thus not avaible with KuzuDB
+> INFO: Token Replay for now requires APOC library and is thus not available with KuzuDB
 
 <p align="center">
     <img src="assets/generic_ocel_visualizer.png" alt="Visualizer" width="750px" align='center'/>
@@ -74,7 +74,7 @@ We provide scripts to help you with this process in the `examples` folder.
     <img src="assets/shader-types.png" alt="Custom Shaders" width="300px" align='center'/>
 </p>
 
-# ObejktViz Proclet Metamodel (Work In Progress - Subject to Change)
+# ObjektViz Proclet Metamodel (Work In Progress - Subject to Change)
 <p align="center">
     <img src="assets/metamodel-objektviz.png" alt="Proclet Metamodel" width="550px" align='center'/>
 </p>
