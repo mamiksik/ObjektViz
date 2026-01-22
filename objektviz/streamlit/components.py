@@ -65,19 +65,21 @@ def general_preferences(
     Callable[["BackendConfig", str, str], ov_shaders.AbstractShader],
 ]:
     with st.expander("General preferences"):
-        class_type = st.selectbox("Proclet class type", options=proclet_types)
+        class_type = st.selectbox("Proclet class type", options=proclet_types, help="Select the proclet class type to visualize")
 
         is_process_start_end_visualized = st.toggle(
-            "Show process start/end nodes", value=True
+            "Show process start/end nodes", value=True, help="If enabled, nodes representing process start and end will be shown in the visualization. These are computed based on the 'StartCount' and 'EndCount' attributes of the event classes."
         )
         start_end_nodes_per_cluster = st.toggle(
             "Start and end nodes per cluster",
             value=True,
             disabled=not is_process_start_end_visualized,
+            help="If enabled, each cluster will have its own virtual start and end node. This can help in visualizing the flow within clusters more clearly and reduce clutter in the overall graph.",
         )
 
         enable_path_effects_on_hover = st.toggle(
-            "Enable path effects on hover", value=True
+            "Enable path effects on hover", value=True,
+            help="If enabled, when hovering over a connection (edge) in the visualization, a dashed animation effect will be played along the path of the edge. This can help in visually tracing the flow of the process represented by the edge."
         )
         shader_factory = builtin_shader_selector()
 
@@ -94,7 +96,8 @@ def builtin_shader_selector() -> Callable[
     ["BackendConfig", str, str], ov_shaders.AbstractShader
 ]:
     shader_type = st.selectbox(
-        "Shader type", options=["Percentile", "Normalized", "RobustScaler"]
+        "Shader type", options=["Percentile", "Normalized", "RobustScaler"],
+        help="Select the shading algorithm used to map numeric attributes to visual properties like color and thickness. This helps to deal with outliers and varying data distributions effectively."
     )
 
     # We know assigning lambdas to variables is not best practice, but here its just more handy
@@ -141,19 +144,22 @@ def edge_render_preference_input(
 ) -> ConnectionPreferences:
     return ConnectionPreferences(
         pen_width_range=st.slider(
-            "Pen with range", min_value=1, max_value=30, value=defaults.pen_range
+            "Edge with range", min_value=1, max_value=30, value=defaults.pen_range,
+            help="Defines the minimal and maximal edge line thickness used during rendering based on the shading attribute.",
         ),
         caption=st.selectbox(
             "Edge attr",
             options=edge_attributes,
             index=edge_attributes.index(defaults.title),
+            help="Attribute used to display value on top of the edge",
         ),
         shading_attr=st.selectbox(
             "Edge shading",
             options=edge_attributes,
             index=edge_attributes.index(defaults.shading),
+            help="Numeric attribute used for edge shading (e.g., frequency or average transition duration)",
         ),
-        use_x_labels=st.toggle("Use xlabels [labels are ignored while routing]"),
+        use_x_labels=st.toggle("Use xlabels", help="If true, xlabels are used for caption, this means the labels are not taking into account while computing layout. It might produce more compact and less convoluted routes for edges, but labels might not be visible."),
     )
 
 
@@ -165,21 +171,25 @@ def node_render_preference_input(
             "Node shading",
             options=node_attributes,
             index=node_attributes.index(defaults.shading_attr),
+            help="Numeric attribute used for node shading (e.g., frequency or number of associated entities)",
         ),
         title=st.selectbox(
             "Node tile",
             options=node_attributes,
             index=node_attributes.index(defaults.title),
+            help="Attribute to be displayed as the node title",
         ),
         caption_left=st.selectbox(
             "Node caption left",
             options=node_attributes,
             index=node_attributes.index(defaults.small_caption_left),
+            help="Which attribute is used to display value on the left of the node",
         ),
         caption_right=st.selectbox(
             "Node caption right",
             options=node_attributes,
             index=node_attributes.index(defaults.small_caption_right),
+            help="Which attribute is used to display value on the right of the node",
         ),
         icon_map=defaults.icon_map,
     )
@@ -220,6 +230,7 @@ def layout_preferences_input(
                 "Clustering attrs [ordered]",
                 options=default_layout_preferences_input.allowed_clustering_attributes,
                 default=default_layout_preferences_input.default_clustering_attribute,
+                help="Select attributes used to create subgraph clusters, order matters (e.g. ['EntityType', 'Location'] will create big clusters for each entity type and within each it will create sub-clusters for each location)",
             )
             if st.toggle("Enable clustering", value=True, help="Create subgraph clusters based on selected attributes")
             else []
@@ -258,7 +269,8 @@ def preferences_group(
     with st.expander("Animation preferences", expanded=False):
         show_only_sampled_elements_filter = ov_filters.DummyFilter.new(
             is_passing=not st.toggle(
-                "Hide connections and classes not contained in the sample"
+                "Hide connections and classes not contained in the sample",
+                help="If enabled, only the elements (nodes and edges) that are part of the sampled token traces will be shown in the visualization.",
             )
         )
         animation_preferences = animation_preferences_input()
@@ -274,21 +286,23 @@ def preferences_group(
 
 def animation_preferences_input() -> TokenReplayPreferences:
     result = TokenReplayPreferences(
-        animate_active_elements_flag=st.toggle("Animate process flow", value=False),
-        animate_tokens_flag=st.toggle("Animate tokens", value=True),
+        animate_active_elements_flag=st.toggle("Animate process flow", value=False, help="If enabled, the active paths will play dashed animation to indicate the process flow."),
+        animate_tokens_flag=st.toggle("Animate tokens", value=True, help="If enabled, tokens representing process instances will be animated along their paths in the process model."),
         token_animation_speed=25.5
         - st.slider(
-            "Animation speed", value=5.0, min_value=0.1, max_value=25.0, step=0.1
+            "Animation speed", value=5.0, min_value=0.1, max_value=25.0, step=0.1, help="Controls how fast the tokens move along their paths. Higher values result in faster animations."
         ),
         token_animation_alignment=(
             alignment := st.segmented_control(
                 "Animation time alignment",
                 options=["At-once", "Real-time"],
                 default="Real-time",
+                help="Determines how the start times of token animations are aligned. 'At-once' means all tokens start simultaneously, while 'Real-time' staggers the start times based on their actual occurrence times."
             )
         ),
         fixed_animation_duration=st.toggle(
-            "Fixed transition duration", value=False, disabled=(alignment != "At-once")
+            "Fixed transition duration", value=False, disabled=(alignment != "At-once"),
+            help="If enabled, all transitions will have the same duration regardless of their actual process duration. This is only applicable when 'At-once' alignment is selected."
         ),
     )
     if alignment != "At-once":
