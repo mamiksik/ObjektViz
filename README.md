@@ -58,7 +58,7 @@ We have exported and processed some OCEL datasets into EKG and generated aggrega
 
 **Token Replay** - understand the dynamics of your process by replaying tokens through the process model. This feature allows you to visualize how different objects interact over time within the process.
 <p align="center">
-    <img src="assets/token-replay.gif" alt="Custom Shaders" width="300px" align='center'/>
+    <img src="assets/token-replay.gif" alt="Custom Shaders" width="550px" align='center'/>
 </p>
 
 ## Import your own OCEL dataset
