@@ -8,7 +8,6 @@ import kuzu
 import objektviz.streamlit.components as ov_components
 import objektviz.backend.filters as ov_filters
 import objektviz.backend.adaptors.kuzudb as ov_kuzu
-from kuzu_example_helpers import generate_token_animation_segments
 
 from objektviz.backend.BackendConfig import BackendConfig
 from objektviz.streamlit.utils import (
@@ -16,7 +15,6 @@ from objektviz.streamlit.utils import (
     DefaultEventClassPreferences,
     DefaultShadingPreferences,
     DefaultLayoutPreferences,
-    TokenReplayManager,
 )
 from objektviz.backend.dot_graph_builder import generate_dot_source
 
@@ -44,8 +42,12 @@ if "kuzu_dataset_selector" not in st.session_state:
 
 database_path = DATASETS[st.session_state.kuzu_dataset_selector]
 
-db = kuzu.Database(database_path)
-conn = kuzu.Connection(db)
+@st.cache_resource
+def connection(database_path: pathlib.Path):
+    db = kuzu.Database(database_path)
+    return kuzu.Connection(db)
+
+conn = connection(database_path)
 queries = ov_kuzu.KuzuEKGRepository(conn)
 
 # ----------------------------------------------------------------------------
@@ -101,16 +103,6 @@ SHADING_PREFERENCES = DefaultShadingPreferences(
     group_by="EntityType", color_map=color_map
 )
 
-TOKEN_UI_ANIMATION_PREFERENCES = TokenReplayManager(
-    samplers={
-        "All": lambda class_type, sample_size: queries.entity_sample(
-            class_type, sample_size
-        ),
-    },
-    token_animation_generator=generate_token_animation_segments,
-)
-
-
 # ----------------------------------------------------------------------------
 # Stream lit UI [EDIT AS NEEDED]
 # ----------------------------------------------------------------------------
@@ -152,21 +144,21 @@ with objektviz_sidebar:
         default_event_class_visuals=DEFAULT_EVENT_CLASS_PREFERENCES,
     )
 
-    (
-        active_element_trace_filter,
-        token_animation_segments,
-        replay_metadata,
-        active_element_ids,
-    ) = ov_components.token_replay_input(
-        queries=queries,
-        class_type=class_type,
-        ui_preferences=TOKEN_UI_ANIMATION_PREFERENCES,
-        token_replay_preferences=token_replay_preferences,
-    )
+    # (
+    #     active_element_trace_filter,
+    #     token_animation_segments,
+    #     replay_metadata,
+    #     active_element_ids,
+    # ) = ov_components.token_replay_input(
+    #     queries=queries,
+    #     class_type=class_type,
+    #     ui_preferences=TOKEN_UI_ANIMATION_PREFERENCES,
+    #     token_replay_preferences=token_replay_preferences,
+    # )
 
-    with debug_tab:
-        st.write("Replay metadata:", replay_metadata)
-        st.write("Process instances:", token_animation_segments)
+    # with debug_tab:
+    #     st.write("Replay metadata:", replay_metadata)
+    #     st.write("Process instances:", token_animation_segments)
 
     # Filters are quite project specific, so you will likely need to modify them
     # Below is just an example of how to add filters to the sidebar for frequency
@@ -236,11 +228,11 @@ with debug_tab:
 # Prepare the payload for the frontend graph component
 graphviz_payload = GraphFrontendPayload(
     dot_source=dot_src,
-    active_element_ids=active_element_ids,
+    active_element_ids=[],
     enable_path_effects_on_hover=enable_path_effects_on_hover,
     animation_preferences=token_replay_preferences,
-    tokens=token_animation_segments,
-    replay_metadata=replay_metadata,
+    tokens=[],
+    replay_metadata=None,
     edge_node_map=edge_node_map,
     node_edge_map=node_edge_map,
     node_node_map=node_node_map,
@@ -258,7 +250,7 @@ with process_model_tab:
         graph_payload=graphviz_payload,
         queries=queries,
         class_type=class_type,
-        token_animation_segments=token_animation_segments,
+        token_animation_segments=[],
     )
 
 with ekg_stats_tab:
