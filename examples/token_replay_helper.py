@@ -5,17 +5,22 @@ from objektviz.frontend import (
     TokenReplayPreferences,
 )
 
-ATTR_VAL_TO_COLOR = {
-    "Handling Unit": "#0000FF",
-    "Container": "#FFA500",
-    "Truck": "#FF0000",
-    "Transport Document": "#00FF00",
-    "Customer Order": "#FFA500",
-    "Vehicle": "#800080",
-    "Forklift": "Greys",
-    None: "Greys",
+color_map = {
+    "Invoice": "Blues",
+    "Item": "Greens",
+    "Order": "Purples",
+    "Payment": "Oranges",
+    "SupplierOrder": "Reds",
 }
 
+ATTR_VAL_TO_COLOR = {
+
+    "Invoice": "#1f77b4",
+    "Item": "#2ca02c",
+    "Order": "#9467bd",
+    "Payment": "#ff7f0e",
+    "SupplierOrder": "#d62728",
+}
 
 def generate_token_animation_segments(
     data: list[dict],
@@ -29,6 +34,7 @@ def generate_token_animation_segments(
     max_duration_sec = 0
 
     for trace in data:
+        print(trace)
         active_element_ids.extend(trace.get("ActiveElementIds"))
 
         if animation_preferences.fixed_animation_duration:
@@ -81,10 +87,11 @@ def generate_token_animation_segments(
 
         tokens.append(
             Token(
-                element_id=trace.get("Entity").get("element_id"),
+                element_id=trace.get("EntityElementId"),
                 entity_id=trace.get("Entity").get("ID"),
-                entity_type=trace.get("EntityType"),
+                entity_type=trace.get("Entity").get("EntityType"),
                 segments=segments,
+                replay_duration_sec=replay_duration,
             )
         )
 

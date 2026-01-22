@@ -13,7 +13,7 @@
             text-align: center;
         }
 
-        .node:hover, .edge:hover {
+        .node:hover, .edge:hover, .token-group:hover {
             cursor: pointer;
         }
 
@@ -31,6 +31,7 @@
 
 <script type="text/javascript">
     const SAFE_AREA = 150
+    const INITIAL_RENDER_DELAY_MS = 250
     const GRAPH_DIV_ID = "graph"
 
     const defaultConfig = {
@@ -126,15 +127,16 @@
 
         install(target, objektviz) {
             this.objektviz = objektviz
-            const that = this;
-            target.selectAll('.node,.edge')
-                .on("click", function () {
-                    console.log(this, target)
-                    that.onClick(d3.select(this)) //TODO: replace with SelectAll
-                })
         }
 
         setPayload(payload) {
+            const that = this;
+            d3
+                .selectAll('.node,.edge,.token-group')
+                .on("click", function () {
+                    that.onClick(d3.select(this)) //TODO: replace with SelectAll
+                })
+
             this.setSelectedElement(payload.selected_element_id)
             console.log("Payload", this.selectedElementId)
         }
@@ -488,7 +490,22 @@
                 .append('g')
                 .classed('token-group', true)
                 .attr("data-entity-id", (d) => d['entity_id'])
+                .attr("id", (d) => d['element_id'])
                 .attr('display', "none")
+
+            tokens
+                .append('set')
+                .attr('attributeName', "display")
+                .attr('to', 'none')
+                .attr('begin', (d) => `0s`)
+                .attr('fill', "freeze")
+
+            tokens
+                .append('set')
+                .attr('attributeName', "display")
+                .attr('to', 'none')
+                .attr('begin', (d) => `${this.scaleDuration(d.replay_duration_sec)}s`)
+                .attr('fill', "freeze")
 
             tokens
                 .selectAll(null)
@@ -563,19 +580,10 @@
                     tweenPrecision: '10%',
                     growEnteringEdges: false,
                 })
-                // .fit(true)
-                // .scale(.8)
+                .scale(0.8)
                 .transition(this.config.twiningTransitionFce);
 
             addEventListener("objektviz:applyStyles", () => this.applyStyles())
-        }
-
-        setHeight(height) {
-            this.graphviz.height(height)
-        }
-
-        setWidth(width) {
-            this.graphviz.width(width)
         }
 
         setupNewProcessModel(dotSource, payload) {
@@ -583,7 +591,12 @@
             d3Helpers.restoreElementStyle(d3.selectAll('.node,.edge'))
             console.info("[RENDERING DOT]")
 
+            const width = d3.select("#graph").node().getBoundingClientRect().width
+            const height = d3.select("#graph").node().getBoundingClientRect().height
+
             this.graphviz
+            .width(width)
+            .height(height)
             .renderDot(dotSource)
             .on("end", () => {
                 console.info("[RENDERING DONE]")
@@ -601,16 +614,9 @@
                 const arrowsOnEdges = edges.selectAll('polygon')
                 d3Helpers.storeOriginalFill(arrowsOnEdges)
                 d3Helpers.storeOriginalDashArray(arrowsOnEdges)
-
                 this.isBusy = false;
+
                 const svgSelection = d3.select("#graph").selectWithoutDataPropagation("svg")
-
-                const width = d3.select("#graph").node().getBoundingClientRect().width
-                const height = d3.select("#graph").node().getBoundingClientRect().height
-
-                this.setHeight(height)
-                this.setWidth(width)
-
                 for (const plugin of this.plugins) {
                     plugin.install(svgSelection, this)
                 }
@@ -639,12 +645,14 @@
     }
 
 
-    const registerResizeObserver = (state) => {
+    const registerResizeObserver = () => {
         const resize = new ResizeObserver((entries) => {
             const width = entries[0].contentRect.width
             const height = entries[0].contentRect.height
-            state.objektviz.setHeight(height)
-            state.objektviz.setWidth(width)
+            d3.select("#graph")
+                .selectWithoutDataPropagation("svg")
+                .attr('width', width)
+                .attr('height', height)
         })
 
         addEventListener("resize", () => setFrameHeight(parent.window.innerHeight - SAFE_AREA))
@@ -659,15 +667,17 @@
     // Called each time the component receives new props from Python backend
     const render = (state, props) => {
         if (state.objektviz === null) {
+            // setFrameHeight(parent.window.innerHeight - SAFE_AREA)
+
             state.objektviz = new ObjektViz(document.getElementById(GRAPH_DIV_ID), [
                 new TraceHighlightPlugin(),
-                new HoverInteractionPlugin(),
-                new ClickInteractionPlugin(),
                 // new TokenReplayPlugin(),
+                new HoverInteractionPlugin(),
                 new AdvancedTokenReplayPlugin(),
+                new ClickInteractionPlugin(),
             ])
 
-            registerResizeObserver(state)
+            registerResizeObserver()
         }
 
         // In case the dot source changed, re-render the whole graph
@@ -708,24 +718,39 @@
     }
 
     function initialize(pipeline) {
+        let isFirstRender = true
 
         // Hook Streamlit's message events into a simple dispatcher of pipeline handlers
         window.addEventListener("message", (event) => {
-            if (event.data.type == RENDER) {
-                // The event.data.args dict holds any JSON-serializable value
-                // sent from the Streamlit client. It is already deserialized.
-                pipeline.forEach(handler => {
-                    handler(event.data.args)
-                })
+            const processMessage = (event) => {
+                if (event.data.type == RENDER) {
+                    // The event.data.args dict holds any JSON-serializable value
+                    // sent from the Streamlit client. It is already deserialized.
+                    pipeline.forEach(handler => {
+                        handler(event.data.args)
+                    })
+                }
+            }
+
+            // We delay the first render so that the original setFrameHeight message has time to be processed
+            // the delay is arbitrary chosen (to 'guarantee' the window is ready)
+            if (!isFirstRender) {
+                processMessage(event)
+            } else {
+                setTimeout(() => {
+                    processMessage(event)
+                    isFirstRender = false;
+                }, INITIAL_RENDER_DELAY_MS)
             }
         })
 
         _sendMessage(COMPONENT_READY, {apiVersion: 1});
+        // setFrameHeight(parent.window.innerHeight - SAFE_AREA)
 
         // Component should be mounted by Streamlit in an iframe, so try to autoset the iframe height.
         window.addEventListener("load", () => {
             window.setTimeout(function () {
-                setFrameHeight(document.documentElement.clientHeight)
+                setFrameHeight(parent.window.innerHeight - SAFE_AREA)
             }, 0)
         })
     }

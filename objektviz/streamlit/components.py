@@ -40,6 +40,9 @@ def setup_objektviz_page():
     if "selected_node" not in st.session_state:
         st.session_state.selected_node = None
 
+    if "selected_token" not in st.session_state:
+        st.session_state.selected_token = None
+
     st.set_page_config(page_title="ObjektViz", page_icon="📦", layout="wide")
 
     with st.sidebar:
@@ -246,7 +249,7 @@ def preferences_group(
         )
 
     with st.expander("Animation preferences", expanded=False):
-        show_only_sampled_elements = ov_filters.DummyFilter.new(
+        show_only_sampled_elements_filter = ov_filters.DummyFilter.new(
             is_passing=not st.toggle(
                 "Hide connections and classes not contained in the sample"
             )
@@ -257,7 +260,7 @@ def preferences_group(
         layout_preferences,
         edge_vis_preferences,
         node_vis_preferences,
-        show_only_sampled_elements,
+        show_only_sampled_elements_filter,
         animation_preferences,
     )
 
@@ -514,6 +517,12 @@ def full_proclet_view(
             dfc_detail(queries, class_type, st.session_state.selected_edge)
             dfc_related_entities(queries, st.session_state.selected_edge)
 
+        if st.session_state.selected_token:
+            st.write("### Token Detail")
+            st.write(f"Selected token: {st.session_state.selected_token}")
+            trace = queries.get_entity_trace(class_type, st.session_state.selected_token)
+            st.write(trace)
+
     with tab2:
         if token_animation_segments:
             animation_segments(token_animation_segments)
@@ -603,7 +612,7 @@ def entity_distribution_plot(
     entity_types: list[str],
 ):
     st.write("## Entity Type Distributions")
-    st.info("Is looks like caching some many figures causes issues for the process model rendering, disable this component if you face such problems.", icon="⚠️")
+    st.info("Is looks like caching so many figures causes issues for the process model rendering, disable this component if you face such problems.", icon="⚠️")
     # Validate edges have required attributes for this component to work
     assert_attribute_exists(nodes, "EntityType")
     assert_attribute_exists(nodes, "frequency")
@@ -702,7 +711,7 @@ def frequency_filter_per_entity_type(
         st.pyplot(fig)
         plt.close(fig)
 
-        filter_label = f"Filter DFC for {entity_type} by frequency"
+        filter_label = f"{entity_type}"
         range_filter = attribute_range_filter_input(
             label=filter_label,
             for_entity_type=entity_type,

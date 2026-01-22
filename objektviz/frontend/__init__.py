@@ -53,6 +53,7 @@ class Token:
     entity_id: Any
     entity_type: str
     segments: list[ReplaySegment]
+    replay_duration_sec: float
 
 
 @dataclasses.dataclass
@@ -87,7 +88,7 @@ class GraphFrontendPayload:
     tokens: list[Token]
 
     # TODO
-    replay_metadata: ReplayMetadata
+    replay_metadata: ReplayMetadata | None
 
     # Precomputed relations between different graph elements (usefully for e.g. brushing to find all related items to
     # selection)
@@ -116,23 +117,26 @@ def interactive_proclet_graph(payload: GraphFrontendPayload):
 def wire_graph_event(graph_event):
     """Consume ObjektViz frontend callback and update the session accordingly"""
 
-    if graph_event:
+    if graph_event and graph_event["elementId"] not in [
+        st.session_state.get("selected_node"),
+        st.session_state.get("selected_edge"),
+        st.session_state.get("selected_token"),
+    ]:
+        st.session_state.selected_node = None
+        st.session_state.selected_edge = None
+        st.session_state.selected_token = None
+
         if (
             graph_event["type"] == "edge"
             and graph_event["elementId"] != st.session_state.selected_edge
         ):
-            st.session_state.selected_node = None
-            st.session_state.selected_edge = None
-
             st.session_state.selected_edge = graph_event["elementId"]
-            st.rerun()
         elif (
             graph_event["type"] == "node"
             and graph_event["elementId"] != st.session_state.selected_node
         ):
-            st.session_state.selected_node = None
-            st.session_state.selected_edge = None
-
-            st.session_state.selected_edge = None
             st.session_state.selected_node = graph_event["elementId"]
-            st.rerun()
+        elif graph_event["type"] == "token-group":
+            st.session_state.selected_token = graph_event["elementId"]
+
+        st.rerun()
