@@ -35,6 +35,7 @@ class DotEdge(AbstractDotElement):
             "color": self.color,
             "style": self.style,
             "dir": self.dir,
+            "weight": str(self.weight),
             # 'constraint': str(not self.is_sync_edge),
             # 'fontsize':'18',
             # 'labeldistance':'4.5',
@@ -43,10 +44,18 @@ class DotEdge(AbstractDotElement):
         }
 
     @property
+    def weight(self) -> int:
+        if self.config.layout_preferences.weight_attribute is None:
+            return 1
+
+        return self.entity.get(self.config.layout_preferences.weight_attribute, 0)
+
+    @property
     def dot_element_type(self) -> Literal["edge"]:
         return "edge"
 
     def get_nesting_attr(self, name, default=None):
+        # TODO: REMOVE???!
         # start_attr = self.entity.start_node.get(name, default)
         # end_attr = self.entity.end_node.get(name, default)
         # if start_attr == end_attr:

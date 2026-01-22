@@ -187,27 +187,33 @@ def node_render_preference_input(
 
 def layout_preferences_input(
     default_layout_preferences_input: DefaultLayoutPreferences,
+    dfc_attributes: list[str],
 ) -> LayoutPreferences:
     cont = st.container()
     col1, col2 = st.columns(2)
     return LayoutPreferences(
         force_same_rank_for_event_class=cont.checkbox(
-            "Force same rank per activity", value=False
+            "Force same rank per activity", value=False, help="If enabled, all nodes of the same EventType will be on the same rank/level. (The rank is not exlusively reserved for that EventType though, which is limitation of the underlying graphviz engine.)"
         ),
         force_process_start_end_same_rank=cont.checkbox(
-            "Force same rank for process estart/end", value=False
+            "Force same rank for process estart/end", value=False, help="If enabled, all start nodes will be on the same rank, and all end nodes will be on the same rank."
         ),
         sort_event_classes_by_frequency=cont.checkbox(
-            "Sort nodes by frequency", value=True
+            "Sort nodes by frequency", value=True, help="Influences the layout heuristics"
         ),
         sort_connections_by_frequency=cont.checkbox(
-            "Sort edges by frequency", value=True
+            "Sort edges by frequency", value=True, help="Influences the layout heuristics"
+        ),
+        weight_attribute=(
+            st.selectbox("Weight attribute", options=dfc_attributes, index=0)
+            if st.toggle("Set edge weight", value=False, help="Used during layout computation, higher weight means 'shorter' and 'straighter' edge. Should be nummeric attribute.")
+            else None
         ),
         node_separation=col1.number_input(
-            "Node separation", min_value=0.1, max_value=5.0, step=0.1, value=0.5
+            "Node separation", min_value=0.1, max_value=5.0, step=0.1, value=0.5, help="Minimal horizontal spacing between nodes on the same rank/level"
         ),
         rank_separation=col2.number_input(
-            "Rank separation", min_value=0.1, max_value=5.0, step=0.1, value=0.5
+            "Rank separation", min_value=0.1, max_value=5.0, step=0.1, value=0.5, help="Minimal vertical spacing between ranks/levels"
         ),
         clustering_keys=(
             st.multiselect(
@@ -215,7 +221,7 @@ def layout_preferences_input(
                 options=default_layout_preferences_input.allowed_clustering_attributes,
                 default=default_layout_preferences_input.default_clustering_attribute,
             )
-            if st.toggle("Enable clustering", value=True)
+            if st.toggle("Enable clustering", value=True, help="Create subgraph clusters based on selected attributes")
             else []
         ),
     )
@@ -236,7 +242,8 @@ def preferences_group(
     TokenReplayPreferences,
 ]:
     with st.expander("Layout preferences", expanded=False):
-        layout_preferences = layout_preferences_input(default_layout_preferences_input)
+        dfc_attributes = queries.dfc_attributes(class_type)
+        layout_preferences = layout_preferences_input(default_layout_preferences_input, dfc_attributes)
 
     with st.expander("DFC Appearance", expanded=False):
         edge_vis_preferences = edge_render_preference_input(

@@ -23,6 +23,10 @@ class LayoutPreferences:
     # declared in the dot source code (this then influences the layout heuristics)
     sort_connections_by_frequency: bool = True
 
+    # If set to an attribute name, the attribute values will be used as edge weights
+    # during layout computation. Higher weight means that the edge is "shorter" and "straighter"
+    weight_attribute: str | None = None
+
     # List of keys used to create subgraph clusters, order matters!
     # e.g. ['EntityType', 'Location'] will create big clusters for
     # each entity type and within each it will create sub-clusters
