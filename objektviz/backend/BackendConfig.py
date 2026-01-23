@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Callable, Self
+from typing import Callable, Self, Literal
 
 from objektviz.backend.filters import AbstractFilter
 from objektviz.backend.shaders import AbstractShader
@@ -38,6 +38,9 @@ class LayoutPreferences:
 
     # Minimal vertical spacing between ranks/levels
     rank_separation: float = 0.5
+
+    # Direction of the graph layout
+    rank_direction: Literal["TB", "BT", "LR", "RL"] = "TB"  # Top to Bottom
 
 
 @dataclasses.dataclass

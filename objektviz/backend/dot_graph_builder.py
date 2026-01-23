@@ -168,6 +168,7 @@ class DotGraphDescriptorBuilder:
             newrank=true;
             nodesep={self.config.layout_preferences.node_separation};
             ranksep={self.config.layout_preferences.rank_separation};
+            rankdir={self.config.layout_preferences.rank_direction};
             edge[tailclip=false];
             graph [outputorder=edgesfirst; compound=true;];
         """)

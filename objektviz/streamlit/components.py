@@ -196,14 +196,16 @@ def node_render_preference_input(
 
 
 def layout_preferences_input(
-    default_layout_preferences_input: DefaultLayoutPreferences,
+    defaults: DefaultLayoutPreferences,
     dfc_attributes: list[str],
 ) -> LayoutPreferences:
+    rank_direction = ["TB", "LR"]
+
     cont = st.container()
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     return LayoutPreferences(
         force_same_rank_for_event_class=cont.checkbox(
-            "Force same rank per activity", value=False, help="If enabled, all nodes of the same EventType will be on the same rank/level. (The rank is not exlusively reserved for that EventType though, which is limitation of the underlying graphviz engine.)"
+            "Force same rank per activity", value=defaults.force_same_rank_for_event_class, help="If enabled, all nodes of the same EventType will be on the same rank/level. (The rank is not exlusively reserved for that EventType though, which is limitation of the underlying graphviz engine.)"
         ),
         force_process_start_end_same_rank=cont.checkbox(
             "Force same rank for process estart/end", value=False, help="If enabled, all start nodes will be on the same rank, and all end nodes will be on the same rank."
@@ -214,22 +216,28 @@ def layout_preferences_input(
         sort_connections_by_frequency=cont.checkbox(
             "Sort edges by frequency", value=True, help="Influences the layout heuristics"
         ),
+        rank_direction=col1.selectbox(
+            "Graph direction",
+            options=rank_direction,
+            index=rank_direction.index(defaults.rank_direction),
+            help="Direction of the graph layout: Top to Bottom (TB), Left to Right (LR)",
+        ),
         weight_attribute=(
-            st.selectbox("Weight attribute", options=dfc_attributes, index=0)
-            if st.toggle("Set edge weight", value=False, help="Used during layout computation, higher weight means 'shorter' and 'straighter' edge. Should be nummeric attribute.")
+            st.selectbox("Weight attribute", options=dfc_attributes, index=dfc_attributes.index(defaults.weight_attribute))
+            if st.toggle("Set edge weight", value=(defaults.weight_attribute is not None), help="Used during layout computation, higher weight means 'shorter' and 'straighter' edge. Should be nummeric attribute.")
             else None
         ),
-        node_separation=col1.number_input(
+        node_separation=col2.number_input(
             "Node separation", min_value=0.1, max_value=5.0, step=0.1, value=0.5, help="Minimal horizontal spacing between nodes on the same rank/level"
         ),
-        rank_separation=col2.number_input(
+        rank_separation=col3.number_input(
             "Rank separation", min_value=0.1, max_value=5.0, step=0.1, value=0.5, help="Minimal vertical spacing between ranks/levels"
         ),
         clustering_keys=(
             st.multiselect(
                 "Clustering attrs [ordered]",
-                options=default_layout_preferences_input.allowed_clustering_attributes,
-                default=default_layout_preferences_input.default_clustering_attribute,
+                options=defaults.allowed_clustering_attributes,
+                default=defaults.clustering_attribute,
                 help="Select attributes used to create subgraph clusters, order matters (e.g. ['EntityType', 'Location'] will create big clusters for each entity type and within each it will create sub-clusters for each location)",
             )
             if st.toggle("Enable clustering", value=True, help="Create subgraph clusters based on selected attributes")

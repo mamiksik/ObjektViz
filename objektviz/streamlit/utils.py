@@ -28,8 +28,11 @@ class DefaultLayoutPreferences:
     allowed_clustering_attributes: list[str] = field(
         default_factory=lambda: ["EntityType", "EventType"]
     )
-    default_clustering_attribute: str = "EntityType"
-
+    clustering_attribute: str = "EntityType"
+    weight_attribute: str | None = "frequency" # If set to none, there is no weighting
+    rank_direction: str = "TB"  # Top to Bottom
+    force_same_rank_for_event_class: bool = True
+    force_process_start_end_same_rank: bool = True
 
 @dataclass
 class DefaultShadingPreferences:
