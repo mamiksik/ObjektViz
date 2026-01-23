@@ -69,7 +69,7 @@ We provide scripts to help you with this process in the `examples` folder.
    ```bash
    uv run python examples/ocel/kuzudb/process_ocel_to_kuzudb.py path/to/your/ocel.json path/to/save/ekg.kuzu
    ```
-2. Copy the example dashboard script and modify it to point to your newly created EKG database. The line to change is where the database is initialized:
+2. Copy one of the example dashboards (e.g. 'examples/generic_ocel_viewer.py') script and modify it to point to your newly created EKG database. The line to change is where the database is initialized:
     ```python
     db = kuzu.Database("path/to/save/ekg.kuzu")
     ```
