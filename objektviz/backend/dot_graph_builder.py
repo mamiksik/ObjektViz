@@ -187,14 +187,14 @@ class DotGraphDescriptorBuilder:
         Process current subgraph, either by adding nodes and edges or splitting
         the input into further sub-graphs and calling itself recursively
         """
-        if not self.config.start_end_nodes_per_cluster and level == 0:
+        if not self.config.show_start_end_nodes_per_cluster and level == 0:
             self.inject_local_start_end_nodes(graph, items)
 
         # If we end of the nesting add the items to the graph
         if level >= len(self.config.layout_preferences.clustering_keys):
             if (
-                self.config.start_end_nodes_per_cluster
-                and self.config.visualize_start_end_flag
+                self.config.show_start_end_nodes_per_cluster
+                and self.config.show_start_end_nodes
             ):
                 self.inject_local_start_end_nodes(graph, items)
 
@@ -352,7 +352,7 @@ class DotGraphDescriptorBuilder:
 
     def enforce_same_rank(self, graph):
         if (
-            self.config.visualize_start_end_flag
+            self.config.show_start_end_nodes
             and self.config.layout_preferences.force_process_start_end_same_rank
         ):
             elements = ";".join([f'"{e}"' for e in self.start_nodes_ids])

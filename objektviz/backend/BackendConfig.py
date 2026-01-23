@@ -66,7 +66,7 @@ class EventClassPreferences:
 
 
 @dataclasses.dataclass
-class ConnectionPreferences:
+class DFCPreferences:
     """Subset of settings related to dot edge appearance and content"""
 
     # Which attribute is used to display value on top of the edge
@@ -95,20 +95,20 @@ class BackendConfig:
     shader_groups_color: dict[str, str]
 
     # If true, process start/end nodes will be computed and visualized
-    # This requires that the :Class nodes have "ProcessStartCount" and "ProcessEndCount" attributes defined
-    visualize_start_end_flag: bool
+    # This requires that the :Class nodes have "StartCount" and "EndCount" attributes defined
+    show_start_end_nodes: bool
 
     # If true, each cluster will have its own virtual start/end node
-    start_end_nodes_per_cluster: bool
+    show_start_end_nodes_per_cluster: bool
 
     # Root filter used to filter :Class nodes (to include all nodes, just pass instance of DummyFilter)
     event_class_root_filter: AbstractFilter
 
     # Root filter used to filter :DF_C edges (to include all edges, just pass instance of DummyFilter)
-    connection_root_filter: AbstractFilter
+    dfc_root_filter: AbstractFilter
 
     layout_preferences: LayoutPreferences
-    connection_preferences: ConnectionPreferences
+    dfc_preferences: DFCPreferences
     event_class_preferences: EventClassPreferences
 
     # Factory that creates the shader instances for event classes and connections

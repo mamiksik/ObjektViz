@@ -18,7 +18,7 @@ class DotEdge(AbstractDotElement):
     @property
     def dot_descriptor(self):
         label_attr = "label"
-        if self.config.connection_preferences.use_x_labels:
+        if self.config.dfc_preferences.use_x_labels:
             label_attr = "xlabel"
 
         return {
@@ -76,7 +76,7 @@ class DotEdge(AbstractDotElement):
         if self.is_sync_edge:
             return ""
 
-        value = self.entity.get(self.config.connection_preferences.caption, -1)
+        value = self.entity.get(self.config.dfc_preferences.caption, -1)
         if isinstance(value, float):
             return f"   {value:.2f}"
 
@@ -111,7 +111,7 @@ class DotEdge(AbstractDotElement):
         if self.is_sync_edge:
             return True
 
-        return self.config.connection_root_filter.is_passing(self.entity)
+        return self.config.dfc_root_filter.is_passing(self.entity)
 
     @property
     def is_sync_edge(self):

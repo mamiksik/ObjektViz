@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from objektviz.backend.BackendConfig import (
     LayoutPreferences,
     BackendConfig,
-    ConnectionPreferences,
+    DFCPreferences,
     EventClassPreferences,
 )
 
@@ -79,8 +79,9 @@ def general_preferences(
 
         enable_path_effects_on_hover = st.toggle(
             "Enable path effects on hover", value=True,
-            help="If enabled, when hovering over a connection (edge) in the visualization, a dashed animation effect will be played along the path of the edge. This can help in visually tracing the flow of the process represented by the edge."
+            help="If enabled, when hovering over a DFC (edge) in the visualization, a dashed animation effect will be played along the path of the edge. This can help in visually tracing the flow of the process represented by the edge."
         )
+
         shader_factory = builtin_shader_selector()
 
         return (
@@ -141,20 +142,20 @@ def builtin_shader_selector() -> Callable[
 
 def dfc_appearance_input(
     edge_attributes: list[str], defaults: DefaultConnectionPreferences
-) -> ConnectionPreferences:
-    return ConnectionPreferences(
+) -> DFCPreferences:
+    return DFCPreferences(
         pen_width_range=st.slider(
-            "Edge with range", min_value=1, max_value=30, value=defaults.pen_range,
-            help="Defines the minimal and maximal edge line thickness used during rendering based on the shading attribute.",
+            "DFC width range", min_value=1, max_value=30, value=defaults.pen_range,
+            help="Defines the minimal and maximal line thickness used during rendering based on the shading attribute.",
         ),
         caption=st.selectbox(
-            "Edge attr",
+            "DFC label",
             options=edge_attributes,
             index=edge_attributes.index(defaults.title),
             help="Attribute used to display value on top of the edge",
         ),
         shading_attr=st.selectbox(
-            "Edge shading",
+            "DFC shading attribute",
             options=edge_attributes,
             index=edge_attributes.index(defaults.shading),
             help="Numeric attribute used for edge shading (e.g., frequency or average transition duration)",
@@ -166,30 +167,33 @@ def dfc_appearance_input(
 def event_class_appearance_input(
     node_attributes: list[str], defaults: DefaultEventClassPreferences
 ) -> EventClassPreferences:
+    container_top = st.container()
+    col1, col2 = st.columns(2)
+    container_bottom = st.container()
     return EventClassPreferences(
-        shading_attr=st.selectbox(
-            "Node shading",
-            options=node_attributes,
-            index=node_attributes.index(defaults.shading_attr),
-            help="Numeric attribute used for node shading (e.g., frequency or number of associated entities)",
-        ),
-        title=st.selectbox(
-            "Node tile",
+        title=container_top.selectbox(
+            "Event class title",
             options=node_attributes,
             index=node_attributes.index(defaults.title),
             help="Attribute to be displayed as the node title",
         ),
-        caption_left=st.selectbox(
-            "Node caption left",
+        caption_left=col1.selectbox(
+            "Caption left",
             options=node_attributes,
             index=node_attributes.index(defaults.small_caption_left),
             help="Which attribute is used to display value on the left of the node",
         ),
-        caption_right=st.selectbox(
-            "Node caption right",
+        caption_right=col2.selectbox(
+            "Caption right",
             options=node_attributes,
             index=node_attributes.index(defaults.small_caption_right),
             help="Which attribute is used to display value on the right of the node",
+        ),
+        shading_attr=container_bottom.selectbox(
+            "Event class shading attribute",
+            options=node_attributes,
+            index=node_attributes.index(defaults.shading_attr),
+            help="Numeric attribute used for node shading (e.g., frequency or number of associated entities)",
         ),
         icon_map=defaults.icon_map,
     )
@@ -235,7 +239,7 @@ def layout_preferences_input(
         ),
         clustering_keys=(
             st.multiselect(
-                "Clustering attrs [ordered]",
+                "Clustering attributes [ordered]",
                 options=defaults.allowed_clustering_attributes,
                 default=defaults.clustering_attribute,
                 help="Select attributes used to create subgraph clusters, order matters (e.g. ['EntityType', 'Location'] will create big clusters for each entity type and within each it will create sub-clusters for each location)",
@@ -255,7 +259,7 @@ def preferences_group(
     default_event_class_visuals: DefaultEventClassPreferences,
 ) -> tuple[
     LayoutPreferences,
-    ConnectionPreferences,
+    DFCPreferences,
     EventClassPreferences,
     ov_filters.AbstractFilter,
     TokenReplayPreferences,
@@ -298,11 +302,11 @@ def animation_preferences_input() -> TokenReplayPreferences:
         animate_tokens_flag=st.toggle("Animate tokens", value=True, help="If enabled, tokens representing process instances will be animated along their paths in the process model."),
         token_animation_speed=25.5
         - st.slider(
-            "Animation speed", value=5.0, min_value=0.1, max_value=25.0, step=0.1, help="Controls how fast the tokens move along their paths. Higher values result in faster animations."
+            "Token replay speed", value=5.0, min_value=0.1, max_value=25.0, step=0.1, help="Controls how fast the tokens move along their paths. Higher values result in faster animations."
         ),
         token_animation_alignment=(
             alignment := st.segmented_control(
-                "Animation time alignment",
+                "Token replay alignment",
                 options=["At-once", "Real-time"],
                 default="Real-time",
                 help="Determines how the start times of token animations are aligned. 'At-once' means all tokens start simultaneously, while 'Real-time' staggers the start times based on their actual occurrence times."

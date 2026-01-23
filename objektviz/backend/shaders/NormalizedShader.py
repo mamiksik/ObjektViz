@@ -20,8 +20,8 @@ class NormalizedShader(AbstractShader):
 
     def pen_width(self, entity: neo4j.graph.Entity | dict):
         pen_min, pen_max = (
-            self.config.connection_preferences.pen_width_range[0],
-            self.config.connection_preferences.pen_width_range[1],
+            self.config.dfc_preferences.pen_width_range[0],
+            self.config.dfc_preferences.pen_width_range[1],
         )
         if isclose(self.lower_bound, self.upper_bound, rel_tol=0.01):
             return (pen_max - pen_min) / 2

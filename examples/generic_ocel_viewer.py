@@ -132,7 +132,7 @@ with ekg_stats_tab:
 with objektviz_sidebar:
     (
         layout_preferences,
-        connection_preferences,
+        dfc_preferences,
         event_class_preferences,
         show_only_sampled_elements,
         token_replay_preferences,
@@ -199,15 +199,15 @@ with objektviz_sidebar:
 
 # Backend Visualizer Configuration
 objektviz_config = BackendConfig(
-    connection_preferences=connection_preferences,
+    dfc_preferences=dfc_preferences,
     event_class_preferences=event_class_preferences,
     shader_groping_key=SHADING_PREFERENCES.group_by,
     shader_groups_color=SHADING_PREFERENCES.color_map,
     layout_preferences=layout_preferences,
-    visualize_start_end_flag=is_process_start_end_visualized,
-    start_end_nodes_per_cluster=start_end_nodes_per_cluster,
+    show_start_end_nodes=is_process_start_end_visualized,
+    show_start_end_nodes_per_cluster=start_end_nodes_per_cluster,
     event_class_root_filter=root_node_filter,
-    connection_root_filter=root_edge_filter,
+    dfc_root_filter=root_edge_filter,
     shader_factory=shader_factory,
 )
 

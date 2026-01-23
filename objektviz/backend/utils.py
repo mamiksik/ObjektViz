@@ -19,7 +19,7 @@ def shader_factory(config: BackendConfig):
     edge_shaders = {
         entity: config.shader_factory(
             config,
-            config.connection_preferences.shading_attr,
+            config.dfc_preferences.shading_attr,
             config.shader_groups_color[entity],
         )
         for entity in config.shader_groups_color.keys()
