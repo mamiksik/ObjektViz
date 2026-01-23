@@ -139,7 +139,7 @@ def builtin_shader_selector() -> Callable[
     return shader_factory
 
 
-def edge_render_preference_input(
+def dfc_appearance_input(
     edge_attributes: list[str], defaults: DefaultConnectionPreferences
 ) -> ConnectionPreferences:
     return ConnectionPreferences(
@@ -163,7 +163,7 @@ def edge_render_preference_input(
     )
 
 
-def node_render_preference_input(
+def event_class_appearance_input(
     node_attributes: list[str], defaults: DefaultEventClassPreferences
 ) -> EventClassPreferences:
     return EventClassPreferences(
@@ -265,12 +265,12 @@ def preferences_group(
         layout_preferences = layout_preferences_input(default_layout_preferences_input, dfc_attributes)
 
     with st.expander("DFC Appearance", expanded=False):
-        edge_vis_preferences = edge_render_preference_input(
+        edge_vis_preferences = dfc_appearance_input(
             queries.dfc_attributes(class_type), defaults=default_connection_visuals
         )
 
     with st.expander("Event Class Appearance", expanded=False):
-        node_vis_preferences = node_render_preference_input(
+        node_vis_preferences = event_class_appearance_input(
             queries.class_attributes(class_type), defaults=default_event_class_visuals
         )
 
