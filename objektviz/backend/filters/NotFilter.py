@@ -1,17 +1,16 @@
-import dataclasses
-
-import neo4j.graph
+from typing import Mapping
 
 from objektviz.backend.filters.AbstractFilter import AbstractFilter
 
 
-@dataclasses.dataclass
 class NotFilter(AbstractFilter):
+    """ A filter that negates the result of another filter, passing elements that
+        fail the inner filter and failing elements that pass the inner filter
+    """
     filter: AbstractFilter
 
-    @classmethod
-    def new(cls, filter: AbstractFilter):
-        return cls(filter=filter)
+    def __init__(self, filter: AbstractFilter):
+        self.filter = filter
 
-    def is_passing(self, entity: neo4j.graph.Entity):
+    def is_passing(self, entity: Mapping):
         return not self.filter.is_passing(entity)

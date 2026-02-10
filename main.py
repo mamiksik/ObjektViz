@@ -290,12 +290,12 @@ with st.sidebar:
         )
 
     with st.expander("Connection preferences", expanded=False):
-        edge_vis_preferences = ov_components.edge_render_preference_input(
+        edge_vis_preferences = ov_components.dfc_appearance_input(
             queries.dfc_attributes(class_type), default="count"
         )
 
     with st.expander("Activity preferences", expanded=False):
-        node_vis_preferences = ov_components.node_render_preference_input(
+        node_vis_preferences = ov_components.event_class_appearance_input(
             queries.class_attributes(class_type),
             icon_map=ATTRIBUTE_ICON_MAP,
             default_right_attr="count",
@@ -303,7 +303,7 @@ with st.sidebar:
         )
 
     with st.expander("Animation preferences", expanded=False):
-        show_only_required_elements = ov_filters.DummyFilter.new(
+        show_only_required_elements = ov_filters.DummyFilter(
             is_passing=not st.toggle(
                 "Hide connections and classes not contained in the sample"
             )
@@ -312,7 +312,7 @@ with st.sidebar:
 
     with st.expander("Entities to animate", expanded=True):
         element_id_filter, active_element_ids, token_animation_segments = (
-            ov_filters.DummyFilter.new(is_passing=False),
+            ov_filters.DummyFilter(is_passing=False),
             None,
             None,
         )
@@ -328,7 +328,7 @@ with st.sidebar:
                     result[0], result[1], result[2], animation_preferences
                 )
             )
-            element_id_filter = ov_filters.MatchFilter.new(
+            element_id_filter = ov_filters.MatchFilter(
                 attribute="element_id",
                 is_enabled=True,
                 skip_on_empty=True,
@@ -341,7 +341,7 @@ with st.sidebar:
             st.write(token_animation_segments)
 
     with st.expander("Connection Filters", expanded=True):
-        attribute_range_filter_input = ov_filters.RangeFilter.new(
+        attribute_range_filter_input = ov_filters.RangeFilter(
             attribute="count",
             is_enabled=True,
             rng=st.slider(
@@ -354,7 +354,7 @@ with st.sidebar:
         )
 
     with st.expander("Activity filters", expanded=False):
-        root_node_filter = ov_filters.MatchFilter.new(
+        root_node_filter = ov_filters.MatchFilter(
             attribute="EntityType",
             is_enabled=True,
             skip_on_empty=True,
@@ -373,8 +373,8 @@ dot_visualizer_config = BackendConfig(
     shader_groping_key=SHADER_GROPING_ATTR,
     shader_groups_color=ATTR_VAL_TO_COLOR_MAP,
     layout_preferences=layout_preferences,
-    visualize_start_end_flag=is_process_start_end_visualized,
-    start_end_nodes_per_cluster=start_end_nodes_per_cluster,
+    show_start_end_nodes=is_process_start_end_visualized,
+    show_start_end_nodes_per_cluster=start_end_nodes_per_cluster,
     node_filter=root_node_filter,
     # edge_filter=DummyFilter.new(is_passing=True),
     edge_filter=attribute_range_filter_input,

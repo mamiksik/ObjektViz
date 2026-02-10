@@ -1,5 +1,4 @@
 import abc
-import dataclasses
 import typing
 
 import matplotlib
@@ -10,11 +9,15 @@ if typing.TYPE_CHECKING:
     from objektviz.backend.BackendConfig import BackendConfig
 
 
-@dataclasses.dataclass
-class AbstractShader:
-    config: "BackendConfig" = dataclasses.field(repr=False)
+class AbstractShader(abc.ABC):
+    config: "BackendConfig"
     cmap: str
     leading_attribute: str
+
+    def __init__(self, config: "BackendConfig", cmap: str, leading_attribute: str):
+        self.config = config
+        self.cmap = cmap
+        self.leading_attribute = leading_attribute
 
     @abc.abstractmethod
     def pen_width(self, entity: neo4j.graph.Entity | dict):

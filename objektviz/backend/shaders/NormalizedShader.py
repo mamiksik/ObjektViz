@@ -8,11 +8,10 @@ from matplotlib import pyplot as plt
 from objektviz.backend.shaders.AbstractShader import AbstractShader
 
 
-@dataclass(kw_only=True)
 class NormalizedShader(AbstractShader):
     upper_bound: int | float = float("-inf")
     lower_bound: int | float = float("inf")
-    values: list = field(default_factory=lambda: [])
+    values: list = []
 
     @staticmethod
     def clamp(_min, value, _max):

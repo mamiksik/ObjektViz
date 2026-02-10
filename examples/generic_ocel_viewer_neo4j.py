@@ -158,9 +158,9 @@ with objektviz_sidebar:
     )
 
     # This filter will be used to ensure that DFC_C and EventClass of the sampled traces are always visible
-    token_replay_element_filter = ov_filters.AndFilter.new([
+    token_replay_element_filter = ov_filters.AndFilter([
         show_only_sampled_elements_filter,
-        ov_filters.MatchFilter.new(
+        ov_filters.MatchFilter(
             attribute="element_id",
             values=active_element_ids,
             skip_on_empty=True,
@@ -181,14 +181,14 @@ with objektviz_sidebar:
             key_prefix="dfc",
         )
 
-        root_edge_filter = ov_filters.OrFilter.new([
+        root_edge_filter = ov_filters.OrFilter([
             token_replay_element_filter,
             dfc_frequency_filter
         ])
 
     with st.expander("Event Class Filters", expanded=True):
-        node_filter_entity_type = ov_filters.NotFilter.new(
-            ov_filters.MatchFilter.new(
+        node_filter_entity_type = ov_filters.NotFilter(
+            ov_filters.MatchFilter(
                 attribute="EntityType",
                 is_enabled=True,
                 skip_on_empty=False,  # If no entity types are selected, filter should return false for all items
@@ -207,9 +207,9 @@ with objektviz_sidebar:
             key_prefix="event_class",
         )
 
-        root_node_filter = ov_filters.OrFilter.new([
+        root_node_filter = ov_filters.OrFilter([
             token_replay_element_filter,
-            ov_filters.AndFilter.new([node_filter_entity_type, event_class_frequency_filter])
+            ov_filters.AndFilter([node_filter_entity_type, event_class_frequency_filter])
         ])
 
 

@@ -1,5 +1,3 @@
-from dataclasses import dataclass, field
-
 import matplotlib
 import neo4j.graph
 from matplotlib import pyplot as plt
@@ -8,9 +6,8 @@ from sklearn.preprocessing import RobustScaler
 from objektviz.backend.shaders.AbstractShader import AbstractShader
 
 
-@dataclass(kw_only=True)
 class RobustShader(AbstractShader):
-    values: list = field(default_factory=lambda: [])
+    values: list = []
     scaler = None
 
     def pen_width(self, entity: neo4j.graph.Entity | dict):

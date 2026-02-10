@@ -156,7 +156,7 @@ class Neo4JEKGRepository(AbstractEKGRepository):
 
         if len(result) == 0:
             return None
-        print(result)
+
         return result[0]['c']
 
     def __init__(self, driver: neo4j.Driver):

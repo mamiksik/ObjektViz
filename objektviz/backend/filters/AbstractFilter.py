@@ -1,8 +1,7 @@
-import dataclasses
 from abc import ABC, abstractmethod
+from typing import Mapping
 
 
-@dataclasses.dataclass(kw_only=True)
 class AbstractFilter(ABC):
     """
     This is a based class for declarative filtering DSL
@@ -15,11 +14,11 @@ class AbstractFilter(ABC):
     your life easier once you learn them
 
     e.g.
-    root_node_filter = DummyFilter.new() # Dummy filter is always passing
+    root_node_filter = DummyFilter() # Dummy filter is always passing
     if st.checkbox("Filtering is enabled"):
-        root_node_filter = AndFilter.new([
-            MatchFilter.new(attribute="EntityType", ["Equipment"]),
-            RangeFilter.new(
+        root_node_filter = AndFilter([
+            MatchFilter(attribute="EntityType", ["Equipment"]),
+            RangeFilter(
                 attribute="EntityType",
                 rng=st.slider("Freq. range", min_value=0.0, max_value=100.0),
             )
@@ -29,5 +28,5 @@ class AbstractFilter(ABC):
     """
 
     @abstractmethod
-    def is_passing(self, entity):
+    def is_passing(self, entity: Mapping):
         raise NotImplementedError

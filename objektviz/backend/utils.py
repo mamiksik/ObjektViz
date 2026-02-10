@@ -34,6 +34,7 @@ def to_lbl(value) -> str:
 
 
 def extrapolate_color(min_freq: int, max_freq: int, value: int, cmap: str):
+    """Extrapolate color based on value and bounds, with clamping to avoid extreme colors"""
     if max_freq == min_freq:
         normalized_value = 1
     else:
@@ -43,7 +44,3 @@ def extrapolate_color(min_freq: int, max_freq: int, value: int, cmap: str):
     colormap = plt.get_cmap(cmap)
     color = colormap(normalized_value)
     return mplt.colors.rgb2hex(color)
-
-
-def robust_scaler(iqr, median, value):
-    return (value - median) / iqr

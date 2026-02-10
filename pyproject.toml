@@ -30,5 +30,7 @@ objektviz_frontend = ["frontend/build/**/*", "pyproject.toml"]
 
 [dependency-groups]
 dev = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.7.1",
     "ruff>=0.14.13",
 ]

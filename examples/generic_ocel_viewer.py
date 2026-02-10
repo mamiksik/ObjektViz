@@ -172,8 +172,8 @@ with objektviz_sidebar:
         )
 
     with st.expander("Event Class Filters", expanded=True):
-        node_filter_entity_type = ov_filters.NotFilter.new(
-            ov_filters.MatchFilter.new(
+        node_filter_entity_type = ov_filters.NotFilter(
+            ov_filters.MatchFilter(
                 attribute="EntityType",
                 is_enabled=True,
                 skip_on_empty=False,  # If no entity types are selected, filter should return false for all items
@@ -192,7 +192,7 @@ with objektviz_sidebar:
             key_prefix="event_class",
         )
 
-        root_node_filter = ov_filters.AndFilter.new(
+        root_node_filter = ov_filters.AndFilter(
             [node_filter_entity_type, event_class_frequency_filter]
         )
 

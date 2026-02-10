@@ -5,9 +5,12 @@ import numpy as np
 from objektviz.backend.shaders.NormalizedShader import NormalizedShader
 
 
-@dataclasses.dataclass
 class PercentileShader(NormalizedShader):
     percentile_range: tuple[int, int]
+
+    def __init__(self, config, cmap, leading_attribute, percentile_range: tuple[int, int]):
+        super().__init__(config, cmap, leading_attribute)
+        self.percentile_range = percentile_range
 
     def update_bounds(self, entity: neo4j.graph.Entity):
         # In case the attribute is not present, default to self.lower_bound to make the element visible

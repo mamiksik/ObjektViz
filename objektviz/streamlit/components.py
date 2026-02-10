@@ -279,7 +279,7 @@ def preferences_group(
         )
 
     with st.expander("Animation preferences", expanded=False):
-        show_only_sampled_elements_filter = ov_filters.DummyFilter.new(
+        show_only_sampled_elements_filter = ov_filters.DummyFilter(
             is_passing=not st.toggle(
                 "Hide connections and classes not contained in the sample",
                 help="If enabled, only the elements (nodes and edges) that are part of the sampled token traces will be shown in the visualization.",
@@ -360,7 +360,7 @@ def token_replay_input(
             st.write(f"Found samples total: {len(sampled_entity_ids)}")
 
         if len(sampled_entity_ids) == 0:
-            return ov_filters.DummyFilter.new(is_passing=False), None, None, None
+            return ov_filters.DummyFilter(is_passing=False), None, None, None
 
         sampled_traces = queries.get_process_executions(class_type, sampled_entity_ids)
         active_element_ids, token_animation_segments, replay_metadata = (
@@ -371,7 +371,7 @@ def token_replay_input(
                 token_replay_preferences,
             )
         )
-        element_filter = ov_filters.MatchFilter.new(
+        element_filter = ov_filters.MatchFilter(
             attribute="element_id",
             is_enabled=True,
             skip_on_empty=True,
@@ -402,9 +402,9 @@ def attribute_range_filter_input(
         key=None if key is None else f"{key}_enabled",
     )
     if min_value == max_value:
-        range_filter = ov_filters.DummyFilter.new(is_passing=True)
+        range_filter = ov_filters.DummyFilter(is_passing=True)
     else:
-        range_filter = ov_filters.RangeFilter.new(
+        range_filter = ov_filters.RangeFilter(
             attribute=on_attribute,
             is_enabled=is_enabled,
             rng=st.slider(
@@ -418,12 +418,12 @@ def attribute_range_filter_input(
             ),
         )
 
-    return ov_filters.AndFilter.new(
+    return ov_filters.AndFilter(
         [
-            ov_filters.MatchFilter.new(
-                attribute="EntityType", values=[for_entity_type]
+            ov_filters.MatchFilter(
+                attribute="EntityType", values=[for_entity_type], is_enabled=True
             ),
-            range_filter,  # if is_enabled else ov_filters.DummyFilter.new(is_passing=True)
+            range_filter,  # if is_enabled else ov_filters.DummyFilter(is_passing=True)
         ]
     )
 
@@ -760,7 +760,7 @@ def frequency_filter_per_entity_type(
 
         filters.append(range_filter)
 
-    return ov_filters.OrFilter.new(filters)
+    return ov_filters.OrFilter(filters)
 
 
 def trace_variants(*, class_type):

@@ -1,19 +1,16 @@
-import dataclasses
-
-import neo4j.graph
+from typing import Mapping
 
 from objektviz.backend.filters.AbstractFilter import AbstractFilter
 
 
-@dataclasses.dataclass
 class AndFilter(AbstractFilter):
+    """ Combines multiple filters, only passing elements that pass all the filters """
     filters: list[AbstractFilter]
 
-    @classmethod
-    def new(cls, filters: list[AbstractFilter]):
-        return cls(filters=filters)
+    def __init__(self, filters: list[AbstractFilter]):
+        self.filters = filters
 
-    def is_passing(self, entity: neo4j.graph.Entity):
+    def is_passing(self, entity: Mapping):
         for fltr in self.filters:
             if not fltr.is_passing(entity):
                 return False
