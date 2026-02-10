@@ -98,6 +98,8 @@ available_colors = [
 color_map = {
     et: available_colors[i % len(available_colors)] for i, et in enumerate(ENTITY_TYPES)
 }
+with debug_tab:
+    st.write("Entity color maps:", color_map)
 
 SHADING_PREFERENCES = DefaultShadingPreferences(
     group_by="EntityType", color_map=color_map
@@ -224,6 +226,7 @@ with debug_tab:
     # TODO: I when this is split on multiple linces I get:
     # "line 1 ov_components.debug_objektviz_backend( ^ SyntaxError: '(' was never closed"
     ov_components.debug_objektviz_backend(objektviz_config, event_classes_db, dfc_db, dot_src)
+    st.write(*wrapped_values)
 
 # Prepare the payload for the frontend graph component
 graphviz_payload = GraphFrontendPayload(

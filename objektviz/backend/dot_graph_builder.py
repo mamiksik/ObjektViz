@@ -39,8 +39,8 @@ def generate_dot_source(
 
     # 1st pass: Decide on node visibility and gather global information (such as maximal visible node frequency)
     visible_node_ids = set()
-    start_nodes = []
-    end_nodes = []
+    # start_nodes = []
+    # end_nodes = []
 
     for node in nodes:
         if not node.is_visible:
@@ -49,11 +49,11 @@ def generate_dot_source(
         visible_node_ids.add(node.element_id)
         node_shaders[node.shader_key].update_bounds(node.entity)
 
-        if node.process_start_count is not None:
-            start_nodes.append(node)
-
-        if node.process_end_count is not None:
-            end_nodes.append(node)
+        # if node.process_start_count is not None:
+        #     start_nodes.append(node)
+        #
+        # if node.process_end_count is not None:
+        #     end_nodes.append(node)
 
     sync_edges_ids = set()
     connected_nodes_ids = set()
@@ -93,6 +93,18 @@ def generate_dot_source(
 
         elements_to_render.append(node)
         node_rank.setdefault(node.activity_name, []).append(to_lbl(node.element_id))
+
+        if config.show_start_end_nodes and (node.process_start_count and node.process_start_count > 0):
+            entity_stub = {
+                config.dfc_preferences.shading_attr: node.process_start_count
+            }
+            edge_shaders[node.shader_key].update_bounds(entity_stub)
+
+        if config.show_start_end_nodes and (node.process_end_count and node.process_end_count > 0):
+            entity_stub = {
+                config.dfc_preferences.shading_attr: node.process_end_count
+            }
+            edge_shaders[node.shader_key].update_bounds(entity_stub)
 
     edge_node_map = {}
     node_edge_map = {}
@@ -297,12 +309,16 @@ class DotGraphDescriptorBuilder:
                 if self.config.dfc_preferences.use_shading_color_on_start_end_edge:
                     shading_color = self.edge_shaders[node.shader_key].shading_color(entity_stub)
 
+                if self.config.dfc_preferences.lower_start_end_edge_opacity:
+                    shading_color = f"{shading_color}40"
+
                 graph.edge(
                     local_start_id,
                     to_lbl(node.element_id),
                     id=edge_id,
                     label=f"{node.process_start_count:,}",
                     penwidth=str(pen_width),
+                    fontname="Helvetica",
                     style="dashed",
                     # color="#00800050",
                     color=shading_color,
@@ -340,9 +356,12 @@ class DotGraphDescriptorBuilder:
                 }
                 pen_width = self.edge_shaders[node.shader_key].pen_width(entity_stub)
 
-                shading_color = "#B31B1B50"
+                shading_color = "#B31B1B"
                 if self.config.dfc_preferences.use_shading_color_on_start_end_edge:
                     shading_color = self.edge_shaders[node.shader_key].shading_color(entity_stub)
+
+                if self.config.dfc_preferences.lower_start_end_edge_opacity:
+                    shading_color = f"{shading_color}40"
 
                 graph.edge(
                     to_lbl(node.element_id),
@@ -350,6 +369,7 @@ class DotGraphDescriptorBuilder:
                     id=edge_id,
                     label=f"{node.process_end_count:,}",
                     penwidth=str(pen_width),
+                    fontname="Helvetica",
                     style="dashed",
                     color=shading_color,
                     arrowsize="2",

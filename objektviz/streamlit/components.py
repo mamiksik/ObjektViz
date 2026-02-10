@@ -165,6 +165,11 @@ def dfc_appearance_input(
             value=True,
             help="If enabled, the edges representing process start and end will be shaded with the same color as the connected nodes, instead of using plain green/red color. This can help in visually associating start/end edges with their respective clusters."
         ),
+        lower_start_end_edge_opacity=st.toggle(
+            "Lower opacity of start/end edges",
+            value=True,
+            help="If enabled, the edges representing process start and end will have lower opacity to not overpower the nodes and other edges in the visualization. This can help in reducing visual clutter and making the overall graph easier to read."
+        ),
         use_x_labels=st.toggle("Use xlabels", help="If true, xlabels are used for caption, this means the labels are not taking into account while computing layout. It might produce more compact and less convoluted routes for edges, but labels might not be visible."),
     )
 

@@ -86,6 +86,9 @@ class DFCPreferences:
     # else plain green/red color will be used for start/end edges respectively
     use_shading_color_on_start_end_edge: bool = False
 
+    # If true, the start/end edges will have lower opacity to not overpower the nodes and other edges
+    lower_start_end_edge_opacity: bool = False
+
 
 @dataclasses.dataclass
 class BackendConfig:
