@@ -287,11 +287,16 @@ class DotGraphDescriptorBuilder:
                 self.node2node.setdefault(local_start_id, []).append(node.element_id)
                 self.node2node.setdefault(node.element_id, []).append(local_start_id)
 
-                pen_width = self.edge_shaders[node.shader_key].pen_width(
-                    {
-                        self.config.event_class_preferences.shading_attr: node.process_start_count
-                    }
-                )
+
+                entity_stub = {
+                    self.config.event_class_preferences.shading_attr: node.process_start_count
+                }
+                pen_width = self.edge_shaders[node.shader_key].pen_width(entity_stub)
+
+                shading_color = "#00800050"
+                if self.config.dfc_preferences.use_shading_color_on_start_end_edge:
+                    shading_color = self.edge_shaders[node.shader_key].shading_color(entity_stub)
+
                 graph.edge(
                     local_start_id,
                     to_lbl(node.element_id),
@@ -299,7 +304,8 @@ class DotGraphDescriptorBuilder:
                     label=f"{node.process_start_count:,}",
                     penwidth=str(pen_width),
                     style="dashed",
-                    color="#00800050",
+                    # color="#00800050",
+                    color=shading_color,
                     arrowsize="2",
                 )
 
@@ -328,11 +334,16 @@ class DotGraphDescriptorBuilder:
                 self.node2node.setdefault(local_end_id, []).append(node.element_id)
                 self.node2node.setdefault(node.element_id, []).append(local_end_id)
 
-                pen_width = self.edge_shaders[node.shader_key].pen_width(
-                    {
-                        self.config.event_class_preferences.shading_attr: node.process_end_count
-                    }
-                )
+
+                entity_stub = {
+                    self.config.event_class_preferences.shading_attr: node.process_end_count
+                }
+                pen_width = self.edge_shaders[node.shader_key].pen_width(entity_stub)
+
+                shading_color = "#B31B1B50"
+                if self.config.dfc_preferences.use_shading_color_on_start_end_edge:
+                    shading_color = self.edge_shaders[node.shader_key].shading_color(entity_stub)
+
                 graph.edge(
                     to_lbl(node.element_id),
                     local_end_id,
@@ -340,7 +351,7 @@ class DotGraphDescriptorBuilder:
                     label=f"{node.process_end_count:,}",
                     penwidth=str(pen_width),
                     style="dashed",
-                    color="#B31B1B50",
+                    color=shading_color,
                     arrowsize="2",
                 )
 

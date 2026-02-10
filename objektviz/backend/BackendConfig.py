@@ -82,6 +82,10 @@ class DFCPreferences:
     # Minimal and maximal edge line thickens. e.g (1, 15)
     pen_width_range: tuple[int, int]
 
+    # If true, the edge will be shaded with the same color as the connected nodes,
+    # else plain green/red color will be used for start/end edges respectively
+    use_shading_color_on_start_end_edge: bool = False
+
 
 @dataclasses.dataclass
 class BackendConfig:

@@ -160,6 +160,11 @@ def dfc_appearance_input(
             index=edge_attributes.index(defaults.shading),
             help="Numeric attribute used for edge shading (e.g., frequency or average transition duration)",
         ),
+        use_shading_color_on_start_end_edge=st.toggle(
+            "Use shading color on start/end edges",
+            value=True,
+            help="If enabled, the edges representing process start and end will be shaded with the same color as the connected nodes, instead of using plain green/red color. This can help in visually associating start/end edges with their respective clusters."
+        ),
         use_x_labels=st.toggle("Use xlabels", help="If true, xlabels are used for caption, this means the labels are not taking into account while computing layout. It might produce more compact and less convoluted routes for edges, but labels might not be visible."),
     )
 
