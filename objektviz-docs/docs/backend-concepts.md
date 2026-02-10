@@ -4,19 +4,25 @@ The ObjektViz backend has one job: transform your Event Knowledge Graph data int
 
 
 You can think of the data flow in the following diagram:
-```
-  Repository (Database Connection) ──────┐
-  Preferences ─────┐                     │
-                   ├─► BackendConfig ────├─► from_[db]_to_dot_elements ─► generate_dot_source ─► DOT Source
-  Filters ─────────┘                     │
-  shaders_factory ───────────────────────┘
-```
 
-1. **Repository**: Gets data from your database (Neo4j, KuzuDB, etc.)
-2. **BackendConfig**: Combines all your preferences (layout, filters, shaders) into one configuration
-3. **from_[db]_to_dot_elements**: Dot elements representing nodes and edges in the graph and can be converted to DOT string.
-4. **generate_dot_source**: Takes dot elements, backend configuration and generates a DOT source string.
-5. **DOT Source**: GraphViz-compatible graph description that the frontend renders
+[//]: # (```)
+[//]: # (  Repository &#40;Database Connection&#41; ──────┐)
+[//]: # (  Preferences ─────┐                     │)
+[//]: # (                   ├─► BackendConfig ────├─► from_[db]_to_dot_elements ─► generate_dot_source ─► DOT Source)
+[//]: # (  Filters ─────────┘                     │)
+[//]: # (  shaders_factory ───────────────────────┘)
+[//]: # (```)
+
+<figure markdown="span">
+  ![Image title](assets/objektviz-arch.png){ width="500" }
+</figure>
+
+* **Repository (Purple)**: Gets data from your database (Neo4j, KuzuDB, etc.)
+* **BackendConfig (Green)**: Combines all your preferences (layout, filters, shaders) into one configuration
+* **from_[db]_to_dot_elements (Orange)**: Dot elements representing nodes and edges in the graph and can be converted to DOT string.
+* **generate_dot_source (Orange)**: Takes dot elements, backend configuration and generates a DOT source string.
+* **DOT Source**: GraphViz-compatible graph description that the frontend renders that is paased to ObjektViz Frontend component (Blue).
+
 
 
 ## Repository
@@ -50,7 +56,7 @@ Preferences are structured data classes that define how your visualization shoul
 
 These get created by the control components and passed to BackendConfig. Most users don't create these directly.
 
-### Filters - What to Show
+## Filters
 Filters decide which nodes and edges appear in your visualization:
 
 ```python

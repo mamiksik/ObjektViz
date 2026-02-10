@@ -1,10 +1,11 @@
 # Getting Started with 📦 ObjektViz
 
+<figure markdown="span">
+  ![Image title](assets/generic_ocel_visualizer.png){ width="700" }
+</figure>
+
 ObjektViz is a visualizer for object-centric process models that enables users to explore and analyze even very complex processes involving multiple interacting objects. Traditional process mining tools struggle with complex, multi-object processes. ObjektViz is designed specifically for exploring these object-centric processes through customizable, interactive dashboards.
 
-[//]: # (!!! question "Why use ObjektViz?")
-[//]: # ()
-[//]: # (    Traditional process mining tools struggle with complex, multi-object processes. ObjektViz is designed specifically for exploring these object-centric processes through customizable, interactive dashboards.)
 
 !!! tip "Features"
 
@@ -98,14 +99,13 @@ graph LR
     style E fill:#fce4ec
     style F fill:#f1f8e9 
 ```
-
-### Database Connection (KuzuDB)
-Start the dashboard by establishing a connection to your EKG database
 !!! tip
 
     You are free to structure your dashboard as you like, the above is just a common pattern we use in our examples. The key is to have a Streamlit page where you can place your control components and visualization components.
 
 #### 1. Set up database connection
+
+Start the dashboard by establishing a connection to your EKG database
 ```python
 queries = ov_kuzu.KuzuEKGRepository(...)
 ...
@@ -213,6 +213,12 @@ ObjektViz works with **Event Knowledge Graphs (EKGs)** - graph representations o
 | **:Class nodes** | Event classes (aggregated events) | "Order Placed", "Payment Processed"      |
 | **:DF_C edges** | Directly-follows relationships | Order Placed → Payment Processed         |
 | **:SYNC edges** | Cross-entity synchronizations | Place Order (Item) ↔ Place Order (Order) |
+
+!!! info "EKG Metamodel"
+
+    <figure markdown="span">
+      ![Image title](assets/metamodel-objektviz.png){ width="400" }
+    </figure>
 
 ### Database Options
 
