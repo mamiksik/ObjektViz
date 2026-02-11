@@ -84,15 +84,25 @@ DEFAULT_CONNECTION_PREFERENCES = DefaultConnectionPreferences()
 DEFAULT_EVENT_CLASS_PREFERENCES = DefaultEventClassPreferences()
 
 available_colors = [
-    "Blues",
-    "Oranges",
-    "Reds",
-    "Greens",
-    "Purples",
-    # "Greys",
-    "YlGnBu",
-    "YlOrRd",
-    "PuRd",
+    ("cmap", "Blues"),
+    # ("hex", "#1f77b4"),  # muted blue
+    ("cmap", "Oranges"),
+    # ("hex", "#ff7f0e"),  # safety orange
+    ("cmap", "Greens"),
+    # ("hex", "#2ca02c"),  # cooked asparagus green
+    ("hex", "#d62728"),  # brick red
+    ("hex", "#9467bd"),  # muted purple
+    ("hex", "#8c564b"),  # chestnut brown
+    ("hex", "#e377c2"),  # raspberry yogurt pink
+    # "Blues",
+    # "Oranges",
+    # "Reds",
+    # "Greens",
+    # "Purples",
+    # # "Greys",
+    # "YlGnBu",
+    # "YlOrRd",
+    # "PuRd",
 ]
 
 color_map = {

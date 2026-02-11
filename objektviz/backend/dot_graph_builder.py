@@ -37,23 +37,14 @@ def generate_dot_source(
     else:
         edges = sorted(edges, key=lambda n: n.element_id)
 
-    # 1st pass: Decide on node visibility and gather global information (such as maximal visible node frequency)
+    # 1st pass: Decide on node visibility and collect relevant ids and shader bounds for visible nodes and edges
     visible_node_ids = set()
-    # start_nodes = []
-    # end_nodes = []
 
     for node in nodes:
         if not node.is_visible:
             continue
 
         visible_node_ids.add(node.element_id)
-        node_shaders[node.shader_key].update_bounds(node.entity)
-
-        # if node.process_start_count is not None:
-        #     start_nodes.append(node)
-        #
-        # if node.process_end_count is not None:
-        #     end_nodes.append(node)
 
     sync_edges_ids = set()
     connected_nodes_ids = set()
@@ -80,7 +71,6 @@ def generate_dot_source(
             connected_nodes_ids.add(edge.start_element_id)
             connected_nodes_ids.add(edge.end_element_id)
             visible_edges_ids.add(edge.element_id)
-            edge_shaders[edge.shader_key].update_bounds(edge.entity)
 
     # Pass 2: Assign styled and visible nodes and edges into correct sub-graph
     elements_to_render = list()
@@ -92,6 +82,7 @@ def generate_dot_source(
             continue
 
         elements_to_render.append(node)
+        node_shaders[node.shader_key].update_bounds(node.entity)
         node_rank.setdefault(node.activity_name, []).append(to_lbl(node.element_id))
 
         if config.show_start_end_nodes and (node.process_start_count and node.process_start_count > 0):
@@ -134,6 +125,8 @@ def generate_dot_source(
         node_node_map.setdefault(edge.end_element_id, []).append(edge.start_element_id)
 
         elements_to_render.append(edge)
+        if not edge.is_sync_edge:
+            edge_shaders[edge.shader_key].update_bounds(edge.entity)
 
     # Pass 3: Built the graph
     builder = DotGraphDescriptorBuilder(

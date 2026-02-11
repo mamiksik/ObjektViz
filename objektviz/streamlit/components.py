@@ -103,11 +103,7 @@ def builtin_shader_selector() -> Callable[
 
     # We know assigning lambdas to variables is not best practice, but here its just more handy
     if shader_type == "Normalized":
-        shader_factory = (  # noqa: E731
-            lambda config, leading_attribute, cmap: ov_shaders.NormalizedShader(
-                config=config, leading_attribute=leading_attribute, cmap=cmap
-            )
-        )
+        shader_factory = ov_shaders.normalized_shader_factory()
     elif shader_type == "Percentile":
         shader_range = st.slider(
             "Percentile range",
@@ -116,24 +112,9 @@ def builtin_shader_selector() -> Callable[
             value=(5.0, 95.0),
             step=2.5,
         )
-        shader_factory = (  # noqa: E731
-            lambda shader_range,
-            config,
-            leading_attribute,
-            cmap: ov_shaders.PercentileShader(
-                config=config,
-                leading_attribute=leading_attribute,
-                cmap=cmap,
-                percentile_range=shader_range,
-            )
-        )
-        shader_factory = functools.partial(shader_factory, shader_range)
+        shader_factory = ov_shaders.percentile_shader_factory(percentile_range=shader_range)
     elif shader_type == "RobustScaler":
-        shader_factory = (  # noqa: E731
-            lambda config, leading_attribute, cmap: ov_shaders.RobustShader(
-                config=config, leading_attribute=leading_attribute, cmap=cmap
-            )
-        )
+        shader_factory = ov_shaders.robust_shader_factory()
     else:
         raise ValueError(f"Shader type {shader_type} not recognized")
 
