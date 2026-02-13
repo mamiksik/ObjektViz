@@ -95,14 +95,14 @@ class DotEdge(AbstractDotElement):
     @property
     def penwidth(self):
         if self.is_sync_edge:
-            return 5
+            return 3
 
         return self.shaders[self.shader_key].pen_width(self.entity)
 
     @property
     def color(self):
         if self.is_sync_edge:
-            return "#4A4A4A50"
+            return "#4A4A4A25"
 
         return self.shaders[self.shader_key].shading_color(self.entity)
 

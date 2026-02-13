@@ -49,6 +49,7 @@ class DefaultConnectionPreferences:
     pen_range: tuple[int, int] = (2, 10)  # Edge line thickness range
     title: str = "frequency"  # Title shows DFC Type by default
     shading: str = "frequency"  # Attributes used for edge shading (must be numeric)
+    hide_sync_edges: bool = False # Whether to hide edges that represent synchronous relationships (e.g. between an event and its entity)
 
 
 @dataclass

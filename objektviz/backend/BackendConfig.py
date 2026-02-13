@@ -89,6 +89,9 @@ class DFCPreferences:
     # If true, the start/end edges will have lower opacity to not overpower the nodes and other edges
     lower_start_end_edge_opacity: bool = False
 
+    # If true, the :SYNC edges will be hidden, this is useful when there are too many :SYNC edges that make the graph unreadable
+    hide_sync_edges: bool = False
+
 
 @dataclasses.dataclass
 class BackendConfig:

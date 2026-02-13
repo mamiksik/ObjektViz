@@ -152,6 +152,7 @@ def dfc_appearance_input(
             help="If enabled, the edges representing process start and end will have lower opacity to not overpower the nodes and other edges in the visualization. This can help in reducing visual clutter and making the overall graph easier to read."
         ),
         use_x_labels=st.toggle("Use xlabels", help="If true, xlabels are used for caption, this means the labels are not taking into account while computing layout. It might produce more compact and less convoluted routes for edges, but labels might not be visible."),
+        hide_sync_edges=st.toggle("Hide :SYNC edges", value=defaults.hide_sync_edges, help="If enabled, the :SYNC edges will be hidden, this is useful when there are too many :SYNC edges that make the graph unreadable"),
     )
 
 

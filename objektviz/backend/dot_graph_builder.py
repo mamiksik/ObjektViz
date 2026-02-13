@@ -83,7 +83,8 @@ def generate_dot_source(
 
         elements_to_render.append(node)
         node_shaders[node.shader_key].update_bounds(node.entity)
-        node_rank.setdefault(node.activity_name, []).append(to_lbl(node.element_id))
+        # Store the raw element id for later mapping and synthetic-edge creation
+        node_rank.setdefault(node.activity_name, []).append(node.element_id)
 
         if config.show_start_end_nodes and (node.process_start_count and node.process_start_count > 0):
             entity_stub = {
@@ -124,9 +125,12 @@ def generate_dot_source(
         node_node_map.setdefault(edge.start_element_id, []).append(edge.end_element_id)
         node_node_map.setdefault(edge.end_element_id, []).append(edge.start_element_id)
 
-        elements_to_render.append(edge)
         if not edge.is_sync_edge:
+            elements_to_render.append(edge)
             edge_shaders[edge.shader_key].update_bounds(edge.entity)
+
+        if edge.is_sync_edge and not config.dfc_preferences.hide_sync_edges:
+            elements_to_render.append(edge)
 
     # Pass 3: Built the graph
     builder = DotGraphDescriptorBuilder(
@@ -386,6 +390,56 @@ class DotGraphDescriptorBuilder:
             graph.body.append(f"{{rank=same; {elements};}};")
 
         if self.config.layout_preferences.force_same_rank_for_event_class:
+            # Build a set of all node ids across all ranks
+            all_nodes = set()
+            for elems in self.node_rank.values():
+                all_nodes.update(elems)
+
+            # For each rank: emit a rank=same statement and create synthetic invisible
+            # edges from one representative node (first element) to all nodes outside
+            # that rank. These invisible edges help the layout algorithm to separate
+            # ranks. We also update edge2node/node2edge/node2node maps so downstream
+            # code can map synthetic edges back to original nodes.
+            created_edges = set()
             for key, elements in self.node_rank.items():
-                elements = ";".join([f'"{e}"' for e in elements])
-                graph.body.append(f"{{rank=same; {elements};}};")
+                if not elements:
+                    continue
+
+                # Emit rank constraint using the node labels used in the graph
+                quoted = ";".join([f'"{to_lbl(e)}"' for e in elements])
+                graph.body.append(f"{{rank=same; {quoted};}};")
+
+                # Representative node (use the first element of the rank)
+                rep = elements[0]
+
+                # Create invisible edges from rep to all nodes outside this rank
+                outside = all_nodes - set(elements)
+                for other in outside:
+                    # Avoid self-loops and duplicate synthetic edges
+                    if rep == other:
+                        continue
+
+                    # Create a stable edge id for the synthetic edge
+                    edge_id = f"rank_invis_{to_lbl(rep)}_{to_lbl(other)}"
+                    if edge_id in created_edges or edge_id in self.edge2node:
+                        continue
+
+                    # Add mapping entries using raw element ids
+                    self.edge2node.setdefault(edge_id, []).extend([rep, other])
+                    self.node2edge.setdefault(rep, []).append(edge_id)
+                    self.node2edge.setdefault(other, []).append(edge_id)
+                    self.node2node.setdefault(rep, []).append(other)
+                    self.node2node.setdefault(other, []).append(rep)
+
+                    # Add the invisible edge to the dot graph (use to_lbl for node ids)
+                    graph.edge(
+                        to_lbl(rep),
+                        to_lbl(other),
+                        id=edge_id,
+                        style="invis",
+                        color="transparent",
+                        arrowhead="none",
+                        constraint="true",
+                    )
+
+                    created_edges.add(edge_id)
