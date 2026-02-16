@@ -38,6 +38,20 @@ The filters can be bind to streamlit input components to create interactive dash
     )
     ```
 
+## Highlighting
+Even well layout and styled object-centric process models can be overwhelming due to their complexity. ObjektViz includes few tricks to manage complexity, one of them is highlighting. When you hover over a node or edge, the related nodes and edges are highlighted to help you understand the local structure and interactions around that element. This makes it easier to explore the process model and understand how different objects are connected and interact with each other.
+
+!!! example "Before"
+
+    <figure markdown="span">
+          ![Image title](assets/no-highlighting.png){ width="550" }
+    </figure>
+
+!!! example "After"
+    <figure markdown="span">
+          ![Image title](assets/highlighting-active.png){ width="550" }
+    </figure>
+
 ## Token Replay 
 Understand the dynamics of your process by replaying tokens through the process model. This feature allows you to visualize how different objects interact over time within the process.
 <figure markdown="span">
