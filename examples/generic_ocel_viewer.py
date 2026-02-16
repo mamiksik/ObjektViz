@@ -42,10 +42,12 @@ if "kuzu_dataset_selector" not in st.session_state:
 
 database_path = DATASETS[st.session_state.kuzu_dataset_selector]
 
+
 @st.cache_resource
 def connection(database_path: pathlib.Path):
     db = kuzu.Database(database_path)
     return kuzu.Connection(db)
+
 
 conn = connection(database_path)
 queries = ov_kuzu.KuzuEKGRepository(conn)

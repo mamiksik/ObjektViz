@@ -1,13 +1,16 @@
-from typing import Mapping
+import typing
 
-import neo4j.graph
 from sklearn.preprocessing import RobustScaler
 
-from objektviz.backend.shaders.AbstractShader import AbstractShader
+from objektviz.backend.shaders.AbstractShader import AbstractShader, ColorT
+
+if typing.TYPE_CHECKING:
+    from objektviz.backend.BackendConfig import BackendConfig
 
 
 def robust_shader_factory():
     return RobustShader
+
 
 class RobustShader(AbstractShader):
     scaler: None | RobustScaler
@@ -23,7 +26,7 @@ class RobustShader(AbstractShader):
         self.values = []
         self.scaler = None
 
-    def pen_width(self, entity: Mapping):
+    def pen_width(self, entity: typing.Mapping):
         pen_min, pen_max = (
             self.config.dfc_preferences.pen_width_range[0],
             self.config.dfc_preferences.pen_width_range[1],
@@ -36,7 +39,7 @@ class RobustShader(AbstractShader):
 
         return max(pen_min, min(pen_max, (pen_max - pen_min) * _value))
 
-    def shading_color(self, entity: Mapping):
+    def shading_color(self, entity: typing.Mapping):
         # In case the attribute is not present, default to self.lower_bound to make the element visible
 
         if self.scaler is None:
@@ -48,7 +51,7 @@ class RobustShader(AbstractShader):
         normalized_value = min(max(0.3, normalized_value), 0.7)  # clamp minimal value
         return self.get_color(normalized_value)
 
-    def update_bounds(self, entity: neo4j.graph.Entity):
+    def update_bounds(self, entity: typing.Mapping):
         # In case the attribute is not present, default to self.lower_bound to make the element visible
         value = self.get_attribute_value(entity, 0)  # Dist is centered around 0
         self.values.append([value])

@@ -1,4 +1,3 @@
-import functools
 from typing import Callable
 
 import numpy as np
@@ -65,10 +64,16 @@ def general_preferences(
     Callable[["BackendConfig", str, str], ov_shaders.AbstractShader],
 ]:
     with st.expander("General preferences"):
-        class_type = st.selectbox("Proclet class type", options=proclet_types, help="Select the proclet class type to visualize")
+        class_type = st.selectbox(
+            "Proclet class type",
+            options=proclet_types,
+            help="Select the proclet class type to visualize",
+        )
 
         is_process_start_end_visualized = st.toggle(
-            "Show process start/end nodes", value=True, help="If enabled, nodes representing process start and end will be shown in the visualization. These are computed based on the 'StartCount' and 'EndCount' attributes of the event classes."
+            "Show process start/end nodes",
+            value=True,
+            help="If enabled, nodes representing process start and end will be shown in the visualization. These are computed based on the 'StartCount' and 'EndCount' attributes of the event classes.",
         )
         start_end_nodes_per_cluster = st.toggle(
             "Start and end nodes per cluster",
@@ -78,8 +83,9 @@ def general_preferences(
         )
 
         enable_path_effects_on_hover = st.toggle(
-            "Enable path effects on hover", value=True,
-            help="If enabled, when hovering over a DFC (edge) in the visualization, a dashed animation effect will be played along the path of the edge. This can help in visually tracing the flow of the process represented by the edge."
+            "Enable path effects on hover",
+            value=True,
+            help="If enabled, when hovering over a DFC (edge) in the visualization, a dashed animation effect will be played along the path of the edge. This can help in visually tracing the flow of the process represented by the edge.",
         )
 
         shader_factory = builtin_shader_selector()
@@ -97,8 +103,9 @@ def builtin_shader_selector() -> Callable[
     ["BackendConfig", str, str], ov_shaders.AbstractShader
 ]:
     shader_type = st.selectbox(
-        "Shader type", options=["Percentile", "Normalized", "RobustScaler"],
-        help="Select the shading algorithm used to map numeric attributes to visual properties like color and thickness. This helps to deal with outliers and varying data distributions effectively."
+        "Shader type",
+        options=["Percentile", "Normalized", "RobustScaler"],
+        help="Select the shading algorithm used to map numeric attributes to visual properties like color and thickness. This helps to deal with outliers and varying data distributions effectively.",
     )
 
     # We know assigning lambdas to variables is not best practice, but here its just more handy
@@ -112,7 +119,9 @@ def builtin_shader_selector() -> Callable[
             value=(5.0, 95.0),
             step=2.5,
         )
-        shader_factory = ov_shaders.percentile_shader_factory(percentile_range=shader_range)
+        shader_factory = ov_shaders.percentile_shader_factory(
+            percentile_range=shader_range
+        )
     elif shader_type == "RobustScaler":
         shader_factory = ov_shaders.robust_shader_factory()
     else:
@@ -126,7 +135,10 @@ def dfc_appearance_input(
 ) -> DFCPreferences:
     return DFCPreferences(
         pen_width_range=st.slider(
-            "DFC width range", min_value=1, max_value=30, value=defaults.pen_range,
+            "DFC width range",
+            min_value=1,
+            max_value=30,
+            value=defaults.pen_range,
             help="Defines the minimal and maximal line thickness used during rendering based on the shading attribute.",
         ),
         caption=st.selectbox(
@@ -144,15 +156,22 @@ def dfc_appearance_input(
         use_shading_color_on_start_end_edge=st.toggle(
             "Use shading color on start/end edges",
             value=True,
-            help="If enabled, the edges representing process start and end will be shaded with the same color as the connected nodes, instead of using plain green/red color. This can help in visually associating start/end edges with their respective clusters."
+            help="If enabled, the edges representing process start and end will be shaded with the same color as the connected nodes, instead of using plain green/red color. This can help in visually associating start/end edges with their respective clusters.",
         ),
         lower_start_end_edge_opacity=st.toggle(
             "Lower opacity of start/end edges",
             value=True,
-            help="If enabled, the edges representing process start and end will have lower opacity to not overpower the nodes and other edges in the visualization. This can help in reducing visual clutter and making the overall graph easier to read."
+            help="If enabled, the edges representing process start and end will have lower opacity to not overpower the nodes and other edges in the visualization. This can help in reducing visual clutter and making the overall graph easier to read.",
         ),
-        use_x_labels=st.toggle("Use xlabels", help="If true, xlabels are used for caption, this means the labels are not taking into account while computing layout. It might produce more compact and less convoluted routes for edges, but labels might not be visible."),
-        hide_sync_edges=st.toggle("Hide :SYNC edges", value=defaults.hide_sync_edges, help="If enabled, the :SYNC edges will be hidden, this is useful when there are too many :SYNC edges that make the graph unreadable"),
+        use_x_labels=st.toggle(
+            "Use xlabels",
+            help="If true, xlabels are used for caption, this means the labels are not taking into account while computing layout. It might produce more compact and less convoluted routes for edges, but labels might not be visible.",
+        ),
+        hide_sync_edges=st.toggle(
+            "Hide :SYNC edges",
+            value=defaults.hide_sync_edges,
+            help="If enabled, the :SYNC edges will be hidden, this is useful when there are too many :SYNC edges that make the graph unreadable",
+        ),
     )
 
 
@@ -199,26 +218,38 @@ def layout_preferences_input(
 
     cont = st.container()
     same_rank_activity = cont.checkbox(
-        "Force same rank per activity", value=defaults.force_same_rank_for_event_class, help="If enabled, all nodes of the same EventType will be on the same rank/level. (The rank is not exlusively reserved for that EventType though, which is limitation of the underlying graphviz engine.)"
+        "Force same rank per activity",
+        value=defaults.force_same_rank_for_event_class,
+        help="If enabled, all nodes of the same EventType will be on the same rank/level. (The rank is not exlusively reserved for that EventType though, which is limitation of the underlying graphviz engine.)",
     )
     exclusive_event_class_ranks_experimental = cont.checkbox(
-        "Exclusive ranks (experimental)", value=False, help="If enabled, each rank/level will be exclusively reserved for a single EventType. This can make the layout more clear and readable, but it can also make the graph much bigger (a lot of gaps) and more sparse, especially if there are many distinct EventTypes. Use with caution.",
+        "Exclusive ranks (experimental)",
+        value=False,
+        help="If enabled, each rank/level will be exclusively reserved for a single EventType. This can make the layout more clear and readable, but it can also make the graph much bigger (a lot of gaps) and more sparse, especially if there are many distinct EventTypes. Use with caution.",
         disabled=not same_rank_activity,
     )
     same_rank_start_end_nodes = cont.checkbox(
-        "Force same rank for process start/end", value=False, help="If enabled, all start nodes will be on the same rank, and all end nodes will be on the same rank."
+        "Force same rank for process start/end",
+        value=False,
+        help="If enabled, all start nodes will be on the same rank, and all end nodes will be on the same rank.",
     )
 
     col1, col2, col3 = st.columns(3)
     return LayoutPreferences(
         force_same_rank_for_event_class=same_rank_activity,
-        exclusive_event_class_ranks_experimental=False if not same_rank_activity else exclusive_event_class_ranks_experimental,
+        exclusive_event_class_ranks_experimental=False
+        if not same_rank_activity
+        else exclusive_event_class_ranks_experimental,
         force_process_start_end_same_rank=same_rank_start_end_nodes,
         sort_event_classes_by_frequency=cont.checkbox(
-            "Sort nodes by frequency", value=True, help="Influences the layout heuristics"
+            "Sort nodes by frequency",
+            value=True,
+            help="Influences the layout heuristics",
         ),
         sort_connections_by_frequency=cont.checkbox(
-            "Sort edges by frequency", value=True, help="Influences the layout heuristics"
+            "Sort edges by frequency",
+            value=True,
+            help="Influences the layout heuristics",
         ),
         rank_direction=col1.selectbox(
             "Graph direction",
@@ -227,15 +258,33 @@ def layout_preferences_input(
             help="Direction of the graph layout: Top to Bottom (TB), Left to Right (LR)",
         ),
         weight_attribute=(
-            st.selectbox("Weight attribute", options=dfc_attributes, index=dfc_attributes.index(defaults.weight_attribute))
-            if st.toggle("Set edge weight", value=(defaults.weight_attribute is not None), help="Used during layout computation, higher weight means 'shorter' and 'straighter' edge. Should be nummeric attribute.")
+            st.selectbox(
+                "Weight attribute",
+                options=dfc_attributes,
+                index=dfc_attributes.index(defaults.weight_attribute),
+            )
+            if st.toggle(
+                "Set edge weight",
+                value=(defaults.weight_attribute is not None),
+                help="Used during layout computation, higher weight means 'shorter' and 'straighter' edge. Should be nummeric attribute.",
+            )
             else None
         ),
         node_separation=col2.number_input(
-            "Node separation", min_value=0.1, max_value=5.0, step=0.1, value=0.5, help="Minimal horizontal spacing between nodes on the same rank/level"
+            "Node separation",
+            min_value=0.1,
+            max_value=5.0,
+            step=0.1,
+            value=0.5,
+            help="Minimal horizontal spacing between nodes on the same rank/level",
         ),
         rank_separation=col3.number_input(
-            "Rank separation", min_value=0.1, max_value=5.0, step=0.1, value=0.5, help="Minimal vertical spacing between ranks/levels"
+            "Rank separation",
+            min_value=0.1,
+            max_value=5.0,
+            step=0.1,
+            value=0.5,
+            help="Minimal vertical spacing between ranks/levels",
         ),
         clustering_keys=(
             st.multiselect(
@@ -244,7 +293,11 @@ def layout_preferences_input(
                 default=defaults.clustering_attribute,
                 help="Select attributes used to create subgraph clusters, order matters (e.g. ['EntityType', 'Location'] will create big clusters for each entity type and within each it will create sub-clusters for each location)",
             )
-            if st.toggle("Enable clustering", value=True, help="Create subgraph clusters based on selected attributes")
+            if st.toggle(
+                "Enable clustering",
+                value=True,
+                help="Create subgraph clusters based on selected attributes",
+            )
             else []
         ),
     )
@@ -266,7 +319,9 @@ def preferences_group(
 ]:
     with st.expander("Layout preferences", expanded=False):
         dfc_attributes = queries.dfc_attributes(class_type)
-        layout_preferences = layout_preferences_input(default_layout_preferences_input, dfc_attributes)
+        layout_preferences = layout_preferences_input(
+            default_layout_preferences_input, dfc_attributes
+        )
 
     with st.expander("DFC Appearance", expanded=False):
         edge_vis_preferences = dfc_appearance_input(
@@ -298,23 +353,38 @@ def preferences_group(
 
 def animation_preferences_input() -> TokenReplayPreferences:
     result = TokenReplayPreferences(
-        animate_active_elements_flag=st.toggle("Animate process flow", value=False, help="If enabled, the active paths will play dashed animation to indicate the process flow."),
-        animate_tokens_flag=st.toggle("Animate tokens", value=True, help="If enabled, tokens representing process instances will be animated along their paths in the process model."),
+        animate_active_elements_flag=st.toggle(
+            "Animate process flow",
+            value=False,
+            help="If enabled, the active paths will play dashed animation to indicate the process flow.",
+        ),
+        animate_tokens_flag=st.toggle(
+            "Animate tokens",
+            value=True,
+            help="If enabled, tokens representing process instances will be animated along their paths in the process model.",
+        ),
         token_animation_speed=25.5
         - st.slider(
-            "Token replay speed", value=5.0, min_value=0.1, max_value=25.0, step=0.1, help="Controls how fast the tokens move along their paths. Higher values result in faster animations."
+            "Token replay speed",
+            value=5.0,
+            min_value=0.1,
+            max_value=25.0,
+            step=0.1,
+            help="Controls how fast the tokens move along their paths. Higher values result in faster animations.",
         ),
         token_animation_alignment=(
             alignment := st.segmented_control(
                 "Token replay alignment",
                 options=["At-once", "Real-time"],
                 default="Real-time",
-                help="Determines how the start times of token animations are aligned. 'At-once' means all tokens start simultaneously, while 'Real-time' staggers the start times based on their actual occurrence times."
+                help="Determines how the start times of token animations are aligned. 'At-once' means all tokens start simultaneously, while 'Real-time' staggers the start times based on their actual occurrence times.",
             )
         ),
         fixed_animation_duration=st.toggle(
-            "Fixed transition duration", value=False, disabled=(alignment != "At-once"),
-            help="If enabled, all transitions will have the same duration regardless of their actual process duration. This is only applicable when 'At-once' alignment is selected."
+            "Fixed transition duration",
+            value=False,
+            disabled=(alignment != "At-once"),
+            help="If enabled, all transitions will have the same duration regardless of their actual process duration. This is only applicable when 'At-once' alignment is selected.",
         ),
     )
     if alignment != "At-once":
@@ -527,9 +597,7 @@ def dfc_related_entities(queries: AbstractEKGRepository, selected_element_id: st
     st.dataframe(entities)
 
 
-def full_proclet_view(
-    *, graph_payload, queries, class_type, token_animation_segments
-):
+def full_proclet_view(*, graph_payload, queries, class_type, token_animation_segments):
     event = interactive_proclet_graph(graph_payload)
     wire_graph_event(event)
 
@@ -553,7 +621,9 @@ def full_proclet_view(
         if st.session_state.selected_token:
             st.write("### Token Detail")
             st.write(f"Selected token: {st.session_state.selected_token}")
-            trace = queries.get_entity_trace(class_type, st.session_state.selected_token)
+            trace = queries.get_entity_trace(
+                class_type, st.session_state.selected_token
+            )
             st.write(trace)
 
     with tab2:
@@ -645,7 +715,10 @@ def entity_distribution_plot(
     entity_types: list[str],
 ):
     st.write("## Entity Type Distributions")
-    st.info("Is looks like caching so many figures causes issues for the process model rendering, disable this component if you face such problems.", icon="⚠️")
+    st.info(
+        "Is looks like caching so many figures causes issues for the process model rendering, disable this component if you face such problems.",
+        icon="⚠️",
+    )
     # Validate edges have required attributes for this component to work
     assert_attribute_exists(nodes, "EntityType")
     assert_attribute_exists(nodes, "frequency")

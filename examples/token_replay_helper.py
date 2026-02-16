@@ -14,13 +14,13 @@ color_map = {
 }
 
 ATTR_VAL_TO_COLOR = {
-
     "Invoice": "#1f77b4",
     "Item": "#2ca02c",
     "Order": "#9467bd",
     "Payment": "#ff7f0e",
     "SupplierOrder": "#d62728",
 }
+
 
 def generate_token_animation_segments(
     data: list[dict],

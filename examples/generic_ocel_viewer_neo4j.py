@@ -7,7 +7,10 @@ import objektviz.backend.filters as ov_filters
 from token_replay_helper import generate_token_animation_segments
 
 from objektviz.backend.BackendConfig import BackendConfig
-from objektviz.backend.adaptors.neo4j import Neo4JEKGRepository, from_neo4j_to_dot_elements
+from objektviz.backend.adaptors.neo4j import (
+    Neo4JEKGRepository,
+    from_neo4j_to_dot_elements,
+)
 from objektviz.streamlit.utils import (
     DefaultConnectionPreferences,
     DefaultEventClassPreferences,
@@ -71,9 +74,7 @@ PROCLET_TYPES = ["EventType,EntityType"]
 # To generalize to all entity types, we load the entity types from database
 # and assign a color to each of them dynamically
 # In real project, you might want to have more control over this mapping / manually define entity types
-ENTITY_TYPES = [
-    "Invoice", "Item", "Order", "Payment", "SupplierOrder"
-]
+ENTITY_TYPES = ["Invoice", "Item", "Order", "Payment", "SupplierOrder"]
 
 # The instances provide sensible defaults for the visualizer preferences in the sidebar
 # but they may not fit your project needs, or they might not even work on your data at all
@@ -158,14 +159,16 @@ with objektviz_sidebar:
     )
 
     # This filter will be used to ensure that DFC_C and EventClass of the sampled traces are always visible
-    token_replay_element_filter = ov_filters.AndFilter.new([
-        show_only_sampled_elements_filter,
-        ov_filters.MatchFilter.new(
-            attribute="element_id",
-            values=active_element_ids,
-            skip_on_empty=True,
-        )
-    ])
+    token_replay_element_filter = ov_filters.AndFilter.new(
+        [
+            show_only_sampled_elements_filter,
+            ov_filters.MatchFilter.new(
+                attribute="element_id",
+                values=active_element_ids,
+                skip_on_empty=True,
+            ),
+        ]
+    )
 
     with debug_tab:
         st.write("Replay metadata:", replay_metadata)
@@ -181,10 +184,9 @@ with objektviz_sidebar:
             key_prefix="dfc",
         )
 
-        root_edge_filter = ov_filters.OrFilter.new([
-            token_replay_element_filter,
-            dfc_frequency_filter
-        ])
+        root_edge_filter = ov_filters.OrFilter.new(
+            [token_replay_element_filter, dfc_frequency_filter]
+        )
 
     with st.expander("Event Class Filters", expanded=True):
         node_filter_entity_type = ov_filters.NotFilter.new(
@@ -207,10 +209,14 @@ with objektviz_sidebar:
             key_prefix="event_class",
         )
 
-        root_node_filter = ov_filters.OrFilter.new([
-            token_replay_element_filter,
-            ov_filters.AndFilter.new([node_filter_entity_type, event_class_frequency_filter])
-        ])
+        root_node_filter = ov_filters.OrFilter.new(
+            [
+                token_replay_element_filter,
+                ov_filters.AndFilter.new(
+                    [node_filter_entity_type, event_class_frequency_filter]
+                ),
+            ]
+        )
 
 
 # Backend Visualizer Configuration

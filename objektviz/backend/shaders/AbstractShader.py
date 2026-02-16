@@ -1,6 +1,5 @@
 import abc
 import colorsys
-import functools
 import typing
 from typing import Literal
 
@@ -12,6 +11,7 @@ if typing.TYPE_CHECKING:
 
 
 type ColorT = tuple[Literal["hex", "cmap"], str]
+
 
 class AbstractShader(abc.ABC):
     config: "BackendConfig"
@@ -37,7 +37,6 @@ class AbstractShader(abc.ABC):
 
         return value
 
-
     @staticmethod
     def clamp(_min, value, _max):
         return max(_min, min(_max, value))
@@ -51,7 +50,9 @@ class AbstractShader(abc.ABC):
 
         if color_type == "cmap":
             # 0 is white, so we clamp to 0.3 to avoid too light colors, but we allow 1 to show the full range of the colormap
-            normalized_value = self.clamp(0.3, normalized_value, 1)  # clamp minimal value
+            normalized_value = self.clamp(
+                0.3, normalized_value, 1
+            )  # clamp minimal value
             return get_cmap_color(color_value, normalized_value)
 
         raise ValueError(f"Invalid color type: {color_type}")
@@ -64,7 +65,6 @@ class AbstractShader(abc.ABC):
     def shading_color(self, entity: typing.Mapping):
         pass
 
-
     @abc.abstractmethod
     def update_bounds(self, entity: typing.Mapping):
         pass
@@ -75,7 +75,7 @@ def get_hex_color(hex_color: str, luminosity: float) -> str:
         raise ValueError("luminosity must be between 0 and 1")
 
     # Remove '#' if present
-    hex_color = hex_color.lstrip('#')
+    hex_color = hex_color.lstrip("#")
     if len(hex_color) != 6:
         raise ValueError("hex_color must be a 6-character hex string")
 
@@ -88,7 +88,7 @@ def get_hex_color(hex_color: str, luminosity: float) -> str:
     r_norm, g_norm, b_norm = r / 255.0, g / 255.0, b / 255.0
 
     # Convert to HLS (Hue, Lightness, Saturation)
-    h, l, s = colorsys.rgb_to_hls(r_norm, g_norm, b_norm)
+    h, _, s = colorsys.rgb_to_hls(r_norm, g_norm, b_norm)
 
     # Replace lightness with desired luminosity
     r_new, g_new, b_new = colorsys.hls_to_rgb(h, 1 - luminosity, s)

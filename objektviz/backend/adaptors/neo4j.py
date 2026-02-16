@@ -40,19 +40,25 @@ def from_neo4j_to_dot_elements(
 class Neo4JEKGRepository(AbstractEKGRepository):
     def get_entity_types(self, class_type: str = None) -> list[str]:
         if class_type is None:
-            result = self.run_query("""
+            result = self.run_query(
+                """
                 MATCH (c: Class)
                 WITH DISTINCT c.EntityType as entityType
                 RETURN entityType
-            """, {})
+            """,
+                {},
+            )
         else:
-            result = self.run_query("""
+            result = self.run_query(
+                """
                 MATCH (c: Class {Type: $ClassType})
                 WITH DISTINCT c.EntityType as entityType
                 RETURN entityType
-            """, {
-                "ClassType": class_type,
-            })
+            """,
+                {
+                    "ClassType": class_type,
+                },
+            )
 
         return [r.get("entityType") for r in result.records]
 
@@ -65,7 +71,8 @@ class Neo4JEKGRepository(AbstractEKGRepository):
               AND (e1)-[:OBSERVED]->(c1)
               AND (e2)-[:OBSERVED]->(c2)
             RETURN count(DISTINCT n) as Count
-        """, {"DFCId": dfc_id}
+        """,
+            {"DFCId": dfc_id},
         )
 
         return result.records[0].get("Count")
@@ -100,12 +107,15 @@ class Neo4JEKGRepository(AbstractEKGRepository):
             MATCH (n: Entity)<-[:CORR]-(e:Event)-[:OBSERVED]->(c: Class)
             WHERE elementId(c) = $ClassId AND n.EntityType = c.EntityType
             RETURN count(DISTINCT n) as Count
-        """, {"ClassId": class_id}
+        """,
+            {"ClassId": class_id},
         )
 
         return result.records[0].get("Count")
 
-    def get_entities_for_event_class(self, class_id: str, limit: int, skip: int) -> list[dict]:
+    def get_entities_for_event_class(
+        self, class_id: str, limit: int, skip: int
+    ) -> list[dict]:
         result = self.run_query(
             """
             MATCH (n: Entity)<-[:CORR]-(e: Event)-[:OBSERVED]->(c: Class)
@@ -132,7 +142,8 @@ class Neo4JEKGRepository(AbstractEKGRepository):
             MATCH (c1: Class)-[df_c:DF_C]->(c2: Class)
             WHERE elementId(df_c) = $DFCId
             RETURN c1, df_c, c2
-        """, {"DFCId": dfc_id},
+        """,
+            {"DFCId": dfc_id},
             to_dict=True,
         )
 
@@ -140,9 +151,9 @@ class Neo4JEKGRepository(AbstractEKGRepository):
             return None
 
         return {
-            "source_class": result[0]['c1'],
-            "dfc_relation": result[0]['df_c'][0],
-            "target_class": result[0]['c2'],
+            "source_class": result[0]["c1"],
+            "dfc_relation": result[0]["df_c"][0],
+            "target_class": result[0]["c2"],
         }
 
     def get_event_class(self, event_class_id: str) -> dict | None:
@@ -151,13 +162,15 @@ class Neo4JEKGRepository(AbstractEKGRepository):
             MATCH (c: Class)
             WHERE elementId(c) = $ClassId
             RETURN c
-        """, {"ClassId": event_class_id}, to_dict=True
+        """,
+            {"ClassId": event_class_id},
+            to_dict=True,
         )
 
         if len(result) == 0:
             return None
         print(result)
-        return result[0]['c']
+        return result[0]["c"]
 
     def __init__(self, driver: neo4j.Driver):
         self.driver = driver
@@ -221,7 +234,11 @@ class Neo4JEKGRepository(AbstractEKGRepository):
 
     def proclet(
         self, class_type: str
-    ) -> tuple[list[neo4j.graph.Node], list[neo4j.graph.Relationship], list[neo4j.graph.Relationship]]:
+    ) -> tuple[
+        list[neo4j.graph.Node],
+        list[neo4j.graph.Relationship],
+        list[neo4j.graph.Relationship],
+    ]:
         result = self.run_query(
             """
             MATCH (c1:Class)
@@ -242,7 +259,11 @@ class Neo4JEKGRepository(AbstractEKGRepository):
             },
         )
 
-        return result.records[0].get("nodes"), result.records[0].get("edges"), result.records[0].get("sync")
+        return (
+            result.records[0].get("nodes"),
+            result.records[0].get("edges"),
+            result.records[0].get("sync"),
+        )
 
     # def get_process_executions(self, class_type, entity_ids: list[str], color_map: str | dict[str, str], animation_preferences: AnimationPreferences):
     def get_process_executions(
@@ -336,7 +357,11 @@ class Neo4JEKGRepository(AbstractEKGRepository):
             end_date,
         )
 
-    def get_entity_trace(self, class_type: str, entity_element_id: str,) -> dict | None:
+    def get_entity_trace(
+        self,
+        class_type: str,
+        entity_element_id: str,
+    ) -> dict | None:
         result = self.run_query(
             """
             CYPHER runtime=parallel

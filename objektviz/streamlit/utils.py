@@ -29,10 +29,11 @@ class DefaultLayoutPreferences:
         default_factory=lambda: ["EntityType", "EventType"]
     )
     clustering_attribute: str = "EntityType"
-    weight_attribute: str | None = "frequency" # If set to none, there is no weighting
+    weight_attribute: str | None = "frequency"  # If set to none, there is no weighting
     rank_direction: str = "TB"  # Top to Bottom
     force_same_rank_for_event_class: bool = True
     force_process_start_end_same_rank: bool = True
+
 
 @dataclass
 class DefaultShadingPreferences:
@@ -49,7 +50,7 @@ class DefaultConnectionPreferences:
     pen_range: tuple[int, int] = (2, 10)  # Edge line thickness range
     title: str = "frequency"  # Title shows DFC Type by default
     shading: str = "frequency"  # Attributes used for edge shading (must be numeric)
-    hide_sync_edges: bool = False # Whether to hide edges that represent synchronous relationships (e.g. between an event and its entity)
+    hide_sync_edges: bool = False  # Whether to hide edges that represent synchronous relationships (e.g. between an event and its entity)
 
 
 @dataclass
