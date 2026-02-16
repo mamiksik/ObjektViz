@@ -1,4 +1,4 @@
-# Getting Started with 📦 ObjektViz
+# Getting Started
 
 <figure markdown="span">
   ![Image title](assets/generic_ocel_visualizer.png){ width="700" }

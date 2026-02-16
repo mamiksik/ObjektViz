@@ -64,7 +64,7 @@ Filters decide which nodes and edges appear in your visualization:
 filter = DummyFilter()
 
 # Show only high-frequency events
-filter = RangeFilter("frequency", min_value=10)
+filter = RangeFilter("frequency", (10, 100))
 
 # Show orders OR payments
 filter = OrFilter([
