@@ -198,14 +198,22 @@ def layout_preferences_input(
     rank_direction = ["TB", "LR"]
 
     cont = st.container()
+    same_rank_activity = cont.checkbox(
+        "Force same rank per activity", value=defaults.force_same_rank_for_event_class, help="If enabled, all nodes of the same EventType will be on the same rank/level. (The rank is not exlusively reserved for that EventType though, which is limitation of the underlying graphviz engine.)"
+    )
+    exclusive_event_class_ranks_experimental = cont.checkbox(
+        "Exclusive ranks (experimental)", value=False, help="If enabled, each rank/level will be exclusively reserved for a single EventType. This can make the layout more clear and readable, but it can also make the graph much bigger (a lot of gaps) and more sparse, especially if there are many distinct EventTypes. Use with caution.",
+        disabled=not same_rank_activity,
+    )
+    same_rank_start_end_nodes = cont.checkbox(
+        "Force same rank for process start/end", value=False, help="If enabled, all start nodes will be on the same rank, and all end nodes will be on the same rank."
+    )
+
     col1, col2, col3 = st.columns(3)
     return LayoutPreferences(
-        force_same_rank_for_event_class=cont.checkbox(
-            "Force same rank per activity", value=defaults.force_same_rank_for_event_class, help="If enabled, all nodes of the same EventType will be on the same rank/level. (The rank is not exlusively reserved for that EventType though, which is limitation of the underlying graphviz engine.)"
-        ),
-        force_process_start_end_same_rank=cont.checkbox(
-            "Force same rank for process estart/end", value=False, help="If enabled, all start nodes will be on the same rank, and all end nodes will be on the same rank."
-        ),
+        force_same_rank_for_event_class=same_rank_activity,
+        exclusive_event_class_ranks_experimental=False if not same_rank_activity else exclusive_event_class_ranks_experimental,
+        force_process_start_end_same_rank=same_rank_start_end_nodes,
         sort_event_classes_by_frequency=cont.checkbox(
             "Sort nodes by frequency", value=True, help="Influences the layout heuristics"
         ),

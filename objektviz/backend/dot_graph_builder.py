@@ -409,6 +409,9 @@ class DotGraphDescriptorBuilder:
                 quoted = ";".join([f'"{to_lbl(e)}"' for e in elements])
                 graph.body.append(f"{{rank=same; {quoted};}};")
 
+                if not self.config.layout_preferences.exclusive_event_class_ranks_experimental:
+                    continue
+
                 # Representative node (use the first element of the rank)
                 rep = elements[0]
 
@@ -423,13 +426,6 @@ class DotGraphDescriptorBuilder:
                     edge_id = f"rank_invis_{to_lbl(rep)}_{to_lbl(other)}"
                     if edge_id in created_edges or edge_id in self.edge2node:
                         continue
-
-                    # Add mapping entries using raw element ids
-                    self.edge2node.setdefault(edge_id, []).extend([rep, other])
-                    self.node2edge.setdefault(rep, []).append(edge_id)
-                    self.node2edge.setdefault(other, []).append(edge_id)
-                    self.node2node.setdefault(rep, []).append(other)
-                    self.node2node.setdefault(other, []).append(rep)
 
                     # Add the invisible edge to the dot graph (use to_lbl for node ids)
                     graph.edge(

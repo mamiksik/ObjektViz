@@ -12,6 +12,9 @@ class LayoutPreferences:
     # All classes with the same activity string are put on the same level
     force_same_rank_for_event_class: bool = False
 
+    # Make rank exclusive
+    exclusive_event_class_ranks_experimental: bool = False
+
     # Force that start/end nodes are on same rank (diff for start and end)
     force_process_start_end_same_rank: bool = False
 
