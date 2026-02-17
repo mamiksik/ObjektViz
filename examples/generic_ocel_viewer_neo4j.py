@@ -22,33 +22,9 @@ from objektviz.backend.dot_graph_builder import generate_dot_source
 
 from objektviz.frontend import GraphFrontendPayload
 
-# PATH = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
-# OCEL_DATASETS = PATH / "datasets" / "kuzudb"
-# DATASETS = {
-#     "Container Logistics": OCEL_DATASETS / "container_logistics.kuzu",
-#     "Order Management": OCEL_DATASETS / "order_managment.kuzu",
-# }
-
-# ----------------------------------------------------------------------------
-# DB Connection [EDIT AS NEEDED]
-# ----------------------------------------------------------------------------
-# with st.sidebar:
-#     st.selectbox(
-#         label="Dataset",
-#         options=DATASETS.keys(),
-#         key="kuzu_dataset_selector",
-#     )
-#
-# if "kuzu_dataset_selector" not in st.session_state:
-#     st.session_state.kuzu_dataset_selector = next(iter(DATASETS.keys()))
-
-# database_path = DATASETS[st.session_state.kuzu_dataset_selector]
 
 driver = neo4j.GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
 queries = Neo4JEKGRepository(driver)
-
-# conn = connection(database_path)
-# queries = ov_kuzu.KuzuEKGRepository(conn)
 
 # ----------------------------------------------------------------------------
 # Stream lit UI boilerplate (DO NOT (LIKELY) MODIFY)
@@ -84,11 +60,11 @@ DEFAULT_CONNECTION_PREFERENCES = DefaultConnectionPreferences()
 DEFAULT_EVENT_CLASS_PREFERENCES = DefaultEventClassPreferences()
 
 color_map = {
-    "Invoice": "Blues",
-    "Item": "Greens",
-    "Order": "Purples",
-    "Payment": "Oranges",
-    "SupplierOrder": "Reds",
+    "Invoice": ("cmap", "Blues"),
+    "Item": ("cmap", "Greens"),
+    "Order": ("cmap", "Purples"),
+    "Payment": ("cmap", "Oranges"),
+    "SupplierOrder": ("cmap", "Reds"),
 }
 
 SHADING_PREFERENCES = DefaultShadingPreferences(
