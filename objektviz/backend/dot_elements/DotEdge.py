@@ -116,10 +116,3 @@ class DotEdge(AbstractDotElement):
     @property
     def is_sync_edge(self):
         return self.entity.type == "SYNC"
-
-    @property
-    def shader_key(self):
-        if self.is_sync_edge:
-            return "CROSS_ENTITY"
-
-        return super().shader_key
