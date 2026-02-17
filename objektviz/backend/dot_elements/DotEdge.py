@@ -55,13 +55,13 @@ class DotEdge(AbstractDotElement):
         return "edge"
 
     def get_nesting_attr(self, name, default=None):
-        # TODO: REMOVE???!
-        # start_attr = self.entity.start_node.get(name, default)
-        # end_attr = self.entity.end_node.get(name, default)
-        # if start_attr == end_attr:
-        #     return start_attr
-        # else:
-        return CROSS_CLUSTER_SENTINEL
+        # This is the best way to handle this since, for kuzu we are now generating suboptimal solution
+        start_attr = self.entity.start_node.get(name, default)
+        end_attr = self.entity.end_node.get(name, default)
+        if start_attr == end_attr:
+            return start_attr
+        else:
+            return CROSS_CLUSTER_SENTINEL
 
     @property
     def start_element_id(self):

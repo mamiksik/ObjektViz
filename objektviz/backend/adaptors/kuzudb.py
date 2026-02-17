@@ -6,7 +6,7 @@ import kuzu
 
 from objektviz.backend.BackendConfig import BackendConfig
 from objektviz.backend.adaptors.shared import AbstractEKGRepository
-from objektviz.backend.dot_elements import DotNode, DotEdge
+from objektviz.backend.dot_elements import DotNode, DotEdge, CROSS_CLUSTER_SENTINEL
 from objektviz.backend.shaders import AbstractShader
 from objektviz.backend.utils import shader_factory
 
@@ -45,6 +45,17 @@ class KuzuDotEdge(DotEdge):
     @property
     def end_element_id(self):
         return kuzu_internal_id_to_str(self.entity["_dst"])
+
+    def get_nesting_attr(self, name, default=None):
+        # TODO: Fix this for KUZUDB, now all edges are considered cross cluster,
+        # since kuzudb does not return the start and end as part of the same record
+
+        # This is suboptimal since we might not cluster on EntityType, thus
+        # sync edges could be in the same cluster
+        if self.is_sync_edge and name == 'EntityType':
+            return CROSS_CLUSTER_SENTINEL
+
+        return self.entity.get(name, default)
 
 
 def from_kuzu_to_dot_elements(
