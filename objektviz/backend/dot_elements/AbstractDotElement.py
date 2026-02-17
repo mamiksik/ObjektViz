@@ -66,6 +66,11 @@ class AbstractDotElement(ABC):
         pass
 
     @property
+    @abc.abstractmethod
+    def is_visible(self) -> bool:
+        pass
+
+    @property
     def frequency(self) -> int:
         # -1 is sentinel value meaning the frequency is undefined
         return self.entity.get("frequency", -1)
