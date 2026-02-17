@@ -194,6 +194,17 @@ with objektviz_sidebar:
             ]
         )
 
+    with st.expander("Element ID Filter", expanded=False):
+        excluded_elements = st.session_state['excluded_elements']
+        st.write("Excluded element IDs (from right-clicking on the graph):", excluded_elements)
+
+        element_id_filter = ov_filters.NotFilter(ov_filters.MatchFilter.new(
+            attribute="element_id",
+            is_enabled=True,
+            skip_on_empty=False,
+            values=list(excluded_elements),
+        ))
+
 
 # Backend Visualizer Configuration
 objektviz_config = BackendConfig(
@@ -206,6 +217,7 @@ objektviz_config = BackendConfig(
     show_start_end_nodes_per_cluster=start_end_nodes_per_cluster,
     event_class_root_filter=root_node_filter,
     dfc_root_filter=root_edge_filter,
+    root_element_filter=element_id_filter,
     shader_factory=shader_factory,
 )
 

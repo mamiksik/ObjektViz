@@ -33,6 +33,11 @@ from objektviz.frontend import (
 
 
 def setup_objektviz_page():
+
+    # excluded_nodes is used in combination with right click and element_id filter
+    if "excluded_elements" not in st.session_state:
+        st.session_state.excluded_elements = set()
+
     if "selected_edge" not in st.session_state:
         st.session_state.selected_edge = None
 

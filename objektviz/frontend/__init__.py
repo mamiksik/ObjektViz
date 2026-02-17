@@ -116,8 +116,14 @@ def interactive_proclet_graph(payload: GraphFrontendPayload):
 
 def wire_graph_event(graph_event):
     """Consume ObjektViz frontend callback and update the session accordingly"""
+    if graph_event is None:
+        return
 
-    if graph_event and graph_event["elementId"] not in [
+    if graph_event['eventType'] == 'RightClick' and graph_event["elementId"] not in st.session_state["excluded_elements"]:
+        st.session_state['excluded_elements'].add(graph_event["elementId"])
+        st.rerun()
+
+    if graph_event['eventType'] == 'LeftClick' and graph_event["elementId"] not in [
         st.session_state.get("selected_node"),
         st.session_state.get("selected_edge"),
         st.session_state.get("selected_token"),

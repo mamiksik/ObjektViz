@@ -120,6 +120,11 @@ class BackendConfig:
     # Root filter used to filter :DF_C edges (to include all edges, just pass instance of DummyFilter)
     dfc_root_filter: AbstractFilter
 
+    # Global filter is applied to all elements including :SYNC edges
+    # this is useful for instance for element_id filter to remove any elements based on their id
+    # Also take into account not all elements have to have the same attribute, so use with caution
+    root_element_filter: AbstractFilter | None
+
     layout_preferences: LayoutPreferences
     dfc_preferences: DFCPreferences
     event_class_preferences: EventClassPreferences

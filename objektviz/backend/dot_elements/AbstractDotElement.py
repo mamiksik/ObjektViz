@@ -39,6 +39,9 @@ class AbstractDotElement(ABC):
         self.shaders = shaders
         self.config = config
 
+    def get(self, name, default=None):
+        return self.entity.get(name, default)
+
     def get_nesting_attr(self, name, default=None):
         return self.entity.get(name, default)
 

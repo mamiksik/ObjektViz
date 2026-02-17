@@ -108,10 +108,14 @@ class DotEdge(AbstractDotElement):
 
     @property
     def is_visible(self):
+        if self.config.root_element_filter:
+            if not self.config.root_element_filter.is_passing(self):
+                return False
+
         if self.is_sync_edge:
             return True
 
-        return self.config.dfc_root_filter.is_passing(self.entity)
+        return self.config.dfc_root_filter.is_passing(self)
 
     @property
     def is_sync_edge(self):

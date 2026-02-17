@@ -1,7 +1,9 @@
 import dataclasses
 
-import neo4j.graph
+import typing
 
+if typing.TYPE_CHECKING:
+    from objektviz.backend.dot_elements import AbstractDotElement
 from objektviz.backend.filters.AbstractFilter import AbstractFilter
 
 
@@ -13,7 +15,7 @@ class AndFilter(AbstractFilter):
     def new(cls, filters: list[AbstractFilter]):
         return cls(filters=filters)
 
-    def is_passing(self, entity: neo4j.graph.Entity):
+    def is_passing(self, entity: 'AbstractDotElement'):
         for fltr in self.filters:
             if not fltr.is_passing(entity):
                 return False

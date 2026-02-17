@@ -1,6 +1,9 @@
 import dataclasses
 
-import neo4j.graph
+import typing
+
+if typing.TYPE_CHECKING:
+    from objektviz.backend.dot_elements import AbstractDotElement
 
 from objektviz.backend.filters.AbstractFilter import AbstractFilter
 
@@ -27,7 +30,7 @@ class MatchFilter(AbstractFilter):
             skip_on_empty=skip_on_empty,
         )
 
-    def is_passing(self, entity: neo4j.graph.Entity):
+    def is_passing(self, entity: 'AbstractDotElement'):
         if not self.is_enabled:
             return True
 

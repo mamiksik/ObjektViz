@@ -85,7 +85,11 @@ class DotNode(AbstractDotElement):
 
     @property
     def is_visible(self):
-        return self.config.event_class_root_filter.is_passing(self.entity)
+        if self.config.root_element_filter:
+            if not self.config.root_element_filter.is_passing(self):
+                return False
+
+        return self.config.event_class_root_filter.is_passing(self)
 
     @property
     def process_start_count(self) -> int | None:

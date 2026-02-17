@@ -42,7 +42,7 @@ class DefaultShadingPreferences:
 
     # For each value of the grouping attribute, specify a color map to use (matplotlib colormap names)
     # There is no sensible default here, as it depends on the data
-    color_map: dict[str, str]
+    color_map: dict[str, tuple[str, str]]
 
 
 @dataclass

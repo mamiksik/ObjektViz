@@ -1,5 +1,9 @@
 import dataclasses
+import typing
 from abc import ABC, abstractmethod
+
+if typing.TYPE_CHECKING:
+    from objektviz.backend.dot_elements import AbstractDotElement
 
 
 @dataclasses.dataclass(kw_only=True)
@@ -29,5 +33,5 @@ class AbstractFilter(ABC):
     """
 
     @abstractmethod
-    def is_passing(self, entity):
+    def is_passing(self, entity: 'AbstractDotElement'):
         raise NotImplementedError
