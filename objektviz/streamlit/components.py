@@ -47,7 +47,13 @@ def setup_objektviz_page():
     if "selected_token" not in st.session_state:
         st.session_state.selected_token = None
 
-    st.set_page_config(page_title="ObjektViz", page_icon="📦", layout="wide")
+    st.set_page_config(
+        page_title="ObjektViz", page_icon="📦", layout="wide",
+        menu_items={
+            "Get Help": "https://github.com/mamiksik/ObjektViz",
+            "About": "ObjektViz is a process visualization tool developed by Martin Miksik. It allows users to create interactive visualizations of process execution data, enabling them to explore and analyze complex processes in an intuitive way.",
+        }
+    )
 
     with st.sidebar:
         st.title("📦 ObjektViz")
