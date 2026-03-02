@@ -73,7 +73,7 @@ ENTITY_TYPES = ["Order", "SupplierOrder", "Item", "Payment", "Invoice"]
 
 # Functions to sample entity ids for animation (we can have multiple samplers, e.g., to select sample from particular sub population)
 ENTITY_ID_SAMPLER = {
-    "All": lambda class_type, sample_size: queries.entity_sample(
+    "All": lambda class_type, sample_size: queries.get_entity_sample(
         class_type, sample_size
     ),
 }
@@ -227,7 +227,7 @@ with st.sidebar:
 # but be rendered before we start querying the data, so that we can see it
 # even if we encounter errors later on
 with ekg_stats:
-    class_attrs = set(queries.class_attributes(class_type=class_type))
+    class_attrs = set(queries.get_class_attributes(class_type=class_type))
 
     with st.expander("EKG Summary", expanded=True):
         col1, _, _ = st.columns(3)
@@ -238,17 +238,17 @@ with ekg_stats:
         col1, col2, col3 = st.columns(3)
         col1.metric(
             "Activity Classes Present",
-            queries.count_classes(class_type),
+            queries.get_classes_count(class_type),
             help="Number of distinct Activity classes in the selected proclet",
         )
         col2.metric(
             "Activity Connections Present",
-            queries.count_dfc(class_type),
+            queries.get_dfc_count(class_type),
             help="Number of distinct Activity connections in the selected proclet",
         )
         col3.metric(
             "SYNC Edges Present",
-            queries.count_sync(class_type),
+            queries.get_sync_edge_count(class_type),
             help="Number of SYNC edges in the selected proclet",
         )
 
@@ -260,24 +260,24 @@ with ekg_stats:
         )
         col2.metric(
             "Start Activities",
-            queries.count_start_activities(class_type),
+            queries.get_start_class_count(class_type),
             help="Number of distinct start Activity classes in the selected proclet",
         )
         col3.metric(
             "End Activities",
-            queries.count_end_activities(class_type),
+            queries.get_end_class_count(class_type),
             help="Number of distinct end Activity classes in the selected proclet",
         )
 
         st.divider()
         col1, col2, col3 = st.columns(3)
         col1.write("Proclet Types Present:")
-        col1.markdown(" ".join(f":blue-badge[{x}]" for x in queries.proclet_types()))
+        col1.markdown(" ".join(f":blue-badge[{x}]" for x in queries.get_proclet_types()))
 
         col2.write("Class attributes present in the selected proclet:")
         col2.markdown(" ".join(f":blue-badge[{x}]" for x in class_attrs))
 
-        dfc_attrs = set(queries.dfc_attributes(class_type=class_type))
+        dfc_attrs = set(queries.get_dfc_attributes(class_type=class_type))
         col3.write("Connection attributes present in the selected proclet:")
         col3.markdown(" ".join(f":blue-badge[{x}]" for x in dfc_attrs))
 
@@ -291,12 +291,12 @@ with st.sidebar:
 
     with st.expander("Connection preferences", expanded=False):
         edge_vis_preferences = ov_components.edge_render_preference_input(
-            queries.dfc_attributes(class_type), default="count"
+            queries.get_dfc_attributes(class_type), default="count"
         )
 
     with st.expander("Activity preferences", expanded=False):
         node_vis_preferences = ov_components.node_render_preference_input(
-            queries.class_attributes(class_type),
+            queries.get_class_attributes(class_type),
             icon_map=ATTRIBUTE_ICON_MAP,
             default_right_attr="count",
             default_left_attr="count",
@@ -382,7 +382,7 @@ dot_visualizer_config = BackendConfig(
 )
 
 # Generate the proclet graph from Neo4j data
-nodes, edges = queries.proclet(class_type)
+nodes, edges = queries.get_proclet(class_type)
 wrapped_values = ov_neo4j.from_neo4j_to_dot_elements(
     nodes, edges, dot_visualizer_config
 )

@@ -6,7 +6,7 @@ from neo4j import Driver
 from neo4j.graph import Node, Relationship
 
 from objektviz.backend.BackendConfig import BackendConfig
-from objektviz.backend.adaptors.shared import AbstractEKGRepository
+from objektviz.backend.adaptors.shared import AbstractEKGRepository, CypherQueries
 from objektviz.backend.dot_elements import AbstractDotNode, AbstractDotEdge, CROSS_CLUSTER_SENTINEL
 from objektviz.backend.shaders import AbstractShader
 from objektviz.backend.utils import shader_factory
@@ -75,45 +75,105 @@ class Neo4JDotNode(AbstractDotNode[Node]):
         return self.entity.element_id
 
 
-class Neo4JEKGRepository(AbstractEKGRepository):
+class Neo4JEKGRepository[Node, Relationship](AbstractEKGRepository):
+
+    def __init__(self, driver: Driver):
+        self.driver = driver
+
+    def run_query(self, query, params, to_dict: bool = False):
+        # print("\n" + query + " " + str(params))
+        with self.driver.session() as session:
+            result = session.run(query, parameters=params)
+            return result.data if to_dict else result.to_eager_result()
+
+    def get_class_attributes(self, class_type: str) -> list[str]:
+        qparams = { "ClassType": class_type }
+        return (
+            self.run_query(CypherQueries.get_class_attributes(), qparams)
+            .records[0]
+            .value()
+        )
+
+    def get_classes_count(self, class_type: str) -> int:
+        qparams = { "ClassType": class_type }
+        return (
+            self.run_query(CypherQueries.get_classes_count(), qparams)
+            .records[0]
+            .get("Count")
+        )
+
+    def get_dfc(self, dfc_id: str) -> dict | None:
+        result = self.run_query(
+            """
+            MATCH (c1: Class)-[df_c:DF_C]->(c2: Class)
+            WHERE elementId(df_c) = $DFCId
+            RETURN c1, df_c, c2
+        """,
+            {"DFCId": dfc_id},
+            to_dict=True,
+        )
+
+        if len(result) == 0:
+            return None
+
+        return {
+            "source_class": result[0]["c1"],
+            "dfc_relation": result[0]["df_c"][0],
+            "target_class": result[0]["c2"],
+        }
+
+    def get_dfc_attributes(self, class_type: str) -> list[str]:
+        qparams = { "ClassType": class_type }
+        return (
+            self.run_query(CypherQueries.get_dfc_attributes(), qparams)
+            .records[0]
+            .value()
+        )
+
+    def get_entity_sample(self, class_type: str, sample_size: int) -> list[str]:
+        result = self.run_query(
+            """
+            CYPHER runtime=parallel
+            MATCH (n:Entity)<-[corr:CORR]-(e:Event)-[obs:OBSERVED]->(:Class {Type: $ClassType})
+            WITH DISTINCT n
+            WITH n, rand() as r
+            ORDER BY r
+            RETURN DISTINCT n.ID as ID
+            LIMIT $Limit
+        """,
+            {
+                "ClassType": class_type,
+                "Limit": sample_size,
+            },
+        )
+
+        return [n.get("ID") for n in result.records]
+
+    def get_dfc_count(self, class_type: str) -> int:
+        qparams = { "ClassType": class_type }
+        return (
+            self.run_query(CypherQueries.get_dfc_count(), qparams)
+            .records[0]
+            .get("Count")
+        )
+
+    def get_end_class_count(self, class_type: str) -> int:
+        qparams = { "ClassType": class_type }
+        return (
+            self.run_query(CypherQueries.get_end_class_count(), qparams)
+            .records[0]
+            .get("Count")
+        )
+
     def get_entity_types(self, class_type: str = None) -> list[str]:
+        qparams = { "ClassType": class_type }
         if class_type is None:
-            result = self.run_query(
-                """
-                MATCH (c: Class)
-                WITH DISTINCT c.EntityType as entityType
-                RETURN entityType
-            """,
-                {},
-            )
+            result = self.run_query(CypherQueries.get_entity_types(),{})
         else:
-            result = self.run_query(
-                """
-                MATCH (c: Class {Type: $ClassType})
-                WITH DISTINCT c.EntityType as entityType
-                RETURN entityType
-            """,
-                {
-                    "ClassType": class_type,
-                },
-            )
+            result = self.run_query(CypherQueries.get_entity_types_for_class(),qparams)
 
         return [r.get("entityType") for r in result.records]
 
-    def get_entities_for_dfc_count(self, dfc_id: str) -> int:
-        result = self.run_query(
-            """
-            MATCH (n: Entity)<-[:CORR]-(e1: Event)-[df:DF]->(e2: Event)-[:CORR]->(n),
-                  (c1: Class)-[df_c:DF_C]->(c2: Class)
-            WHERE elementId(df_c) = $DFCId
-              AND (e1)-[:OBSERVED]->(c1)
-              AND (e2)-[:OBSERVED]->(c2)
-            RETURN count(DISTINCT n) as Count
-        """,
-            {"DFCId": dfc_id},
-        )
-
-        return result.records[0].get("Count")
 
     def get_entities_for_dfc(self, dfc_id: str, limit: int, skip: int) -> list[dict]:
         result = self.run_query(
@@ -139,14 +199,17 @@ class Neo4JEKGRepository(AbstractEKGRepository):
 
         return result
 
-    def get_entities_for_event_class_count(self, class_id: str) -> int:
+    def get_entities_for_dfc_count(self, dfc_id: str) -> int:
         result = self.run_query(
             """
-            MATCH (n: Entity)<-[:CORR]-(e:Event)-[:OBSERVED]->(c: Class)
-            WHERE elementId(c) = $ClassId AND n.EntityType = c.EntityType
+            MATCH (n: Entity)<-[:CORR]-(e1: Event)-[df:DF]->(e2: Event)-[:CORR]->(n),
+                  (c1: Class)-[df_c:DF_C]->(c2: Class)
+            WHERE elementId(df_c) = $DFCId
+              AND (e1)-[:OBSERVED]->(c1)
+              AND (e2)-[:OBSERVED]->(c2)
             RETURN count(DISTINCT n) as Count
         """,
-            {"ClassId": class_id},
+            {"DFCId": dfc_id},
         )
 
         return result.records[0].get("Count")
@@ -174,25 +237,17 @@ class Neo4JEKGRepository(AbstractEKGRepository):
 
         return result
 
-    def get_dfc(self, dfc_id: str) -> dict | None:
+    def get_entities_for_event_class_count(self, class_id: str) -> int:
         result = self.run_query(
             """
-            MATCH (c1: Class)-[df_c:DF_C]->(c2: Class)
-            WHERE elementId(df_c) = $DFCId
-            RETURN c1, df_c, c2
+            MATCH (n: Entity)<-[:CORR]-(e:Event)-[:OBSERVED]->(c: Class)
+            WHERE elementId(c) = $ClassId AND n.EntityType = c.EntityType
+            RETURN count(DISTINCT n) as Count
         """,
-            {"DFCId": dfc_id},
-            to_dict=True,
+            {"ClassId": class_id},
         )
 
-        if len(result) == 0:
-            return None
-
-        return {
-            "source_class": result[0]["c1"],
-            "dfc_relation": result[0]["df_c"][0],
-            "target_class": result[0]["c2"],
-        }
+        return result.records[0].get("Count")
 
     def get_event_class(self, event_class_id: str) -> dict | None:
         result = self.run_query(
@@ -207,70 +262,23 @@ class Neo4JEKGRepository(AbstractEKGRepository):
 
         if len(result) == 0:
             return None
-        print(result)
+
         return result[0]["c"]
 
-    def __init__(self, driver: Driver):
-        self.driver = driver
+    def get_start_class_count(self, class_type: str) -> int:
+        qparam = {"ClassType": class_type}
+        result = self.run_query(CypherQueries.get_start_class_count(), qparam)
+        return result.records[0].get("Count")
 
-    def run_query(self, query, params, to_dict: bool = False):
-        # print("\n" + query + " " + str(params))
-        with self.driver.session() as session:
-            if to_dict:
-                result = session.run(query, parameters=params).data()
-            else:
-                result = session.run(query, parameters=params).to_eager_result()
-            return result
+    def get_sync_edge_count(self, class_type: str) -> int:
+        qparam = {"ClassType": class_type}
+        result = self.run_query(CypherQueries.get_sync_edge_count(), qparam)
+        return int(
+            result.records[0].get("Count") // 2
+        )  # Each SYNC relation is stored twice ()-[]->() and ()<-[]-()
 
-    def class_attributes(self, class_type: str) -> list[str]:
-        return (
-            self.run_query(
-                """
-            MATCH (c: Class {Type: $ClassType})
-            UNWIND keys(c) as key
-            RETURN collect(DISTINCT key)
-        """,
-                {
-                    "ClassType": class_type,
-                },
-            )
-            .records[0]
-            .value()
-        )
 
-    def dfc_attributes(self, class_type: str) -> list[str]:
-        return (
-            self.run_query(
-                """
-            MATCH (: Class {Type: $ClassType})-[r:DF_C]->(: Class {Type: $ClassType})
-            UNWIND keys(r) as key
-            RETURN collect(DISTINCT key)
-        """,
-                {
-                    "ClassType": class_type,
-                },
-            )
-            .records[0]
-            .value()
-        )
-
-    def class_names(self, class_type) -> list[str]:
-        return (
-            self.run_query(
-                """
-            MATCH (c: Class {Type: $ClassType})
-            WITH DISTINCT c.Name as name
-            RETURN name
-        """,
-                {
-                    "ClassType": class_type,
-                },
-            )
-            .records[0]
-            .value()
-        )
-
-    def proclet(
+    def get_proclet(
         self, class_type: str
     ) -> tuple[
         list[Node],
@@ -302,6 +310,10 @@ class Neo4JEKGRepository(AbstractEKGRepository):
             result.records[0].get("edges"),
             result.records[0].get("sync"),
         )
+
+    def get_proclet_types(self):
+        result = self.run_query(CypherQueries.get_proclet_types(), {})
+        return result.records[0].get("Types")
 
     # def get_process_executions(self, class_type, entity_ids: list[str], color_map: str | dict[str, str], animation_preferences: AnimationPreferences):
     def get_process_executions(
@@ -421,103 +433,3 @@ class Neo4JEKGRepository(AbstractEKGRepository):
             return None
 
         return result[0]
-
-    def entity_sample(self, class_type: str, sample_size: int) -> list[str]:
-        result = self.run_query(
-            """
-            CYPHER runtime=parallel
-            MATCH (n:Entity)<-[corr:CORR]-(e:Event)-[obs:OBSERVED]->(:Class {Type: $ClassType})
-            //WHERE n.ID = "O2" OR n.ID = "B"
-            WITH DISTINCT n
-            WITH n, rand() as r
-            ORDER BY r
-            RETURN DISTINCT n.ID as ID
-            LIMIT $Limit
-        """,
-            {
-                "ClassType": class_type,
-                "Limit": sample_size,
-            },
-        )
-
-        return [n.get("ID") for n in result.records]
-
-    def count_classes(self, class_type: str) -> int:
-        result = self.run_query(
-            """
-            MATCH (c: Class {Type: $ClassType})
-            RETURN count(DISTINCT c) as Count
-        """,
-            {
-                "ClassType": class_type,
-            },
-        )
-
-        return result.records[0].get("Count")
-
-    def count_dfc(self, class_type: str) -> int:
-        result = self.run_query(
-            """
-            MATCH (: Class {Type: $ClassType})-[r:DF_C]->(: Class {Type: $ClassType})
-            RETURN count(DISTINCT r) as Count
-        """,
-            {
-                "ClassType": class_type,
-            },
-        )
-
-        return result.records[0].get("Count")
-
-    def count_sync(self, class_type: str) -> int:
-        result = self.run_query(
-            """
-            MATCH (:Class {Type: $ClassType})-[r:SYNC]->(: Class {Type: $ClassType})
-            RETURN count(DISTINCT r) as Count
-        """,
-            {
-                "ClassType": class_type,
-            },
-        )
-
-        return int(
-            result.records[0].get("Count") / 2
-        )  # Each SYNC relation is stored twice ()-[]->() and ()<-[]-()
-
-    def proclet_types(self):
-        result = self.run_query(
-            """
-            MATCH (c: Class)
-            RETURN collect(DISTINCT c.Type) as Types
-        """,
-            {},
-        )
-
-        return result.records[0].get("Types")
-
-    def count_start_activities(self, class_type: str) -> int:
-        result = self.run_query(
-            """
-            MATCH (c: Class {Type: $ClassType})
-            WHERE c.StartCount IS NOT NULL AND c.StartCount > 0
-            RETURN count(DISTINCT c) as Count
-        """,
-            {
-                "ClassType": class_type,
-            },
-        )
-
-        return result.records[0].get("Count")
-
-    def count_end_activities(self, class_type: str) -> int:
-        result = self.run_query(
-            """
-            MATCH (c: Class {Type: $ClassType})
-            WHERE c.EndCount IS NOT NULL AND c.EndCount > 0
-            RETURN count(DISTINCT c) as Count
-        """,
-            {
-                "ClassType": class_type,
-            },
-        )
-
-        return result.records[0].get("Count")

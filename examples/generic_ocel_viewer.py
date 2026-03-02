@@ -133,7 +133,7 @@ with objektviz_sidebar:
 
 # ----------------------------------------------------------------------------
 # Query the data from the database (We fetch the data here, so we can use the values to populate the sidebar filters)
-event_classes_db, dfc_db, sync_db = queries.proclet(class_type)
+event_classes_db, dfc_db, sync_db = queries.get_proclet(class_type)
 
 # ----------------------------------------------------------------------------
 

@@ -323,19 +323,19 @@ def preferences_group(
     TokenReplayPreferences,
 ]:
     with st.expander("Layout preferences", expanded=False):
-        dfc_attributes = queries.dfc_attributes(class_type)
+        dfc_attributes = queries.get_dfc_attributes(class_type)
         layout_preferences = layout_preferences_input(
             default_layout_preferences_input, dfc_attributes
         )
 
     with st.expander("DFC Appearance", expanded=False):
         edge_vis_preferences = dfc_appearance_input(
-            queries.dfc_attributes(class_type), defaults=default_connection_visuals
+            queries.get_dfc_attributes(class_type), defaults=default_connection_visuals
         )
 
     with st.expander("Event Class Appearance", expanded=False):
         node_vis_preferences = event_class_appearance_input(
-            queries.class_attributes(class_type), defaults=default_event_class_visuals
+            queries.get_class_attributes(class_type), defaults=default_event_class_visuals
         )
 
     with st.expander("Animation preferences", expanded=False):
@@ -521,7 +521,7 @@ def event_class_detail(
         return
 
     st.write("### Class Detail")
-    event_class_attributes = queries.class_attributes(class_type)
+    event_class_attributes = queries.get_class_attributes(class_type)
     data = {key: event_class[key] for key in event_class_attributes}
     data["ElementId"] = selected_element_id
     st.table(data)
@@ -567,7 +567,7 @@ def dfc_detail(
         return
 
     st.write("### DFC Detail")
-    dfc_attributes = queries.dfc_attributes(class_type)
+    dfc_attributes = queries.get_dfc_attributes(class_type)
     data = {key: edge["dfc_relation"][key] for key in dfc_attributes}
     data["ElementId"] = selected_element_id
     st.table(data)
@@ -598,7 +598,8 @@ def dfc_related_entities(queries: AbstractEKGRepository, selected_element_id: st
     )
     offset = int(selection.split("-")[0])
 
-    entities = queries.get_entities_for_dfc(selected_element_id, limit, offset)
+    entities = (queries.
+                get_entities_for_dfc(selected_element_id, limit, offset))
     st.dataframe(entities)
 
 
@@ -637,24 +638,24 @@ def full_proclet_view(*, graph_payload, queries, class_type, token_animation_seg
 
 
 def ekg_stats(queries: AbstractEKGRepository, class_type: str):
-    class_attrs = set(queries.class_attributes(class_type=class_type))
+    class_attrs = set(queries.get_class_attributes(class_type=class_type))
     col1, _, _ = st.columns(3)
     col1.metric("Selected Proclet", class_type, help="The selected proclet class type")
 
     col1, col2, col3 = st.columns(3)
     col1.metric(
         "Activity Classes Present",
-        queries.count_classes(class_type),
+        queries.get_classes_count(class_type),
         help="Number of distinct Activity classes in the selected proclet",
     )
     col2.metric(
         "Activity Connections Present",
-        queries.count_dfc(class_type),
+        queries.get_dfc_count(class_type),
         help="Number of distinct Activity connections in the selected proclet",
     )
     col3.metric(
         "SYNC Edges Present",
-        queries.count_sync(class_type),
+        queries.get_sync_edge_count(class_type),
         help="Number of SYNC edges in the selected proclet",
     )
 
@@ -666,24 +667,24 @@ def ekg_stats(queries: AbstractEKGRepository, class_type: str):
     )
     col2.metric(
         "Start Activities",
-        queries.count_start_activities(class_type),
+        queries.get_start_class_count(class_type),
         help="Number of distinct start Activity classes in the selected proclet",
     )
     col3.metric(
         "End Activities",
-        queries.count_end_activities(class_type),
+        queries.get_end_class_count(class_type),
         help="Number of distinct end Activity classes in the selected proclet",
     )
 
     st.divider()
     col1, col2, col3 = st.columns(3)
     col1.write("Proclet Types Present:")
-    col1.markdown(" ".join(f":blue-badge[{x}]" for x in queries.proclet_types()))
+    col1.markdown(" ".join(f":blue-badge[{x}]" for x in queries.get_proclet_types()))
 
     col2.write("Class attributes present in the selected proclet:")
     col2.markdown(" ".join(f":blue-badge[{x}]" for x in class_attrs))
 
-    dfc_attrs = set(queries.dfc_attributes(class_type=class_type))
+    dfc_attrs = set(queries.get_dfc_attributes(class_type=class_type))
     col3.write("Connection attributes present in the selected proclet:")
     col3.markdown(" ".join(f":blue-badge[{x}]" for x in dfc_attrs))
 

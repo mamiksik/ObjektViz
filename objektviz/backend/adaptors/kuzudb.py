@@ -5,7 +5,7 @@ from typing import Iterator, Mapping
 import kuzu
 
 from objektviz.backend.BackendConfig import BackendConfig
-from objektviz.backend.adaptors.shared import AbstractEKGRepository
+from objektviz.backend.adaptors.shared import AbstractEKGRepository, CypherQueries
 from objektviz.backend.dot_elements import AbstractDotNode, CROSS_CLUSTER_SENTINEL, AbstractDotEdge
 from objektviz.backend.shaders import AbstractShader
 from objektviz.backend.utils import shader_factory
@@ -87,73 +87,199 @@ class KuzuEKGRepository(AbstractEKGRepository):
         self.connection = connection
 
     def run_query(self, query, params) -> kuzu.QueryResult:
-        # print('\n'+query + " " + str(params))
         return self.connection.execute(query, params)
 
-    def class_attributes(self, class_type: str) -> list[str]:
-        return self.run_query(
-            """
-            MATCH (c: Class {type: $ClassType})
-            UNWIND keys(c) as key
-            RETURN collect(DISTINCT key)
-        """,
-            {
-                "ClassType": class_type,
-            },
-        ).get_all()[0][0]
+    def get_class_attributes(self, class_type: str) -> list[str]:
+        qparams = { "ClassType": class_type }
+        return (
+            self.run_query(CypherQueries.get_class_attributes(), qparams)
+            .get_all()[0][0]
+        )
 
-    def dfc_attributes(self, class_type: str) -> list[str]:
-        return self.run_query(
-            """
-            MATCH (: Class {type: $ClassType})-[r:DF_C]->(: Class {type: $ClassType})
-            UNWIND keys(r) as key
-            RETURN collect(DISTINCT key)
-        """,
-            {
-                "ClassType": class_type,
-            },
-        ).get_all()[0][0]
+    def get_classes_count(self, class_type: str) -> int:
+        qparams = { "ClassType": class_type }
+        return (
+            self.run_query(CypherQueries.get_classes_count(), qparams)
+            .get_all()[0][0]
+        )
 
-    def class_names(self, class_type) -> list[str]:
-        return self.run_query(
+    def get_dfc(self, dfc_id: str) -> dict | None:
+        result = self.run_query(
             """
-            MATCH (c: Class {type: $ClassType})
-            WITH DISTINCT c.EventType as name
-            RETURN name
+            MATCH (c1: Class)-[df_c:DF_C]->(c2: Class)
+            WHERE OFFSET(ID(df_c)) = $DFCId
+            RETURN c1, df_c, c2
         """,
             {
-                "ClassType": class_type,
+                "DFCId": kuzu_internal_id_to_element_id(dfc_id),
             },
-        ).get_all()[0][0]
+        )
+
+        records = result.get_all()
+        if len(records) == 0:
+            return None
+
+        record = records[0]
+        return {
+            "source_class": record[0],
+            "target_class": record[2],
+            "dfc_relation": record[1],
+        }
+
+
+    def get_dfc_attributes(self, class_type: str) -> list[str]:
+        qparams = { "ClassType": class_type }
+        return (
+            self.run_query(CypherQueries.get_dfc_attributes(), qparams)
+            .get_all()[0][0]
+        )
+
+    def get_dfc_count(self, class_type: str) -> int:
+        qparams = { "ClassType": class_type }
+        return (
+            self.run_query(CypherQueries.get_dfc_count(), qparams)
+            .get_all()[0][0]
+        )
+
+    def get_end_class_count(self, class_type: str) -> int:
+        qparams = { "ClassType": class_type }
+        result = self.run_query(CypherQueries.get_end_class_count(), qparams)
+        return result.get_all()[0][0]
+
+    def get_entity_sample(self, class_type: str, sample_size: int) -> list[str]:
+        raise RuntimeError("We do not support TokenReplay in KuzuDB")
+
+    def get_entity_trace(self, class_type: str, entity_element_id: str) -> dict | None:
+        raise RuntimeError("We do not support TokenReplay in KuzuDB")
 
     def get_entity_types(self, class_type: str = None) -> list[str]:
+        qparams = { "ClassType": class_type }
         if class_type is None:
-            return [
-                x[0]
-                for x in self.run_query(
-                    """
-                MATCH (c: Class)
-                WITH DISTINCT c.EntityType as entityType
-                RETURN entityType
-            """,
-                    {},
-                ).get_all()
-            ]
-        return [
-            x[0]
-            for x in self.run_query(
-                """
-            MATCH (c: Class {type: $ClassType})
-            WITH DISTINCT c.EntityType as entityType
-            RETURN entityType
-        """,
-                {
-                    "ClassType": class_type,
-                },
-            ).get_all()
-        ]
+            result = self.run_query(CypherQueries.get_entity_types(),{})
+        else:
+            result = self.run_query(CypherQueries.get_entity_types_for_class(), qparams)
 
-    def proclet(
+        return [x[0] for x in result.get_all()]
+
+    def get_entities_for_dfc(self, dfc_id: str, limit: int, skip: int) -> list[dict]:
+        result = self.run_query(
+            """
+            MATCH (c1: Class)-[df_c:DF_C]->(c2: Class)
+            WHERE OFFSET(ID(df_c)) = $DFCId
+            WITH c1, c2
+            
+            MATCH (e1: Event)-[:CORR]->(n: Entity)<-[:CORR]-(e2: Event)
+            WHERE
+                (e1)-[:DF]->(e2)
+                AND (e1)-[:OBSERVED]->(c1)
+                AND (e2)-[:OBSERVED]->(c2)
+            RETURN DISTINCT n
+            ORDER BY n.ID
+            SKIP $Skip
+            LIMIT $Limit
+        """,
+            {
+                "DFCId": kuzu_internal_id_to_element_id(dfc_id),
+                "Limit": limit,
+                "Skip": skip,
+            },
+        )
+
+        return [n[0] for n in result.get_all()]
+
+    def get_entities_for_dfc_count(self, dfc_id: str) -> int:
+        result = self.run_query(
+            """
+            MATCH (c1: Class)-[df_c:DF_C]->(c2: Class)
+            WHERE OFFSET(ID(df_c)) = $DFCId
+            WITH c1, c2
+            MATCH (e1: Event)-[:CORR]->(n: Entity)<-[:CORR]-(e2: Event)
+            WHERE
+                (e1)-[:DF]->(e2)
+                AND (e1)-[:OBSERVED]->(c1)
+                AND (e2)-[:OBSERVED]->(c2)
+            RETURN count(DISTINCT n) as Count
+        """,
+            {
+                "DFCId": kuzu_internal_id_to_element_id(dfc_id),
+            },
+        )
+
+        return result.get_all()[0][0]
+
+    def get_entities_for_event_class(
+            self, class_id: str, limit: int, skip: int
+    ) -> list[dict]:
+        result = self.run_query(
+            """
+            MATCH (c: Class)
+            WHERE OFFSET(ID(c)) = $ClassId
+            WITH c
+            MATCH (e: Event)-[:CORR]->(n: Entity)
+            WHERE (e)-[:OBSERVED]->(c)
+            RETURN DISTINCT n
+            ORDER BY n.ID
+            SKIP $Skip
+            LIMIT $Limit
+        """,
+            {
+                "ClassId": kuzu_internal_id_to_element_id(class_id),
+                "Limit": limit,
+                "Skip": skip,
+            },
+        )
+
+        return [n[0] for n in result.get_all()]
+
+    def get_entities_for_event_class_count(self, class_id: str) -> int:
+        result = self.run_query(
+            """
+            MATCH (c: Class)
+            WHERE OFFSET(ID(c)) = $ClassId
+            WITH c
+            MATCH (e: Event)-[:CORR]->(n: Entity)
+            WHERE (e)-[:OBSERVED]->(c)
+            RETURN count(DISTINCT n) as Count
+        """,
+            {
+                "ClassId": kuzu_internal_id_to_element_id(class_id),
+            },
+        )
+
+        return result.get_all()[0][0]
+
+    def get_start_class_count(self, class_type: str) -> int:
+        qparams = {"ClassType": class_type}
+        result = self.run_query(CypherQueries.get_start_class_count(), qparams)
+        return result.get_all()[0][0]
+
+
+    def get_event_class(self, event_class_id: str) -> dict | None:
+        result = self.run_query(
+            """
+            MATCH (c: Class)
+            WHERE OFFSET(ID(c)) = $ClassId
+            RETURN c
+        """,
+            {
+                "ClassId": kuzu_internal_id_to_element_id(event_class_id),
+            },
+        )
+
+        records = result.get_all()
+        if len(records) == 0:
+            return None
+
+        return records[0][0]
+
+    def get_sync_edge_count(self, class_type: str) -> int:
+        qparam = {"ClassType": class_type}
+        result = self.run_query(CypherQueries.get_sync_edge_count(), qparam)
+        return int(
+            result.get_all()[0][0] // 2
+        )  # Each SYNC relation is stored twice ()-[]->() and ()<-[]-()
+
+    def get_proclet(
         self, class_type: str
     ) -> tuple[list[KuzuNode], list[KuzuRelationship], list[KuzuRelationship]]:
         result = self.run_query(
@@ -189,328 +315,12 @@ class KuzuEKGRepository(AbstractEKGRepository):
         # Nodes, DFC Edges, SYNC Edges
         return nodes, x[3], x[4]
 
+    def get_proclet_types(self):
+        result = self.run_query(CypherQueries.get_proclet_types(), {})
+        return result.get_all()[0][0]
+
     # def get_process_executions(self, class_type, entity_ids: list[str], color_map: str | dict[str, str], animation_preferences: AnimationPreferences):
     def get_process_executions(
         self, class_type: str, entity_ids: list[str]
     ) -> tuple[list[dict], datetime, datetime]:
-        # start_date
-        start_date = (
-            self.run_query(
-                """
-            CYPHER runtime=parallel
-            MATCH (n: Entity)<-[:CORR]-(e1: Event)
-            WHERE n.ID in $EntityIDs
-            ORDER BY e1.timestamp ASC
-            RETURN e1.timestamp as datetime
-            LIMIT 1
-        """,
-                params={
-                    "EntityIDs": entity_ids,
-                },
-            )
-            .records[0]
-            .get("datetime")
-        )
-
-        end_date = (
-            self.run_query(
-                """
-            CYPHER runtime=parallel
-            MATCH (n: Entity)<-[:END]-(e1: Event)
-            WHERE n.ID in $EntityIDs
-            ORDER BY e1.timestamp DESC
-            RETURN e1.timestamp as datetime
-            LIMIT 1
-        """,
-                params={
-                    "EntityIDs": entity_ids,
-                },
-            )
-            .records[0]
-            .get("datetime")
-        )
-        print("Start Data ", start_date)
-        print("END Data ", end_date)
-
-        return (
-            self.run_query(
-                """
-            CYPHER runtime=parallel
-            MATCH (n: Entity)
-            WHERE n.ID in $EntityIDs
-            CALL(n) {
-                MATCH
-                    (n)<-[:CORR]-(e1: Event)-[df:DF]->(e2: Event)-[:CORR]->(n),
-                    (c1: Class {Type: $ClassType})-[df_c:DF_C]->(c2: Class),
-                    (e1)-[:OBSERVED]->(c1),
-                    (e2)-[:OBSERVED]->(c2)
-                WHERE
-                    c1.Type = c2.Type
-                    AND n.EntityType  = df.EntityType
-                    AND c1.EntityType = n.EntityType
-                    AND c2.EntityType = n.EntityType
-                ORDER BY e1.timestamp
-                WITH
-                    n,
-                    apoc.coll.union(
-                        collect(elementId(c1)),
-                        apoc.coll.union(
-                            collect(elementId(c2)),
-                            collect(elementId(df_c))
-                        )
-                    ) as ActiveElementIds,
-                    collect({
-                        DFCElementId: elementId(df_c),
-                        DurationSec: duration.inSeconds(e1.timestamp, e2.timestamp).seconds,
-                        StartOffsetSec: duration.inSeconds($StartDate, e1.timestamp).seconds
-                    }) as TraceSegments
-    
-                RETURN ActiveElementIds, TraceSegments
-            }
-            RETURN n as Entity, ActiveElementIds, TraceSegments
-        """,
-                params={
-                    "ClassType": class_type,
-                    "EntityIDs": entity_ids,
-                    "StartDate": start_date,
-                    "EndDate": end_date,
-                },
-                to_dict=True,
-            ),
-            start_date,
-            end_date,
-        )
-
-    def entity_sample(self, class_type: str, sample_size: int) -> list[str]:
-        result = self.run_query(
-            """
-            CYPHER runtime=parallel
-            MATCH (n:Entity)<-[corr:CORR]-(e:Event)-[obs:OBSERVED]->(:Class {Type: $ClassType})
-            //WHERE n.ID = "O2" OR n.ID = "B"
-            WITH DISTINCT n
-            WITH n, rand() as r
-            ORDER BY r
-            RETURN DISTINCT n.ID as ID
-            LIMIT $Limit
-        """,
-            {
-                "ClassType": class_type,
-                "Limit": sample_size,
-            },
-        )
-
-        return [n.get("ID") for n in result.records]
-
-    def count_classes(self, class_type: str) -> int:
-        result = self.run_query(
-            """
-            MATCH (c: Class {Type: $ClassType})
-            RETURN count(DISTINCT c) as Count
-        """,
-            {
-                "ClassType": class_type,
-            },
-        )
-
-        return result.get_all()[0][0]
-
-    def count_dfc(self, class_type: str) -> int:
-        result = self.run_query(
-            """
-            MATCH (: Class {Type: $ClassType})-[r:DF_C]->(: Class {Type: $ClassType})
-            RETURN count(DISTINCT r) as Count
-        """,
-            {
-                "ClassType": class_type,
-            },
-        )
-
-        return result.get_all()[0][0]
-
-    def count_sync(self, class_type: str) -> int:
-        result = self.run_query(
-            """
-            MATCH (:Class {type: $ClassType})-[r:SYNC]->(: Class {type: $ClassType})
-            RETURN count(DISTINCT r) as Count
-        """,
-            {
-                "ClassType": class_type,
-            },
-        )
-
-        return int(
-            result.get_all()[0][0] / 2
-        )  # Each SYNC relation is stored twice ()-[]->() and ()<-[]-()
-
-    def proclet_types(self):
-        result = self.run_query(
-            """
-            MATCH (c: Class)
-            RETURN collect(DISTINCT c.Type) as Types
-        """,
-            {},
-        )
-
-        return result.get_all()[0][0]
-
-    def count_start_activities(self, class_type: str) -> int:
-        try:
-            result = self.run_query(
-                """
-                MATCH (c: Class {Type: $ClassType})
-                WHERE c.StartCount IS NOT NULL AND c.StartCount > 0
-                RETURN count(DISTINCT c) as Count
-            """,
-                {
-                    "ClassType": class_type,
-                },
-            )
-
-            return result.get_all()[0][0]
-        except RuntimeError:
-            return None
-
-    def count_end_activities(self, class_type: str) -> int:
-        try:
-            result = self.run_query(
-                """
-                MATCH (c: Class {Type: $ClassType})
-                WHERE c.EndCount IS NOT NULL AND c.EndCount > 0
-                RETURN count(DISTINCT c) as Count
-            """,
-                {
-                    "ClassType": class_type,
-                },
-            )
-
-            return result.get_all()[0][0]
-        except RuntimeError:
-            return None
-
-    def get_entities_for_dfc_count(self, dfc_id: str) -> int:
-        result = self.run_query(
-            """
-            MATCH (c1: Class)-[df_c:DF_C]->(c2: Class)
-            WHERE OFFSET(ID(df_c)) = $DFCId
-            WITH c1, c2
-            MATCH (e1: Event)-[:CORR]->(n: Entity)<-[:CORR]-(e2: Event)
-            WHERE
-                (e1)-[:DF]->(e2)
-                AND (e1)-[:OBSERVED]->(c1)
-                AND (e2)-[:OBSERVED]->(c2)
-            RETURN count(DISTINCT n) as Count
-        """,
-            {
-                "DFCId": kuzu_internal_id_to_element_id(dfc_id),
-            },
-        )
-
-        return result.get_all()[0][0]
-
-    def get_entities_for_dfc(self, dfc_id: str, limit: int, skip: int) -> list[dict]:
-        result = self.run_query(
-            """
-            MATCH (c1: Class)-[df_c:DF_C]->(c2: Class)
-            WHERE OFFSET(ID(df_c)) = $DFCId
-            WITH c1, c2
-            
-            MATCH (e1: Event)-[:CORR]->(n: Entity)<-[:CORR]-(e2: Event)
-            WHERE
-                (e1)-[:DF]->(e2)
-                AND (e1)-[:OBSERVED]->(c1)
-                AND (e2)-[:OBSERVED]->(c2)
-            RETURN DISTINCT n
-            ORDER BY n.ID
-            SKIP $Skip
-            LIMIT $Limit
-        """,
-            {
-                "DFCId": kuzu_internal_id_to_element_id(dfc_id),
-                "Limit": limit,
-                "Skip": skip,
-            },
-        )
-
-        return [n[0] for n in result.get_all()]
-
-    def get_entities_for_event_class_count(self, class_id: str) -> int:
-        result = self.run_query(
-            """
-            MATCH (c: Class)
-            WHERE OFFSET(ID(c)) = $ClassId
-            WITH c
-            MATCH (e: Event)-[:CORR]->(n: Entity)
-            WHERE (e)-[:OBSERVED]->(c)
-            RETURN count(DISTINCT n) as Count
-        """,
-            {
-                "ClassId": kuzu_internal_id_to_element_id(class_id),
-            },
-        )
-
-        return result.get_all()[0][0]
-
-    def get_entities_for_event_class(
-        self, class_id: str, limit: int, skip: int
-    ) -> list[dict]:
-        result = self.run_query(
-            """
-            MATCH (c: Class)
-            WHERE OFFSET(ID(c)) = $ClassId
-            WITH c
-            MATCH (e: Event)-[:CORR]->(n: Entity)
-            WHERE (e)-[:OBSERVED]->(c)
-            RETURN DISTINCT n
-            ORDER BY n.ID
-            SKIP $Skip
-            LIMIT $Limit
-        """,
-            {
-                "ClassId": kuzu_internal_id_to_element_id(class_id),
-                "Limit": limit,
-                "Skip": skip,
-            },
-        )
-
-        return [n[0] for n in result.get_all()]
-
-    def get_dfc(self, dfc_id: str) -> dict | None:
-        result = self.run_query(
-            """
-            MATCH (c1: Class)-[df_c:DF_C]->(c2: Class)
-            WHERE OFFSET(ID(df_c)) = $DFCId
-            RETURN c1, df_c, c2
-        """,
-            {
-                "DFCId": kuzu_internal_id_to_element_id(dfc_id),
-            },
-        )
-
-        records = result.get_all()
-        if len(records) == 0:
-            return None
-
-        record = records[0]
-        return {
-            "source_class": record[0],
-            "target_class": record[2],
-            "dfc_relation": record[1],
-        }
-
-    def get_event_class(self, event_class_id: str) -> dict | None:
-        result = self.run_query(
-            """
-            MATCH (c: Class)
-            WHERE OFFSET(ID(c)) = $ClassId
-            RETURN c
-        """,
-            {
-                "ClassId": kuzu_internal_id_to_element_id(event_class_id),
-            },
-        )
-
-        records = result.get_all()
-        if len(records) == 0:
-            return None
-
-        return records[0][0]
+        raise NotImplemented("TokenReplay is not implemented for KuzuDB")
