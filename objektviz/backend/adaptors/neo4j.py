@@ -2,22 +2,23 @@ import warnings
 from datetime import datetime
 from typing import Iterator
 
-import neo4j
+from neo4j import Driver
+from neo4j.graph import Node, Relationship
 
 from objektviz.backend.BackendConfig import BackendConfig
 from objektviz.backend.adaptors.shared import AbstractEKGRepository
-from objektviz.backend.dot_elements import DotNode, DotEdge
+from objektviz.backend.dot_elements import AbstractDotNode, AbstractDotEdge, CROSS_CLUSTER_SENTINEL
 from objektviz.backend.shaders import AbstractShader
 from objektviz.backend.utils import shader_factory
 
 
 def from_neo4j_to_dot_elements(
-    nodes: list[neo4j.graph.Node],
-    edges: list[neo4j.graph.Relationship],
+    nodes: list[Node],
+    edges: list[Relationship],
     config: BackendConfig,
 ) -> tuple[
-    Iterator[DotNode],
-    Iterator[DotEdge],
+    Iterator[AbstractDotNode],
+    Iterator[AbstractDotEdge],
     dict[str, AbstractShader],
     dict[str, AbstractShader],
     BackendConfig,
@@ -31,10 +32,47 @@ def from_neo4j_to_dot_elements(
         warnings.warn("0 edges were passed to neo4j_proclet_to_dot")
 
     node_shaders, edge_shaders = shader_factory(config)
-    _nodes = map(lambda node: DotNode(node, node_shaders, config), nodes)
-    _edges = map(lambda edge: DotEdge(edge, edge_shaders, config), edges)
+    _nodes = map(lambda node: Neo4JDotNode(node, node_shaders, config), nodes)
+    _edges = map(lambda edge: Neo4JDotEdge(edge, edge_shaders, config), edges)
 
     return _nodes, _edges, node_shaders, edge_shaders, config
+
+# IntelliJ has problems with inferring the type if neo4j.graph.Relationship is used
+class Neo4JDotEdge(AbstractDotEdge[Relationship]):
+    """Takes care of producing dot descriptor code for edge (see parent class doc)"""
+    def get_nesting_attr(self, name, default=None):
+        # This is the best way to handle this since, for kuzu we are now generating suboptimal solution
+        start_attr = self.entity.start_node.get(name, default)
+        end_attr = self.entity.end_node.get(name, default)
+        if start_attr == end_attr:
+            return start_attr
+        else:
+            return CROSS_CLUSTER_SENTINEL
+
+    @property
+    def element_id(self):
+        return self.entity.element_id
+
+    @property
+    def start_element_id(self):
+        return self.entity.start_node.element_id
+
+    @property
+    def end_element_id(self):
+        return self.entity.end_node.element_id
+
+    @property
+    def is_sync_edge(self):
+        return self.entity.type == "SYNC"
+
+
+
+class Neo4JDotNode(AbstractDotNode[Node]):
+    """Takes care of producing dot descriptor code for node (see parent class doc)"""
+
+    @property
+    def element_id(self):
+        return self.entity.element_id
 
 
 class Neo4JEKGRepository(AbstractEKGRepository):
@@ -172,7 +210,7 @@ class Neo4JEKGRepository(AbstractEKGRepository):
         print(result)
         return result[0]["c"]
 
-    def __init__(self, driver: neo4j.Driver):
+    def __init__(self, driver: Driver):
         self.driver = driver
 
     def run_query(self, query, params, to_dict: bool = False):
@@ -235,9 +273,9 @@ class Neo4JEKGRepository(AbstractEKGRepository):
     def proclet(
         self, class_type: str
     ) -> tuple[
-        list[neo4j.graph.Node],
-        list[neo4j.graph.Relationship],
-        list[neo4j.graph.Relationship],
+        list[Node],
+        list[Relationship],
+        list[Relationship],
     ]:
         result = self.run_query(
             """

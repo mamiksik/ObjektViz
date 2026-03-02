@@ -8,17 +8,17 @@ import graphviz
 from objektviz.backend.BackendConfig import BackendConfig
 from objektviz.backend.dot_elements import (
     AbstractDotElement,
-    DotEdge,
-    DotNode,
+    AbstractDotEdge,
+    AbstractDotNode,
     CROSS_CLUSTER_SENTINEL,
 )
 from objektviz.backend.shaders import AbstractShader
-from objektviz.backend.utils import to_lbl
+from objektviz.backend.utils import uuid_to_lbl
 
 
 def generate_dot_source(
-    nodes: Iterable[DotNode],
-    edges: Iterable[DotEdge],
+    nodes: Iterable[AbstractDotNode],
+    edges: Iterable[AbstractDotEdge],
     node_shaders: dict[str, AbstractShader],
     edge_shaders: dict[str, AbstractShader],
     config: BackendConfig,
@@ -257,7 +257,7 @@ class DotGraphDescriptorBuilder:
         local_start_nodes = [
             n
             for n in items
-            if isinstance(n, DotNode)
+            if isinstance(n, AbstractDotNode)
             and n.process_start_count
             and n.process_start_count > 0
             and n.element_id in self.visible_node_ids
@@ -267,7 +267,7 @@ class DotGraphDescriptorBuilder:
         local_end_nodes = [
             n
             for n in items
-            if isinstance(n, DotNode)
+            if isinstance(n, AbstractDotNode)
             and n.process_end_count
             and n.process_end_count > 0
             and n.element_id in self.visible_node_ids
@@ -288,7 +288,7 @@ class DotGraphDescriptorBuilder:
             self.start_nodes_ids.append(local_start_id)
 
             for node in local_start_nodes:
-                edge_id = f"{local_start_id}-{to_lbl(node.element_id)}"
+                edge_id = f"{local_start_id}-{uuid_to_lbl(node.element_id)}"
 
                 self.edge2node.setdefault(edge_id, []).extend(
                     [local_start_id, node.element_id]
@@ -314,7 +314,7 @@ class DotGraphDescriptorBuilder:
 
                 graph.edge(
                     local_start_id,
-                    to_lbl(node.element_id),
+                    uuid_to_lbl(node.element_id),
                     id=edge_id,
                     label=f"{node.process_start_count:,}",
                     penwidth=str(pen_width),
@@ -339,7 +339,7 @@ class DotGraphDescriptorBuilder:
             self.end_nodes_ids.append(local_end_id)
 
             for node in local_end_nodes:
-                edge_id = f"{to_lbl(node.element_id)}-{local_end_id}"
+                edge_id = f"{uuid_to_lbl(node.element_id)}-{local_end_id}"
 
                 self.edge2node.setdefault(edge_id, []).extend(
                     [edge_id, node.element_id]
@@ -365,7 +365,7 @@ class DotGraphDescriptorBuilder:
                     shading_color = f"{shading_color}40"
 
                 graph.edge(
-                    to_lbl(node.element_id),
+                    uuid_to_lbl(node.element_id),
                     local_end_id,
                     id=edge_id,
                     label=f"{node.process_end_count:,}",
@@ -410,7 +410,7 @@ class DotGraphDescriptorBuilder:
                     continue
 
                 # Emit rank constraint using the node labels used in the graph
-                quoted = ";".join([f'"{to_lbl(e)}"' for e in elements])
+                quoted = ";".join([f'"{uuid_to_lbl(e)}"' for e in elements])
                 graph.body.append(f"{{rank=same; {quoted};}};")
 
                 if not self.config.layout_preferences.exclusive_event_class_ranks_experimental:
@@ -427,14 +427,14 @@ class DotGraphDescriptorBuilder:
                         continue
 
                     # Create a stable edge id for the synthetic edge
-                    edge_id = f"rank_invis_{to_lbl(rep)}_{to_lbl(other)}"
+                    edge_id = f"rank_invis_{uuid_to_lbl(rep)}_{uuid_to_lbl(other)}"
                     if edge_id in created_edges or edge_id in self.edge2node:
                         continue
 
                     # Add the invisible edge to the dot graph (use to_lbl for node ids)
                     graph.edge(
-                        to_lbl(rep),
-                        to_lbl(other),
+                        uuid_to_lbl(rep),
+                        uuid_to_lbl(other),
                         id=edge_id,
                         style="invis",
                         color="transparent",

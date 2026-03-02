@@ -28,22 +28,7 @@ def shader_factory(config: BackendConfig):
     return node_shaders, edge_shaders
 
 
-def to_lbl(value) -> str:
+def uuid_to_lbl(value) -> str:
     """DOT language does not allow ':' in ID, so we need to replace all : in UUIDs with a valid char"""
     return value.replace(":", "+")
 
-
-def extrapolate_color(min_freq: int, max_freq: int, value: int, cmap: str):
-    if max_freq == min_freq:
-        normalized_value = 1
-    else:
-        normalized_value = (value - min_freq) / (max_freq - min_freq)
-
-    normalized_value = min(max(0.3, normalized_value), 0.7)  # clamp minimal value
-    colormap = plt.get_cmap(cmap)
-    color = colormap(normalized_value)
-    return mplt.colors.rgb2hex(color)
-
-
-def robust_scaler(iqr, median, value):
-    return (value - median) / iqr

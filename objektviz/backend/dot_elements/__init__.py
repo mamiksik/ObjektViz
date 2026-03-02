@@ -3,12 +3,12 @@
 # dot_elements.DotNode(...)
 
 from .AbstractDotElement import AbstractDotElement, CROSS_CLUSTER_SENTINEL
-from .DotNode import DotNode
-from .DotEdge import DotEdge
+from .AbstractDotNode import AbstractDotNode
+from .AbstractDotEdge import AbstractDotEdge
 
 __all__ = [
     "AbstractDotElement",
     "CROSS_CLUSTER_SENTINEL",
-    "DotNode",
-    "DotEdge",
+    "AbstractDotNode",
+    "AbstractDotEdge",
 ]

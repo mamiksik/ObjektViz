@@ -1,19 +1,23 @@
-from typing import Literal
-
-import neo4j
+import abc
+from abc import ABC
+from typing import Literal, Mapping
 
 from objektviz.backend.dot_elements.AbstractDotElement import (
     AbstractDotElement,
-    CROSS_CLUSTER_SENTINEL,
 )
-from objektviz.backend.utils import to_lbl
+
+from objektviz.backend.utils import uuid_to_lbl
 
 
-class DotEdge(AbstractDotElement):
+class AbstractDotEdge[EntityT: Mapping](AbstractDotElement[EntityT], ABC):
     """Takes care of producing dot descriptor code for edge (see parent class doc)"""
 
-    entity: neo4j.graph.Relationship
+    sync_edge_color = "#c4c4c4"
+    sync_edge_width  = 3
+
     style = "solid"
+    arrow_size = 2
+    force_labels = True
 
     @property
     def dot_descriptor(self):
@@ -25,13 +29,13 @@ class DotEdge(AbstractDotElement):
             "id": self.element_id,
             "tail_id": self.start_element_id,
             "head_id": self.end_element_id,
-            "head_name": to_lbl(self.end_element_id),
-            "tail_name": to_lbl(self.start_element_id),
+            "head_name": uuid_to_lbl(self.end_element_id),
+            "tail_name": uuid_to_lbl(self.start_element_id),
             label_attr: self.descriptive_label,
-            "forcelabels": str(True),
+            "forcelabels": str(self.force_labels),
             "fontname": self.fontname,
             "penwidth": str(self.penwidth),
-            "arrowsize": "2",
+            "arrowsize": f"{self.arrow_size}",
             "color": self.color,
             "style": self.style,
             "dir": self.dir,
@@ -45,35 +49,28 @@ class DotEdge(AbstractDotElement):
         if self.config.layout_preferences.weight_attribute is None:
             return 1
 
-        return self.entity.get(self.config.layout_preferences.weight_attribute, 0)
+        return self.get(self.config.layout_preferences.weight_attribute, 0)
+
+    @property
+    @abc.abstractmethod
+    def start_element_id(self):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def end_element_id(self):
+        pass
 
     @property
     def dot_element_type(self) -> Literal["edge"]:
         return "edge"
-
-    def get_nesting_attr(self, name, default=None):
-        # This is the best way to handle this since, for kuzu we are now generating suboptimal solution
-        start_attr = self.entity.start_node.get(name, default)
-        end_attr = self.entity.end_node.get(name, default)
-        if start_attr == end_attr:
-            return start_attr
-        else:
-            return CROSS_CLUSTER_SENTINEL
-
-    @property
-    def start_element_id(self):
-        return self.entity.start_node.element_id
-
-    @property
-    def end_element_id(self):
-        return self.entity.end_node.element_id
 
     @property
     def descriptive_label(self) -> str:
         if self.is_sync_edge:
             return ""
 
-        value = self.entity.get(self.config.dfc_preferences.caption, -1)
+        value = self.get(self.config.dfc_preferences.caption, -1)
         if isinstance(value, float):
             return f"   {value:.2f}"
 
@@ -92,22 +89,21 @@ class DotEdge(AbstractDotElement):
     @property
     def penwidth(self):
         if self.is_sync_edge:
-            return 3
+            return self.sync_edge_color
 
         return self.shaders[self.shader_key].pen_width(self.entity)
 
     @property
     def color(self):
         if self.is_sync_edge:
-            return "#c4c4c4"
+            return self.sync_edge_color
 
         return self.shaders[self.shader_key].shading_color(self.entity)
 
     @property
     def is_visible(self):
-        if self.config.root_element_filter:
-            if not self.config.root_element_filter.is_passing(self):
-                return False
+        if self.config.root_element_filter and not self.config.root_element_filter.is_passing(self):
+            return False
 
         if self.is_sync_edge:
             return True
@@ -115,5 +111,6 @@ class DotEdge(AbstractDotElement):
         return self.config.dfc_root_filter.is_passing(self)
 
     @property
+    @abc.abstractmethod
     def is_sync_edge(self):
-        return self.entity.type == "SYNC"
+        pass

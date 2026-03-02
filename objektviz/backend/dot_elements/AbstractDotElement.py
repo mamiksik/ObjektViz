@@ -1,16 +1,14 @@
 import abc
-from abc import ABC
-from typing import Literal
+from typing import TYPE_CHECKING, Literal, Mapping
 
-import neo4j
-
-from objektviz.backend.BackendConfig import BackendConfig
-from objektviz.backend.shaders.AbstractShader import AbstractShader
+if TYPE_CHECKING:
+    from objektviz.backend.BackendConfig import BackendConfig
+    from objektviz.backend.shaders.AbstractShader import AbstractShader
 
 CROSS_CLUSTER_SENTINEL = object()
 
 
-class AbstractDotElement(ABC):
+class AbstractDotElement[EntityT: Mapping](abc.ABC):
     """
     Shared representation of edge or node that is going to be parsed into a dot descriptor.
     It's a middle layer between the database and dot representation of node/edge
@@ -31,19 +29,14 @@ class AbstractDotElement(ABC):
 
     def __init__(
         self,
-        entity: neo4j.graph.Entity,
-        shaders: dict[str, AbstractShader],
-        config: BackendConfig,
+        entity: EntityT,
+        shaders: dict[str, 'AbstractShader'],
+        config: 'BackendConfig',
     ):
         self.entity = entity
         self.shaders = shaders
         self.config = config
 
-    def get(self, name, default=None):
-        return self.entity.get(name, default)
-
-    def get_nesting_attr(self, name, default=None):
-        return self.entity.get(name, default)
 
     @property
     @abc.abstractmethod
@@ -51,12 +44,9 @@ class AbstractDotElement(ABC):
         pass
 
     @property
-    def element_id(self):
-        return self.entity.element_id
-
-    @property
-    def shader_key(self):
-        return self.entity.get(self.config.shader_groping_key)
+    @abc.abstractmethod
+    def element_id(self) -> str:
+        pass
 
     @property
     @abc.abstractmethod
@@ -65,7 +55,7 @@ class AbstractDotElement(ABC):
 
     @property
     @abc.abstractmethod
-    def dot_descriptor(self):
+    def dot_descriptor(self) -> str:
         pass
 
     @property
@@ -74,6 +64,16 @@ class AbstractDotElement(ABC):
         pass
 
     @property
+    def shader_key(self) -> str:
+        return self.get(self.config.shader_groping_key)
+
+    @property
     def frequency(self) -> int:
         # -1 is sentinel value meaning the frequency is undefined
-        return self.entity.get("frequency", -1)
+        return self.get("frequency", -1)
+
+    def get(self, name, default=None):
+        return self.entity.get(name, default)
+
+    def get_nesting_attr(self, name, default=None):
+        return self.get(name, default)

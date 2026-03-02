@@ -1,17 +1,17 @@
 import warnings
 from datetime import datetime
-from typing import Iterator, Any
+from typing import Iterator, Mapping
 
 import kuzu
 
 from objektviz.backend.BackendConfig import BackendConfig
 from objektviz.backend.adaptors.shared import AbstractEKGRepository
-from objektviz.backend.dot_elements import DotNode, DotEdge, CROSS_CLUSTER_SENTINEL
+from objektviz.backend.dot_elements import AbstractDotNode, CROSS_CLUSTER_SENTINEL, AbstractDotEdge
 from objektviz.backend.shaders import AbstractShader
 from objektviz.backend.utils import shader_factory
 
-type KuzuNode = Any  # Placeholder for kuzu.graph.Node
-type KuzuRelationship = Any  # Placeholder for kuzu.graph.Relationship
+type KuzuNode = Mapping  # Placeholder for kuzu Node
+type KuzuRelationship = Mapping  # Placeholder for kuzu Relationship
 
 
 def kuzu_internal_id_to_str(node: dict) -> str:
@@ -23,13 +23,13 @@ def kuzu_internal_id_to_element_id(id: str) -> str:
     return id.split(":")[1]
 
 
-class KuzuDotNode(DotNode):
+class KuzuDotNode(AbstractDotNode):
     @property
     def element_id(self):
         return kuzu_internal_id_to_str(self.entity["_id"])
 
 
-class KuzuDotEdge(DotEdge):
+class KuzuDotEdge(AbstractDotEdge[KuzuRelationship]):
     @property
     def element_id(self):
         return kuzu_internal_id_to_str(self.entity["_id"])
