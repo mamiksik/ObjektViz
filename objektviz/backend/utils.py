@@ -1,6 +1,3 @@
-from matplotlib import pyplot as plt
-import matplotlib as mplt
-
 from objektviz.backend.BackendConfig import BackendConfig
 
 

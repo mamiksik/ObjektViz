@@ -323,4 +323,4 @@ class KuzuEKGRepository(AbstractEKGRepository):
     def get_process_executions(
         self, class_type: str, entity_ids: list[str]
     ) -> tuple[list[dict], datetime, datetime]:
-        raise NotImplemented("TokenReplay is not implemented for KuzuDB")
+        raise NotImplementedError("TokenReplay is not implemented for KuzuDB")
