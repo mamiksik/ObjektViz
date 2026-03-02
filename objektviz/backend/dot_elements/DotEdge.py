@@ -36,11 +36,8 @@ class DotEdge(AbstractDotElement):
             "style": self.style,
             "dir": self.dir,
             "weight": str(self.weight),
-            # 'constraint': str(not self.is_sync_edge),
-            # 'fontsize':'18',
-            # 'labeldistance':'4.5',
-            # 'labelangle':'45',
-            # 'headlabel':"True",
+            "class": "sync-edge" if self.is_sync_edge else "dfc-edge",
+            "headclip": str(not self.is_sync_edge),
         }
 
     @property
@@ -102,7 +99,7 @@ class DotEdge(AbstractDotElement):
     @property
     def color(self):
         if self.is_sync_edge:
-            return "#4A4A4A25"
+            return "#c4c4c4"
 
         return self.shaders[self.shader_key].shading_color(self.entity)
 
