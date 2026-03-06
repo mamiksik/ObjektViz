@@ -103,9 +103,11 @@ class BackendConfig:
     # What attribute is used group shaders
     shader_groping_key: str
 
-    # Mapping of shader_grouping_key attr values to color map name (matplotlib.colors.Colormap)
-    # e.g. {'Loan Application': "Blues", "Workflow": "Reds"}
-    shader_groups_color: dict[str, str]
+    # Mapping of shader_grouping_key attr values to color map name (matplotlib.colors.Colormap) or hex color
+    # Matplot lib color maps are safer option since the luminosity change is precised uniformly,
+    # but that also means that there is only very few of them.
+    # e.g. {'Loan Application': ("hex", "#FF00FF"), "Workflow": ("cmap", "Reds")}
+    shader_groups_color: dict[str, tuple[str, str]]
 
     # If true, process start/end nodes will be computed and visualized
     # This requires that the :Class nodes have "StartCount" and "EndCount" attributes defined
