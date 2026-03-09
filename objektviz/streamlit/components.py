@@ -33,6 +33,12 @@ from objektviz.frontend import (
 
 
 def setup_objektviz_page():
+    st.markdown("""<style>
+      .block-container {
+           padding-left: 2rem;
+           padding-right: 2rem;
+        }  
+    </style>""", unsafe_allow_html=True)
 
     # excluded_nodes is used in combination with right click and element_id filter
     if "excluded_elements" not in st.session_state:

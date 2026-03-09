@@ -20,6 +20,26 @@ from objektviz.backend.dot_graph_builder import generate_dot_source
 
 from objektviz.frontend import GraphFrontendPayload
 
+
+# ----------------------------------------------------------------------------
+# Stream lit UI boilerplate (DO NOT (LIKELY) MODIFY)
+# ----------------------------------------------------------------------------
+objektviz_sidebar = ov_components.setup_objektviz_page()
+
+# Graph tab contains the main proclet graph
+# EKG Stats tab contains statistics about EKG attributes
+# Trace Variants tab contains trace variants for selected class type (TODO)
+# Debug tab contains raw data for debugging purposes
+# Sidebar contains all possible configuration options for the ObjektViz
+process_model_tab, ekg_stats_tab, trace_variants_tab, debug_tab = st.tabs(
+    ["📦 Process Model", "ℹ️ EKG Stats", "➡️ Trace Variants", "⚙️ Debug tab"]
+)
+
+
+# ----------------------------------------------------------------------------
+# DB Connection [EDIT AS NEEDED]
+# ----------------------------------------------------------------------------
+
 PATH = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
 OCEL_DATASETS = PATH / "datasets" / "kuzudb"
 DATASETS = {
@@ -27,10 +47,7 @@ DATASETS = {
     "Order Management": OCEL_DATASETS / "order_managment.kuzu",
 }
 
-# ----------------------------------------------------------------------------
-# DB Connection [EDIT AS NEEDED]
-# ----------------------------------------------------------------------------
-with st.sidebar:
+with objektviz_sidebar:
     st.selectbox(
         label="Dataset",
         options=DATASETS.keys(),
@@ -51,20 +68,6 @@ def connection(database_path: pathlib.Path):
 
 conn = connection(database_path)
 queries = ov_kuzu.KuzuEKGRepository(conn)
-
-# ----------------------------------------------------------------------------
-# Stream lit UI boilerplate (DO NOT (LIKELY) MODIFY)
-# ----------------------------------------------------------------------------
-objektviz_sidebar = ov_components.setup_objektviz_page()
-
-# Graph tab contains the main proclet graph
-# EKG Stats tab contains statistics about EKG attributes
-# Trace Variants tab contains trace variants for selected class type (TODO)
-# Debug tab contains raw data for debugging purposes
-# Sidebar contains all possible configuration options for the ObjektViz
-process_model_tab, ekg_stats_tab, trace_variants_tab, debug_tab = st.tabs(
-    ["📦 Process Model", "ℹ️ EKG Stats", "➡️ Trace Variants", "⚙️ Debug tab"]
-)
 
 # ----------------------------------------------------------------------------
 # CONFIG SECTION [EDIT AS NEEDED]
