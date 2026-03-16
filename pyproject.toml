@@ -18,6 +18,13 @@ dependencies = [
     "watchdog>=6.0.0",
 ]
 
+[project.optional-dependencies]
+publish = ["build", "twine"]
+
+[project.urls]
+Homepage = "https://mamiksik.github.io/ObjektViz/"
+Repository = "https://github.com/mamiksik/ObjektViz.git"
+
 
 [tool.setuptools.packages.find]
 where = ["src"]
