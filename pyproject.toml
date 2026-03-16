@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "objektviz"
-version = "0.2.3"
+version = "0.2.4"
 description = "ObjektViz is a visualizer for object-centric process models that enables users to explore and analyze even _very complex_ processes involving multiple interacting objects"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -31,9 +31,16 @@ Repository = "https://github.com/mamiksik/ObjektViz.git"
 where = ["src"]
 include = ['objektviz*']
 
+
+[tool.setuptools.package-data]
+objektviz = [
+    "frontend/**/*.html",
+    "frontend/**/*.js",
+    "frontend/source/*"
+]
+
 [tool.uv.sources]
 objektviz = { workspace = true, editable = true }
-
 
 [dependency-groups]
 dev = [
