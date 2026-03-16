@@ -1,25 +1,21 @@
 import os
 import pathlib
 
+import kuzu
 import streamlit as st
 
-import kuzu
-
-import objektviz.streamlit.components as ov_components
-import objektviz.backend.filters as ov_filters
 import objektviz.backend.adaptors.kuzudb as ov_kuzu
-
+import objektviz.backend.filters as ov_filters
+import objektviz.streamlit.components as ov_components
 from objektviz.backend.BackendConfig import BackendConfig
+from objektviz.backend.dot_graph_builder import generate_dot_source
+from objektviz.frontend import GraphFrontendPayload
 from objektviz.streamlit.utils import (
     DefaultConnectionPreferences,
     DefaultEventClassPreferences,
-    DefaultShadingPreferences,
     DefaultLayoutPreferences,
+    DefaultShadingPreferences,
 )
-from objektviz.backend.dot_graph_builder import generate_dot_source
-
-from objektviz.frontend import GraphFrontendPayload
-
 
 # ----------------------------------------------------------------------------
 # Stream lit UI boilerplate (DO NOT (LIKELY) MODIFY)
@@ -32,7 +28,7 @@ objektviz_sidebar = ov_components.setup_objektviz_page()
 # Debug tab contains raw data for debugging purposes
 # Sidebar contains all possible configuration options for the ObjektViz
 process_model_tab, ekg_stats_tab, trace_variants_tab, debug_tab = st.tabs(
-    ["📦 Process Model", "ℹ️ EKG Stats", "➡️ Trace Variants", "⚙️ Debug tab"]
+    ["📦 Process Model", "ℹ️ EKG Inspection", "➡️ Trace Variants", "⚙️ Debug"]
 )
 
 
@@ -214,15 +210,20 @@ with objektviz_sidebar:
         )
 
     with st.expander("Element ID Filter", expanded=False):
-        excluded_elements = st.session_state['excluded_elements']
-        st.write("Excluded element IDs (from right-clicking on the graph):", excluded_elements)
+        excluded_elements = st.session_state["excluded_elements"]
+        st.write(
+            "Excluded element IDs (from right-clicking on the graph):",
+            excluded_elements,
+        )
 
-        element_id_filter = ov_filters.NotFilter(ov_filters.MatchFilter.new(
-            attribute="element_id",
-            is_enabled=True,
-            skip_on_empty=False,
-            values=list(excluded_elements),
-        ))
+        element_id_filter = ov_filters.NotFilter(
+            ov_filters.MatchFilter.new(
+                attribute="element_id",
+                is_enabled=True,
+                skip_on_empty=False,
+                values=list(excluded_elements),
+            )
+        )
 
 
 # Backend Visualizer Configuration
@@ -250,9 +251,9 @@ dot_src, edge_node_map, node_edge_map, node_node_map = generate_dot_source(
 
 # Log the raw data in the debug tab
 with debug_tab:
-    # TODO: I when this is split on multiple linces I get:
-    # "line 1 ov_components.debug_objektviz_backend( ^ SyntaxError: '(' was never closed"
-    ov_components.debug_objektviz_backend(objektviz_config, event_classes_db, dfc_db, dot_src)
+    ov_components.debug_objektviz_backend(
+        objektviz_config, event_classes_db, dfc_db, dot_src
+    )
     st.write(*wrapped_values)
 
 # Prepare the payload for the frontend graph component

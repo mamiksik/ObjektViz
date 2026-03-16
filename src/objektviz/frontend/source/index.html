@@ -1,0 +1,91 @@
+<html>
+<head>
+<style type="text/css">
+        #graph {
+            padding: 1px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            width: 100%;
+            height: calc(100% - 100px);
+            max-height: 100%;
+            max-width: 100%;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .node:hover, .edge:hover, .token-group:hover {
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+    <script src="//d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/d3-simple-slider"></script>
+    <script src="https://unpkg.com/@hpcc-js/wasm@2.20.0/dist/graphviz.umd.js"></script>
+    <script src="https://unpkg.com/d3-graphviz@5.6.0/build/d3-graphviz.js"></script>
+
+    <script src="plugins/d3-helpers.js"></script>
+    <script src="streamlit-boilerplate.js"></script>
+    <script src="objektviz.js"></script>
+    <script src="plugins/resize-plugin.js"></script>
+    <script src="plugins/click-interaction-plugin.js"></script>
+    <script src="plugins/hover-interaction-plugin.js"></script>
+    <script src="plugins/trace-highlight-plugin.js"></script>
+    <script src="plugins/advanced-token-replay-plugin.js"></script>
+    <script src="plugins/straight-sync-edge-plugin.js"></script>
+
+    <div id="graph"></div>
+    <div id="slider-container"></div>
+</body>
+
+<script type="text/javascript">
+    'use strict';
+
+    const SAFE_AREA = 150
+    const GRAPH_DIV_ID = "graph"
+    const defaultConfig = {
+        colorHovering: '#10069F',
+        colorSelected: '#fb2c36',
+        colorTraceAnimation: '#00a63e',
+        twiningTransitionFce: function () {
+            return d3.transition("main")
+                .ease(d3.easeLinear)
+                .delay(300)
+                .duration(500);
+        }
+    }
+
+    // The render function is called each time the component receives new props from Python backend
+    const componentState = {
+        objektviz: null,
+        dotSource: null,
+    }
+
+    streamlitRender((props) => {
+        if (componentState.objektviz === null) {
+            componentState.objektviz = new ObjektViz(document.getElementById(GRAPH_DIV_ID), [
+                new ResizeObserverPlugin(),
+                new StraightSyncEdgePlugin(),
+                new TraceHighlightPlugin(),
+                new HoverInteractionPlugin(),
+                new AdvancedTokenReplayPlugin(),
+                new ClickInteractionPlugin(),
+            ], defaultConfig)
+        }
+
+        // In case the dot source changed, re-render the whole graph
+        if (componentState.dotSource !== props.dot_source) {
+            componentState.dotSource = props.dot_source
+            componentState.objektviz.renderDot(props.dot_source, props)
+        }
+
+        // Otherwise just update the payload and re-apply styles
+        if (componentState.dotSource === props.dot_source) {
+            componentState.objektviz.setPayload(props)
+            componentState.objektviz.applyStyles()
+        }
+    })
+
+</script>
+</html>

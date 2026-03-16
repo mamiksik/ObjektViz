@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "objektviz"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.2.0"
+description = "ObjektViz is a visualizer for object-centric process models that enables users to explore and analyze even _very complex_ processes involving multiple interacting objects"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -20,15 +20,15 @@ dependencies = [
 
 
 [tool.setuptools.packages.find]
-include = ["objektviz_frontend*"]
+where = ["src"]
+include = ['objektviz*']
 
-[tool.setuptools]
-include-package-data = true
+[tool.uv.sources]
+objektviz = { workspace = true, editable = true }
 
-[tool.setuptools.package-data]
-objektviz_frontend = ["frontend/build/**/*", "pyproject.toml"]
 
 [dependency-groups]
 dev = [
+    "objektviz",
     "ruff>=0.14.13",
 ]

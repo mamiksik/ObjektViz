@@ -555,7 +555,7 @@ wheels = [
 
 [[package]]
 name = "objektviz"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "graphviz" },
@@ -569,6 +569,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "objektviz" },
     { name = "ruff" },
 ]
 
@@ -584,7 +585,10 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "ruff", specifier = ">=0.14.13" }]
+dev = [
+    { name = "objektviz", editable = "." },
+    { name = "ruff", specifier = ">=0.14.13" },
+]
 
 [[package]]
 name = "orjson"
