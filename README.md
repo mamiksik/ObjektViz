@@ -20,6 +20,19 @@ ObjektViz has a lot of customization, and is built with the idea that you as a u
 In the examples we use KuzuDB, which works fine for small examples and the setup is easy. For real-world datasets, you might use Neo4J, but that requires more setup.
 We have exported and processed some OCEL datasets into EKG and generated aggregated views (i.e. process models) for you to explore in the examples.
 
+# Quick setup (using pypi package)
+1. Create a new Python environment and install the `objektviz` package from PyPI:
+   ```bash
+   pip install objektviz
+   ```
+2. Copy the example dashboard script (e.g. 'examples/generic_ocel_viewer.py') and dataset folder. 
+
+3. Run the example dashboard:
+    ```bash
+   streamlit run generic_ocel_viewer.py
+   ```
+
+## Advance setup (manual installation)
 1. Clone the repository:
    ```bash
    git clone git@github.com:mamiksik/ObjektViz.git
