@@ -23,7 +23,7 @@ We have exported and processed some OCEL datasets into EKG and generated aggrega
 ### Installation using pypi package
 1. Create a new Python environment and install the `objektviz` package from PyPI:
    ```bash
-   pip install objektviz
+   pip install objektviz[kuzu, neo4j]
    ```
 2. Copy the example dashboard script (e.g. 'examples/generic_ocel_viewer.py') and dataset folder. 
 
@@ -41,7 +41,7 @@ We have exported and processed some OCEL datasets into EKG and generated aggrega
    cd ObjektViz
 3. Install the required dependencies (we use [uv](https://docs.astral.sh/uv/) to manage the Python environment and dependencies):
    ```bash
-   uv sync
+   uv sync --all-extras
 
 4. Activate the virtual environment (bash shell):
    ```bash
