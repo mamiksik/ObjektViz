@@ -4,15 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "objektviz"
-version = "0.2.2"
+version = "0.2.3"
 description = "ObjektViz is a visualizer for object-centric process models that enables users to explore and analyze even _very complex_ processes involving multiple interacting objects"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "graphviz>=0.21",
-    "kuzu>=0.11.3",
     "matplotlib>=3.10.7",
-    "neo4j>=6.0.3",
     "scikit-learn>=1.7.2",
     "streamlit[charts]>=1.51.0",
     "watchdog>=6.0.0",
@@ -20,6 +18,9 @@ dependencies = [
 
 [project.optional-dependencies]
 publish = ["build", "twine"]
+docs = ["mkdocs>=1.6.1", "mkdocs-material>=9.7.1"]
+kuzu = ["kuzu"]
+neo4j = ["neo4j"]
 
 [project.urls]
 Homepage = "https://mamiksik.github.io/ObjektViz/"
