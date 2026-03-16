@@ -4,15 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "objektviz"
-version = "0.2.4"
+version = "0.2.5"
 description = "ObjektViz is a visualizer for object-centric process models that enables users to explore and analyze even _very complex_ processes involving multiple interacting objects"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "graphviz>=0.21",
     "matplotlib>=3.10.7",
+    "plotly>=6.5.2",
     "scikit-learn>=1.7.2",
-    "streamlit[charts]>=1.51.0",
+    "streamlit-adjustable-columns>=0.2.1",
+    "streamlit[charts]>=1.55.0",
     "watchdog>=6.0.0",
 ]
 
@@ -46,4 +48,5 @@ objektviz = { workspace = true, editable = true }
 dev = [
     "objektviz",
     "ruff>=0.14.13",
+    "wfork-streamlit-profiler>=1.6.0"
 ]

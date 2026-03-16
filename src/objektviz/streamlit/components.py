@@ -1,6 +1,7 @@
 from typing import Callable
 
 import numpy as np
+import plotly.express as px
 import streamlit as st
 from matplotlib import pyplot as plt
 
@@ -808,8 +809,28 @@ def entity_distribution_plot(
 
 @st.cache_data
 def plot_frequency_distribution(values: list[int | float]):
-    fig, ax = plt.subplots(figsize=(6, 3), constrained_layout=True)
-    ax.hist(values, bins=100, color="tab:blue", edgecolor="black", alpha=0.8)
+    # fig, ax = plt.subplots(figsize=(6, 3), constrained_layout=True)
+    # ax.hist(values, bins=100, color="tab:blue", edgecolor="black", alpha=0.8)
+    #  # Create histogram with plotly
+    fig = px.histogram(
+        x=values,
+        nbins=100,
+        title="",
+        labels={"x": "Frequency", "count": "Count"},
+        color_discrete_sequence=["#1f77b4"],  # tab:blue equivalent
+    )
+
+    fig.update_layout(
+        bargap=0.1,  # Explicitly set bargap to avoid numpy precision errors
+        showlegend=False,
+        xaxis_title="Frequency",
+        yaxis_title="",
+        height=250,
+        margin=dict(t=0, b=0, l=30, r=0),  # Remove top and bottom paddin
+    )
+
+    fig.update_traces(marker_line_color="black", marker_line_width=0.5)
+
     return fig
 
 
@@ -836,11 +857,10 @@ def frequency_filter_per_entity_type(
         min_freq = min(elements["frequency"] for elements in elements_of_type)
         values = [elements["frequency"] for elements in elements_of_type]
 
-        # fig, ax = plt.subplots(figsize=(6, 3), constrained_layout=True)
-        # ax.hist(values, bins=100, color='tab:blue', edgecolor='black', alpha=0.8)
         fig = plot_frequency_distribution(values)
-        st.pyplot(fig)
-        plt.close(fig)
+        st.plotly_chart(
+            fig, width="content", config={"staticPlot": True, "responsive": True}
+        )
 
         filter_label = f"{entity_type}"
         range_filter = attribute_range_filter_input(

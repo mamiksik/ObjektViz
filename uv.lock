@@ -909,13 +909,15 @@ wheels = [
 
 [[package]]
 name = "objektviz"
-version = "0.2.2"
+version = "0.2.4"
 source = { editable = "." }
 dependencies = [
     { name = "graphviz" },
     { name = "matplotlib" },
+    { name = "plotly" },
     { name = "scikit-learn" },
     { name = "streamlit", extra = ["charts"] },
+    { name = "streamlit-adjustable-columns" },
     { name = "watchdog" },
 ]
 
@@ -939,6 +941,7 @@ publish = [
 dev = [
     { name = "objektviz" },
     { name = "ruff" },
+    { name = "wfork-streamlit-profiler" },
 ]
 
 [package.metadata]
@@ -950,8 +953,10 @@ requires-dist = [
     { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.6.1" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.7.1" },
     { name = "neo4j", marker = "extra == 'neo4j'" },
+    { name = "plotly", specifier = ">=6.5.2" },
     { name = "scikit-learn", specifier = ">=1.7.2" },
-    { name = "streamlit", extras = ["charts"], specifier = ">=1.51.0" },
+    { name = "streamlit", extras = ["charts"], specifier = ">=1.55.0" },
+    { name = "streamlit-adjustable-columns", specifier = ">=0.2.1" },
     { name = "twine", marker = "extra == 'publish'" },
     { name = "watchdog", specifier = ">=6.0.0" },
 ]
@@ -961,6 +966,7 @@ provides-extras = ["publish", "docs", "kuzu", "neo4j"]
 dev = [
     { name = "objektviz", editable = "." },
     { name = "ruff", specifier = ">=0.14.13" },
+    { name = "wfork-streamlit-profiler", specifier = ">=1.6.0" },
 ]
 
 [[package]]
@@ -1214,6 +1220,22 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b0/77/a5b8c569bf593b0140bde72ea885a803b82086995367bf2037de0159d924/pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887", size = 4968631, upload-time = "2025-06-21T13:39:12.283Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b", size = 1225217, upload-time = "2025-06-21T13:39:07.939Z" },
+]
+
+[[package]]
+name = "pyinstrument"
+version = "5.0.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ba/a5/f11adb20528285ab85878f8fe1a22d5759c68c49ad3b545d1c1808ab52da/pyinstrument-5.0.3.tar.gz", hash = "sha256:88281dfe65e5d6b42035bba72808cbcd4cb46cd0a0ba35da23d3e74a41ebdd05", size = 264026, upload-time = "2025-07-02T14:14:03.546Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b3/5a/80c94bd2a7344c130c560e2cf23327cab992ac9f237e12556e0d4594d75b/pyinstrument-5.0.3-cp313-cp313-macosx_10_13_universal2.whl", hash = "sha256:aa6eb04572c6cb00c204e7ae287403becca90f3b00b56b43df2d2f81d726ed5b", size = 129584, upload-time = "2025-07-02T14:13:27.845Z" },
+    { url = "https://files.pythonhosted.org/packages/9f/3e/0191d18804bda94adc8f111f00fc1eef9752f71028e2900a1a26ccb31098/pyinstrument-5.0.3-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:12a71a39b82a49482fd14c2478d04a3ef69bfad393c31ea1fa9d2de3f4d8becd", size = 122124, upload-time = "2025-07-02T14:13:29.025Z" },
+    { url = "https://files.pythonhosted.org/packages/b8/84/2fb4bac6921a67793b61212789b276f708edb1bfa4fdc70e47d6565dec4e/pyinstrument-5.0.3-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:bc858887463d12c66ac642b1791c1a3b535ebe0db0bef26901bd6e7210a43cf1", size = 146928, upload-time = "2025-07-02T14:13:30.242Z" },
+    { url = "https://files.pythonhosted.org/packages/30/f6/22e85d453315fb679fc7017050f9c5366bd42aa9bab442d5806e08d1789f/pyinstrument-5.0.3-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:861c549be809759f0b236d6e9844a22a91343d952a1e35983ae193863d0ef276", size = 145848, upload-time = "2025-07-02T14:13:31.905Z" },
+    { url = "https://files.pythonhosted.org/packages/c5/58/5fbe58383d3a1d3e127161b5095e2a4211a17a3312f021ba1a5c754a686d/pyinstrument-5.0.3-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:2ec782f1946fe280ca4efa2280b5ad64e318378241421554134adcb4265dc1f8", size = 145850, upload-time = "2025-07-02T14:13:33.414Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/06/d7bfa9d8ab9af1fcc028c6cf7cace7ccf53324690094f66217eb286d75cd/pyinstrument-5.0.3-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:87a558b1f39dc556621ef7e9482c0d2884af7df2aae35b90edad02fe099d28ab", size = 145653, upload-time = "2025-07-02T14:13:34.927Z" },
+    { url = "https://files.pythonhosted.org/packages/e7/9b/f6538ec597dcf810e393bd88da314e43e785b10f3fc7cc0756753f298792/pyinstrument-5.0.3-cp313-cp313-win32.whl", hash = "sha256:a71777ae66969a5c1a57ba06e81ac3f19e3234b4de30fea84eb12f0cf29d009e", size = 123551, upload-time = "2025-07-02T14:13:36.205Z" },
+    { url = "https://files.pythonhosted.org/packages/20/55/a28db1dd0d29186e389705554a8f81ad5a66a858f13aedc47f815700f879/pyinstrument-5.0.3-cp313-cp313-win_amd64.whl", hash = "sha256:4a385975db0aa52a65fd4c1ea72158af3aaf03d704156551a28d2146bbb107ee", size = 124324, upload-time = "2025-07-02T14:13:37.419Z" },
 ]
 
 [[package]]
@@ -1606,7 +1628,7 @@ wheels = [
 
 [[package]]
 name = "streamlit"
-version = "1.51.0"
+version = "1.55.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "altair" },
@@ -1628,9 +1650,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "watchdog", marker = "sys_platform != 'darwin'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/59/6d/327ddd5fc35fcf2aeecb4040668337f5565a1c6c95b1e892b8bfd4bb9031/streamlit-1.51.0.tar.gz", hash = "sha256:1e742a9c0b698f466c6f5bf58d333beda5a1fbe8de660743976791b5c1446ef6", size = 9742904, upload-time = "2025-10-29T17:07:39.082Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/92/8e/f2b8b4fa8ba65aae251170c54f8ce198fb588fc348301c2b624f8c63efac/streamlit-1.55.0.tar.gz", hash = "sha256:015e512bbd02d000f4047e51118dc086b70e7d9c46b4a11a33c2509731379626", size = 8612008, upload-time = "2026-03-03T22:26:02.149Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/39/60/868371b6482ccd9ef423c6f62650066cf8271fdb2ee84f192695ad6b7a96/streamlit-1.51.0-py3-none-any.whl", hash = "sha256:4008b029f71401ce54946bb09a6a3e36f4f7652cbb48db701224557738cfda38", size = 10171702, upload-time = "2025-10-29T17:07:35.97Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/e6/412c1e1f200ca8c32ecf10201839183e261ad61ced3ede34a66f6d4be3cf/streamlit-1.55.0-py3-none-any.whl", hash = "sha256:1e4a16449c6131696180f4ddb40ea8c51834e89c2a43e1b0362bc9b1cfd9b415", size = 9075714, upload-time = "2026-03-03T22:25:59.126Z" },
 ]
 
 [package.optional-dependencies]
@@ -1639,6 +1661,18 @@ charts = [
     { name = "matplotlib" },
     { name = "orjson" },
     { name = "plotly" },
+]
+
+[[package]]
+name = "streamlit-adjustable-columns"
+version = "0.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "streamlit" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/20/aa/9dd7cb7e8ebd61b45e4a51cbaee4387922793ef94ff43a20493fb3ae5590/streamlit-adjustable-columns-0.2.1.tar.gz", hash = "sha256:b01f79c0f455d75a56d5cd03a7d769faf1ed31fcc98a1661df7583d021afb438", size = 154435, upload-time = "2025-06-23T12:52:44.247Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e3/46/75d9b33a65e6fffb1e780376ecc68c5c737bae16172d16c07950e68cc19c/streamlit_adjustable_columns-0.2.1-py3-none-any.whl", hash = "sha256:2986d4cdef4422ac5da0a7fd1d52faefbf6ccf04bebdd44cf31686ee3c296eb2", size = 157020, upload-time = "2025-06-23T12:52:42.643Z" },
 ]
 
 [[package]]
@@ -1753,4 +1787,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/07/f6/d0e5b343768e8bcb4cda79f0f2f55051bf26177ecd5651f84c07567461cf/watchdog-6.0.0-py3-none-win32.whl", hash = "sha256:07df1fdd701c5d4c8e55ef6cf55b8f0120fe1aef7ef39a1c6fc6bc2e606d517a", size = 79065, upload-time = "2024-11-01T14:07:09.525Z" },
     { url = "https://files.pythonhosted.org/packages/db/d9/c495884c6e548fce18a8f40568ff120bc3a4b7b99813081c8ac0c936fa64/watchdog-6.0.0-py3-none-win_amd64.whl", hash = "sha256:cbafb470cf848d93b5d013e2ecb245d4aa1c8fd0504e863ccefa32445359d680", size = 79070, upload-time = "2024-11-01T14:07:10.686Z" },
     { url = "https://files.pythonhosted.org/packages/33/e8/e40370e6d74ddba47f002a32919d91310d6074130fe4e17dabcafc15cbf1/watchdog-6.0.0-py3-none-win_ia64.whl", hash = "sha256:a1914259fa9e1454315171103c6a30961236f508b9b623eae470268bbcc6a22f", size = 79067, upload-time = "2024-11-01T14:07:11.845Z" },
+]
+
+[[package]]
+name = "wfork-streamlit-profiler"
+version = "1.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyinstrument" },
+    { name = "streamlit" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/03/b9/9c899619d124cc7440ae472f90636ebef6bebc60a12f5a72ba4227148d69/wfork_streamlit_profiler-1.6.0.tar.gz", hash = "sha256:f8fcca0d05effd313f0870990ae0f52834bd47558c4d537d7b53985d897b1549", size = 3915, upload-time = "2025-06-29T19:38:50.306Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5e/b7/54ae95be7a96382d1b8ea27f875db19aa6db75493703d28405d06f6c5db6/wfork_streamlit_profiler-1.6.0-py3-none-any.whl", hash = "sha256:61a28028881df33c9c648b722d60aae1447cd8e99b9a7c777fe8c25c109da414", size = 4808, upload-time = "2025-06-29T19:38:49.198Z" },
 ]
