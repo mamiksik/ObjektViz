@@ -30,15 +30,22 @@ We have exported and processed some OCEL datasets into EKG and generated aggrega
    ```bash
    uv sync
 
+4. Activate the virtual environment (bash shell):
+   ```bash
+   source .venv/bin/activate
+
 5. Run the example dashboard:
     ```bash
-   uv run python -m streamlit run examples/generic_ocel_viewer.py
+   streamlit run examples/generic_ocel_viewer.py
    ```
-> IMPORTANT: Do **not** use streamlit run from the command line directly, as this will lead to issues with imports.
-
 > INFO: Using Chrome is strongly recommended. Mozilla Firefox and Safari should also work. (Although Safari does not support token replay.)
 
 > INFO: Token Replay for now requires APOC library and is thus not available with KuzuDB
+
+6. [OPTIONAL] If you are planning on editing the objektviz source code, you can install the objektviz package it in editable mode:
+    ```bash
+   uv add --editable --dev objektviz
+   ```
 
 <p align="center">
     <img src="assets/generic_ocel_visualizer.png" alt="Visualizer" width="750px" align='center'/>
