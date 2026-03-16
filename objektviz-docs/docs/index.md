@@ -41,7 +41,24 @@ We will build interactive dashboards to view OCEL dataset that allows you to:
 Your OCEL Data → EKG Database → ObjektViz Dashboard → Interactive Visualization
 ```
 
-### Setting up ObjektViz
+# Setting up ObjektViz (using pypi package)
+1. Create a new Python environment and install the `objektviz` package from PyPI:
+   ```bash
+   pip install objektviz
+   ```
+2. Copy the example dashboard script (e.g. 'examples/generic_ocel_viewer.py') and dataset folder.
+
+3. Run the example dashboard:
+    ```bash
+   streamlit run generic_ocel_viewer.py
+   ```
+
+!!! tip "Which method to choose"
+    
+    - Use the PyPI package, if you want to use provided objetkviz compoenents and code as is 
+    - Use the manual installation if you need to moidfy the inner workings of objektviz beyoud what can be controleld via configurations
+
+### Setting up ObjektViz (manual installation)
 1. Clone the repository:
    ```bash
    git clone git@github.com:mamiksik/ObjektViz.git
