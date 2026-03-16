@@ -45,14 +45,30 @@ Your OCEL Data → EKG Database → ObjektViz Dashboard → Interactive Visualiz
 1. Clone the repository:
    ```bash
    git clone git@github.com:mamiksik/ObjektViz.git
-   ```
+
 2. Navigate to the project directory:
    ```bash
    cd ObjektViz
-   ```
+
 3. Install the required dependencies (we use [uv](https://docs.astral.sh/uv/) to manage the Python environment and dependencies):
    ```bash
    uv sync
+
+4. Activate the virtual environment (bash shell):
+   ```bash
+   source .venv/bin/activate
+
+5. Run the example dashboard:
+    ```bash
+   streamlit run examples/generic_ocel_viewer.py
+   ```
+> INFO: Using Chrome is strongly recommended. Mozilla Firefox and Safari should also work. (Although Safari does not support token replay.)
+
+> INFO: Token Replay for now requires APOC library and is thus not available with KuzuDB
+
+6. [OPTIONAL] If you are planning on editing the objektviz source code, you can install the objektviz package it in editable mode:
+    ```bash
+   uv add --editable --dev objektviz
    ```
 
 !!! tip "Quick Start"
