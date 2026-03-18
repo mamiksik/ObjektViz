@@ -1,16 +1,15 @@
 import itertools
-
-from typing import Iterable
 from collections import defaultdict
+from typing import Iterable
 
 import graphviz
 
 from objektviz.backend.BackendConfig import BackendConfig
 from objektviz.backend.dot_elements import (
-    AbstractDotElement,
-    AbstractDotEdge,
-    AbstractDotNode,
     CROSS_CLUSTER_SENTINEL,
+    AbstractDotEdge,
+    AbstractDotElement,
+    AbstractDotNode,
 )
 from objektviz.backend.shaders import AbstractShader
 from objektviz.backend.utils import uuid_to_lbl
@@ -394,17 +393,7 @@ class DotGraphDescriptorBuilder:
             graph.body.append(f"{{rank=same; {elements};}};")
 
         if self.config.layout_preferences.force_same_rank_for_event_class:
-            # Build a set of all node ids across all ranks
-            all_nodes = set()
-            for elems in self.node_rank.values():
-                all_nodes.update(elems)
-
-            # For each rank: emit a rank=same statement and create synthetic invisible
-            # edges from one representative node (first element) to all nodes outside
-            # that rank. These invisible edges help the layout algorithm to separate
-            # ranks. We also update edge2node/node2edge/node2node maps so downstream
-            # code can map synthetic edges back to original nodes.
-            created_edges = set()
+            # For each rank: emit a rank=same statement
             for key, elements in self.node_rank.items():
                 if not elements:
                     continue
@@ -413,33 +402,53 @@ class DotGraphDescriptorBuilder:
                 quoted = ";".join([f'"{uuid_to_lbl(e)}"' for e in elements])
                 graph.body.append(f"{{rank=same; {quoted};}};")
 
-                if not self.config.layout_preferences.exclusive_event_class_ranks_experimental:
-                    continue
+            if not self.config.layout_preferences.exclusive_event_class_ranks_experimental:
+                return
 
-                # Representative node (use the first element of the rank)
-                rep = elements[0]
+            # Use synthetic anchor nodes to enforce exclusive ranks without polluting
+            # the edge/node maps. Create one invisible anchor node per rank and chain
+            # them with invisible edges. This scales as O(n) instead of O(n²).
+            rank_keys = list(self.node_rank.keys())
+            if len(rank_keys) < 2:
+                return
 
-                # Create invisible edges from rep to all nodes outside this rank
-                outside = all_nodes - set(elements)
-                for other in outside:
-                    # Avoid self-loops and duplicate synthetic edges
-                    if rep == other:
-                        continue
+            # Create anchor nodes and chain them together
+            anchor_nodes = {}
+            for i, rank_key in enumerate(rank_keys):
+                anchor_id = f"__rank_anchor_{i}__"
+                anchor_nodes[rank_key] = anchor_id
+                # Add invisible anchor node to the graph
+                graph.node(anchor_id, label=f"", width="0", height="0", style="invis")
 
-                    # Create a stable edge id for the synthetic edge
-                    edge_id = f"rank_invis_{uuid_to_lbl(rep)}_{uuid_to_lbl(other)}"
-                    if edge_id in created_edges or edge_id in self.edge2node:
-                        continue
+            # Add each anchor to its corresponding rank's rank=same group
+            for rank_key, anchor_id in anchor_nodes.items():
+                elements = self.node_rank[rank_key]
+                if elements:
+                    # Build the rank=same constraint including the anchor
+                    quoted = ";".join([f'"{uuid_to_lbl(e)}"' for e in elements])
+                    graph.body.append(f"{{rank=same; {quoted}; {anchor_id};}};")
 
-                    # Add the invisible edge to the dot graph (use to_lbl for node ids)
+            # Create a fully connected spine between all anchor nodes.
+            # Each anchor connects to every other anchor, creating complete graph constraints.
+            # This ensures Graphviz must place all anchors at different ranks.
+            #
+            # Why full connectivity works:
+            # - Edge A→B forces B to be at different rank than A
+            # - Edge A→C forces C to be at different rank than A
+            # - Edge B→C forces C to be at different rank than B
+            # - All pairwise constraints together force all anchors to distinct ranks
+            #
+            # The edges are styled with dotted gray to be visually unobtrusive
+            # while participating strongly in rank assignment via high weight.
+            for i in range(len(rank_keys)):
+                for j in range(i + 1, len(rank_keys)):
+                    anchor_i = anchor_nodes[rank_keys[i]]
+                    anchor_j = anchor_nodes[rank_keys[j]]
                     graph.edge(
-                        uuid_to_lbl(rep),
-                        uuid_to_lbl(other),
-                        id=edge_id,
+                        anchor_i,
+                        anchor_j,
                         style="invis",
-                        color="transparent",
                         arrowhead="none",
                         constraint="true",
+                        weight="1000",  # High weight prioritizes rank assignment
                     )
-
-                    created_edges.add(edge_id)

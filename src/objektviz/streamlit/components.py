@@ -243,9 +243,9 @@ def layout_preferences_input(
         help="If enabled, all nodes of the same EventType will be on the same rank/level. (The rank is not exlusively reserved for that EventType though, which is limitation of the underlying graphviz engine.)",
     )
     exclusive_event_class_ranks_experimental = cont.checkbox(
-        "Exclusive ranks (experimental)",
-        value=False,
-        help="If enabled, each rank/level will be exclusively reserved for a single EventType. This can make the layout more clear and readable, but it can also make the graph much bigger (a lot of gaps) and more sparse, especially if there are many distinct EventTypes. Use with caution.",
+        "Exclusive ranks",
+        value=True,
+        help="If enabled, each rank/level will be exclusively reserved for a single EventType.",
         disabled=not same_rank_activity,
     )
     same_rank_start_end_nodes = cont.checkbox(

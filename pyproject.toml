@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "objektviz"
-version = "0.2.7"
+version = "0.2.8"
 description = "ObjektViz is a visualizer for object-centric process models that enables users to explore and analyze even _very complex_ processes involving multiple interacting objects"
 readme = "README.md"
 license = "AGPL-3.0-only"
