@@ -103,3 +103,8 @@ We provide scripts to help you with this process in the `examples` folder.
     <img src="assets/metamodel-objektviz.png" alt="Proclet Metamodel" width="550px" align='center'/>
 </p>
 
+## Licensing
+This project is licensed under the **GNU Affero General Public License v3 (AGPL-3.0)** for open-source and academic use. If you require ObjektViz for **commercial use in closed-source environments** under a different license please contact us.
+
+
+
