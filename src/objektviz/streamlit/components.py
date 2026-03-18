@@ -540,9 +540,26 @@ def event_class_detail(
     event_class_attributes = queries.get_class_attributes(class_type)
     data = {key: event_class[key] for key in event_class_attributes}
     data["ElementId"] = selected_element_id
-    # st.table(data)
-    for key, value in data.items():
-        st.metric(key, value)
+    # Create a stylized card layout
+    with st.container(border=True):
+        col1, col2, col3 = st.columns(3)
+
+        # Display key attributes prominently
+        key_attributes = ["EventType", "EntityType", "frequency"]
+        for idx, attr in enumerate(key_attributes):
+            if attr in data:
+                col = [col1, col2, col3][idx % 3]
+                with col:
+                    st.metric(attr, data[attr])
+
+        # Display remaining attributes in 2-column layout
+        remaining = {k: v for k, v in data.items() if k not in key_attributes}
+        if remaining:
+            attr_col1, attr_col2 = st.columns(2)
+            for idx, (key, value) in enumerate(remaining.items()):
+                col = attr_col1 if idx % 2 == 0 else attr_col2
+                with col:
+                    st.write(f"**{key}:** `{value}`")
 
 
 def event_class_related_entities(
@@ -588,10 +605,7 @@ def dfc_detail(
     dfc_attributes = queries.get_dfc_attributes(class_type)
     data = {key: edge["dfc_relation"][key] for key in dfc_attributes}
     data["ElementId"] = selected_element_id
-
-    for key, value in data.items():
-        st.metric(key, value)
-    # st.table(data)
+    st.table(data)
 
 
 def dfc_related_entities(queries: AbstractEKGRepository, selected_element_id: str):
