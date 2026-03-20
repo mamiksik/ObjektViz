@@ -355,57 +355,53 @@ class Neo4JEKGRepository[Node, Relationship](AbstractEKGRepository):
             .records[0]
             .get("datetime")
         )
-        print("Start Data ", start_date)
-        print("END Data ", end_date)
 
-        return (
-            self.run_query(
+        traces = self.run_query(
                 """
-            CYPHER runtime=parallel
-            MATCH (n: Entity)
-            WHERE n.ID in $EntityIDs
-            CALL(n) {
-                MATCH
-                    (n)<-[:CORR]-(e1: Event)-[df:DF]->(e2: Event)-[:CORR]->(n),
-                    (c1: Class {Type: $ClassType})-[df_c:DF_C]->(c2: Class),
-                    (e1)-[:OBSERVED]->(c1),
-                    (e2)-[:OBSERVED]->(c2)
-                WHERE
-                    c1.Type = c2.Type
-                    AND n.EntityType  = df.EntityType
-                    AND c1.EntityType = n.EntityType
-                    AND c2.EntityType = n.EntityType
-                ORDER BY e1.timestamp
-                WITH
-                    n,
-                    apoc.coll.union(
-                        collect(elementId(c1)),
+                CYPHER runtime=parallel
+                MATCH (n: Entity)
+                WHERE n.ID in $EntityIDs
+                CALL(n) {
+                    MATCH
+                        (n)<-[:CORR]-(e1: Event)-[df:DF]->(e2: Event)-[:CORR]->(n),
+                        (c1: Class {Type: $ClassType})-[df_c:DF_C]->(c2: Class),
+                        (e1)-[:OBSERVED]->(c1),
+                        (e2)-[:OBSERVED]->(c2)
+                    WHERE
+                        c1.Type = c2.Type
+                        AND n.EntityType  = df.EntityType
+                        AND c1.EntityType = n.EntityType
+                        AND c2.EntityType = n.EntityType
+                    ORDER BY e1.timestamp
+                    WITH
+                        n,
                         apoc.coll.union(
-                            collect(elementId(c2)),
-                            collect(elementId(df_c))
-                        )
-                    ) as ActiveElementIds,
-                    collect({
-                        DFCElementId: elementId(df_c),
-                        DurationSec: duration.inSeconds(e1.timestamp, e2.timestamp).seconds,
-                        StartOffsetSec: duration.inSeconds($StartDate, e1.timestamp).seconds
-                    }) as TraceSegments
-    
-                RETURN ActiveElementIds, TraceSegments
-            }
-            RETURN n as Entity, elementId(n) as EntityElementId, ActiveElementIds, TraceSegments
-        """,
-                params={
-                    "ClassType": class_type,
-                    "EntityIDs": entity_ids,
-                    "StartDate": start_date,
-                    "EndDate": end_date,
-                },
-                to_dict=True,
-            ),
-            start_date,
-            end_date,
+                            collect(elementId(c1)),
+                            apoc.coll.union(
+                                collect(elementId(c2)),
+                                collect(elementId(df_c))
+                            )
+                        ) as ActiveElementIds,
+                        collect({
+                            DFCElementId: elementId(df_c),
+                            DurationSec: duration.inSeconds(e1.timestamp, e2.timestamp).seconds,
+                            StartOffsetSec: duration.inSeconds($StartDate, e1.timestamp).seconds
+                        }) as TraceSegments
+        
+                    RETURN ActiveElementIds, TraceSegments
+                }
+                RETURN n as Entity, elementId(n) as EntityElementId, ActiveElementIds, TraceSegments
+            """,
+            params={
+                "ClassType": class_type,
+                "EntityIDs": entity_ids,
+                "StartDate": start_date,
+                "EndDate": end_date,
+            },
+            to_dict=True,
         )
+
+        return traces, start_date, end_date
 
     def get_entity_trace(
         self,
