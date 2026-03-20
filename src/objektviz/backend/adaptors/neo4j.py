@@ -84,7 +84,7 @@ class Neo4JEKGRepository[Node, Relationship](AbstractEKGRepository):
         # print("\n" + query + " " + str(params))
         with self.driver.session() as session:
             result = session.run(query, parameters=params)
-            return result.data if to_dict else result.to_eager_result()
+            return result.data() if to_dict else result.to_eager_result()
 
     def get_class_attributes(self, class_type: str) -> list[str]:
         qparams = { "ClassType": class_type }
