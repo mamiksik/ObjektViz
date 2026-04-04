@@ -658,11 +658,17 @@ def full_proclet_view(*, graph_payload, queries, class_type, token_animation_seg
                 class_type,
                 st.session_state.selected_node,
             )
-            event_class_related_entities(queries, st.session_state.selected_node)
+            expander = st.expander("Related entities for event class", on_change="rerun")
+            if expander.open:
+                with expander:
+                    event_class_related_entities(queries, st.session_state.selected_node)
 
         if st.session_state.selected_edge:
             dfc_detail(queries, class_type, st.session_state.selected_edge)
-            dfc_related_entities(queries, st.session_state.selected_edge)
+            expander = st.expander("Related entities for this connection", on_change="rerun")
+            if expander.open:
+                with expander:
+                    dfc_related_entities(queries, st.session_state.selected_edge)
 
         if st.session_state.selected_token:
             st.write("### Token Detail")
