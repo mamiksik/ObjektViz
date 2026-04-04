@@ -15,6 +15,7 @@ from objektviz.streamlit.utils import (
     DefaultEventClassPreferences,
     DefaultLayoutPreferences,
     DefaultShadingPreferences,
+    get_class_ordering, get_cluster_ordering,
 )
 
 # ----------------------------------------------------------------------------
@@ -239,6 +240,11 @@ objektviz_config = BackendConfig(
     dfc_root_filter=root_edge_filter,
     root_element_filter=element_id_filter,
     shader_factory=shader_factory,
+    explicit_event_class_order=(
+        None if layout_preferences.sort_event_classes_by != "Avg. Activity Order"
+        else get_class_ordering(queries, class_type, queries.get_entity_types(class_type))
+    ),
+    explicit_cluster_order=get_cluster_ordering(queries, class_type, layout_preferences.sort_groups_by)
 )
 
 # Generate the dot source from the proclet data

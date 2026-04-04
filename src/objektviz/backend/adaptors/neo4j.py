@@ -86,6 +86,33 @@ class Neo4JEKGRepository[Node, Relationship](AbstractEKGRepository):
             result = session.run(query, parameters=params)
             return result.data() if to_dict else result.to_eager_result()
 
+    def get_avg_class_order(self, class_type: str, entity_type: str) -> list[str]:
+        warnings.warn("class type is not used in get_avg_class_order for Neo4j yet")
+        res = self.run_query(f"""
+            MATCH (endEvent:Event)-[:END]->(entity:Entity {{EntityType: "{entity_type}"}})<-[:START]-(startEvent:Event)
+            MATCH path = (startEvent)-[:DF* {{EntityType: "{entity_type}"}}]->(endEvent)
+            WITH entity, [node in nodes(path) | node.Activity] as trace
+            UNWIND range(0, size(trace)-1) as position
+            WITH trace[position] as activity, position
+            
+            WITH activity, 
+                 avg(position) as avgPosition, 
+                 count(*) as frequency
+            
+            ORDER BY avgPosition ASC, frequency DESC
+            
+            RETURN collect(activity) as sorted
+        """, {})
+        return res.records[0].get("sorted")
+
+    def get_all_activity_names(self, class_type: str, entity_type: str) -> list[str]:
+        warnings.warn("class type is not used in get_all_activity_names for Neo4j yet")
+        res = self.run_query(f"""
+            MATCH (e:Event)-[:CORR]->(n:Entity {{Type: "{entity_type}"}})
+            RETURN DISTINCT e.Type AS activity
+        """, {})
+        return [record["activity"] for record in res]
+
     def get_class_attributes(self, class_type: str) -> list[str]:
         qparams = { "ClassType": class_type }
         return (

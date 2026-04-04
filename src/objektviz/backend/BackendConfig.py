@@ -18,9 +18,16 @@ class LayoutPreferences:
     # Force that start/end nodes are on same rank (diff for start and end)
     force_process_start_end_same_rank: bool = False
 
+    # How to sort events before adding them into the dot source code, this influences the layout heuristics
+    # to be used in combination with manual_class_sorting in BackendConfig
+    sort_event_classes_by: Literal["Frequency", "Avg. Activity Order", "None"] = "Frequency"
+
     # Sort nodes based on frequency, this influences the order in which they are
     # declared in the dot source code (this then influences the layout heuristics)
-    sort_event_classes_by_frequency: bool = True
+    # sort_event_classes_by_frequency: bool = True
+
+    # How to sort groups before adding them into the dot source code, this influences the layout heuristics
+    sort_groups_by: Literal["Frequency", "Alphabetical"] = "Frequency"
 
     # Sort edges based on frequency, this influences the order in which they are
     # declared in the dot source code (this then influences the layout heuristics)
@@ -143,3 +150,13 @@ class BackendConfig:
     #   config=config, leading_attribute=leading_attribute, cmap=cmap
     # )
     shader_factory: Callable[[Self, str, str], AbstractShader]
+
+    # This is used to manually specify the order of event classes in the layout
+    # i.e. when class sorting is set to avg. activity order, then we have to precompute the order of classes based,
+    # it has no effect if class sorting is set to frequency or none
+    explicit_event_class_order: dict | None
+
+    # This is used to sort the clusters, index of the clustering key in the list
+    # corresponds to render order of the cluster in the graph.
+    explicit_cluster_order: list | None
+

@@ -25,11 +25,24 @@ def generate_dot_source(
     """Produces dot source code for given edges and nodes"""
     node_rank = {}
 
-    # Sort graph elements for layout stability
-    if config.layout_preferences.sort_event_classes_by_frequency:
-        nodes = sorted(nodes, key=lambda n: n.frequency, reverse=True)
+    cluster_order = config.explicit_cluster_order or sorted(
+        set(n.shader_key for n in nodes)
+    )
+
+    if config.layout_preferences.sort_event_classes_by == "Frequency":
+        nodes = sorted(nodes, key=lambda n: (
+            cluster_order.index(n.shader_key),
+            n.frequency
+        ))
+    elif config.layout_preferences.sort_event_classes_by == "None":
+        nodes = sorted(nodes, key=lambda n: (cluster_order.index(n.shader_key), n.element_id))
     else:
-        nodes = sorted(nodes, key=lambda n: n.element_id)
+        if not config.explicit_event_class_order:
+            raise ValueError("manual_class_sorting must be provided when sort_event_classes_by is not Frequency or None")
+        nodes = sorted(nodes, key=lambda n: (
+            cluster_order.index(n.shader_key),
+            config.explicit_event_class_order[n.get('EntityType')].index(n.get('EventType'))
+        ))
 
     if config.layout_preferences.sort_connections_by_frequency:
         edges = sorted(edges, key=lambda n: n.frequency, reverse=True)

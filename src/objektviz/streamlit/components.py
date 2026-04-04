@@ -234,92 +234,139 @@ def layout_preferences_input(
     defaults: DefaultLayoutPreferences,
     dfc_attributes: list[str],
 ) -> LayoutPreferences:
-    rank_direction = ["TB", "LR"]
+    rank_direction_options = ["TB", "LR"]
 
-    cont = st.container()
-    same_rank_activity = cont.checkbox(
-        "Force same rank per activity",
-        value=defaults.force_same_rank_for_event_class,
-        help="If enabled, all nodes of the same EventType will be on the same rank/level. (The rank is not exlusively reserved for that EventType though, which is limitation of the underlying graphviz engine.)",
-    )
-    exclusive_event_class_ranks_experimental = cont.checkbox(
-        "Exclusive ranks",
-        value=True,
-        help="If enabled, each rank/level will be exclusively reserved for a single EventType.",
-        disabled=not same_rank_activity,
-    )
-    same_rank_start_end_nodes = cont.checkbox(
-        "Force same rank for process start/end",
-        value=False,
-        help="If enabled, all start nodes will be on the same rank, and all end nodes will be on the same rank.",
-    )
-
+    # ===== GRAPH DIRECTION & SPACING =====
+    st.caption("Graph Layout")
     col1, col2, col3 = st.columns(3)
+
+    with col1:
+        rank_direction = st.selectbox(
+            "Direction",
+            options=rank_direction_options,
+            index=rank_direction_options.index(defaults.rank_direction),
+            help="TB: Top to Bottom | LR: Left to Right",
+        )
+
+    with col2:
+        node_separation = st.number_input(
+            "H-spacing",
+            min_value=0.1,
+            max_value=5.0,
+            step=0.1,
+            value=0.5,
+            help="Horizontal spacing between nodes",
+            key="node_sep"
+        )
+
+    with col3:
+        rank_separation = st.number_input(
+            "V-spacing",
+            min_value=0.1,
+            max_value=5.0,
+            step=0.1,
+            value=0.5,
+            help="Vertical spacing between ranks",
+            key="rank_sep"
+        )
+
+    # ===== RANK ALIGNMENT =====
+    st.caption("Rank Alignment")
+
+    same_rank_activity = st.checkbox(
+        "Same rank per activity",
+        value=defaults.force_same_rank_for_event_class,
+        help="Align nodes of same activity type on same rank",
+    )
+
+    if same_rank_activity:
+        exclusive_event_class_ranks_experimental = st.checkbox(
+            "Exclusive ranks",
+            value=True,
+            help="Reserve each rank for single activity (experimental)",
+        )
+    else:
+        exclusive_event_class_ranks_experimental = False
+
+    same_rank_start_end_nodes = st.checkbox(
+        "Same rank start/end",
+        value=False,
+        help="Align all start and end nodes on their respective ranks",
+    )
+
+    # ===== SORTING & ORDERING =====
+    st.caption("Sorting & Ordering")
+    col1, col2 = st.columns(2)
+    with col1:
+        cluster_sorting = st.selectbox(
+            "Clusters",
+            options=["Frequency", "Alphabetical"],
+            index=0,
+            help="Sort clusters by frequency or name",
+        )
+
+    with col2:
+        activity_sorting = st.selectbox(
+            "Activities",
+            options=["Frequency", "Avg. Activity Order", "None"],
+            index=0,
+            help="Sort activities for layout optimization",
+        )
+
+    edge_sorting = st.checkbox(
+        "Sort edges by frequency",
+        value=True,
+        help="Optimize edge routing by frequency",
+    )
+
+    # ===== EDGE WEIGHTING =====
+    st.caption("Edge Weighting")
+    enable_weight = st.toggle(
+        "Use edge weights",
+        value=(defaults.weight_attribute is not None),
+        help="Higher weights = shorter edges",
+    )
+
+    if enable_weight and dfc_attributes:
+        weight_attribute = st.selectbox(
+            "Weight attribute",
+            options=dfc_attributes,
+            index=dfc_attributes.index(defaults.weight_attribute) if defaults.weight_attribute in dfc_attributes else 0,
+            help="Numeric attribute for edge weights",
+        )
+    else:
+        weight_attribute = None
+
+    # ===== SUBGRAPH CLUSTERING =====
+    st.caption("Subgraph Clustering")
+    enable_clustering = st.toggle(
+        "Enable clustering",
+        value=True,
+        help="Create clusters based on attributes",
+    )
+
+    if enable_clustering:
+        clustering_keys = st.multiselect(
+            "Clustering attributes",
+            options=defaults.allowed_clustering_attributes,
+            default=defaults.clustering_attribute,
+            help="Order matters: ['Type', 'Location'] creates type clusters with location sub-clusters",
+        )
+    else:
+        clustering_keys = []
+
     return LayoutPreferences(
         force_same_rank_for_event_class=same_rank_activity,
-        exclusive_event_class_ranks_experimental=False
-        if not same_rank_activity
-        else exclusive_event_class_ranks_experimental,
+        exclusive_event_class_ranks_experimental=exclusive_event_class_ranks_experimental,
         force_process_start_end_same_rank=same_rank_start_end_nodes,
-        sort_event_classes_by_frequency=cont.checkbox(
-            "Sort nodes by frequency",
-            value=True,
-            help="Influences the layout heuristics",
-        ),
-        sort_connections_by_frequency=cont.checkbox(
-            "Sort edges by frequency",
-            value=True,
-            help="Influences the layout heuristics",
-        ),
-        rank_direction=col1.selectbox(
-            "Graph direction",
-            options=rank_direction,
-            index=rank_direction.index(defaults.rank_direction),
-            help="Direction of the graph layout: Top to Bottom (TB), Left to Right (LR)",
-        ),
-        weight_attribute=(
-            st.selectbox(
-                "Weight attribute",
-                options=dfc_attributes,
-                index=dfc_attributes.index(defaults.weight_attribute),
-            )
-            if st.toggle(
-                "Set edge weight",
-                value=(defaults.weight_attribute is not None),
-                help="Used during layout computation, higher weight means 'shorter' and 'straighter' edge. Should be nummeric attribute.",
-            )
-            else None
-        ),
-        node_separation=col2.number_input(
-            "Node separation",
-            min_value=0.1,
-            max_value=5.0,
-            step=0.1,
-            value=0.5,
-            help="Minimal horizontal spacing between nodes on the same rank/level",
-        ),
-        rank_separation=col3.number_input(
-            "Rank separation",
-            min_value=0.1,
-            max_value=5.0,
-            step=0.1,
-            value=0.5,
-            help="Minimal vertical spacing between ranks/levels",
-        ),
-        clustering_keys=(
-            st.multiselect(
-                "Clustering attributes [ordered]",
-                options=defaults.allowed_clustering_attributes,
-                default=defaults.clustering_attribute,
-                help="Select attributes used to create subgraph clusters, order matters (e.g. ['EntityType', 'Location'] will create big clusters for each entity type and within each it will create sub-clusters for each location)",
-            )
-            if st.toggle(
-                "Enable clustering",
-                value=True,
-                help="Create subgraph clusters based on selected attributes",
-            )
-            else []
-        ),
+        sort_groups_by=cluster_sorting,
+        sort_event_classes_by=activity_sorting,
+        sort_connections_by_frequency=edge_sorting,
+        rank_direction=rank_direction,
+        weight_attribute=weight_attribute,
+        node_separation=node_separation,
+        rank_separation=rank_separation,
+        clustering_keys=clustering_keys,
     )
 
 

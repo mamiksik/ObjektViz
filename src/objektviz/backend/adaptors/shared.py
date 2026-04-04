@@ -99,6 +99,51 @@ class AbstractEKGRepository[NodeT, EdgeT](abc.ABC):
     """
 
     @abstractmethod
+    def get_entity_type_frequency(self, class_type: str, entity_type: str) -> int:
+        """Return the frequency of a given entity type for a class type.
+
+        This method can be used to determine how common a specific entity type is within the traces of a given class type.
+
+        Parameters
+        - class_type: the :Class type to consider (e.g. "EventType, EntityType")
+        - entity_type: the EntityType to query (e.g. "Order", "Shipment", etc.)
+
+        Returns
+        - Integer count (>= 0) representing how many times entities of the given type appear in the traces of the specified class type.
+        """
+        pass
+
+    @abstractmethod
+    def get_avg_class_order(self, class_type: str, entity_type: str) -> list[str]:
+        """ Returns ordered list of activity names based on average position
+            in process executions for a given class type and entity type.
+
+        This method is used to determine a default ordering of event classes in the
+        visualization, based on the average order in which they occur in the traces of the entities.
+
+        - Parameters
+            - class_type: the :Class type to consider (e.g. "EventType, EntityType")
+            - entity_type: the EntityType to filter by (e.g. "Order", "Shipment", etc.)
+        - Returns
+            - A list of activity names (strings) ordered by their average position in the traces of
+            entities of the given type. The first element is the activity that occurs earliest on average.
+        """
+        pass
+
+    @abstractmethod
+    def get_all_activity_names(self, class_type: str, entity_type: str) -> list[str]:
+        """ Return a list of all activity names for a given class type and entity type, without specific ordering.
+
+        This method can be used as a fallback when average order information is not available.
+        Parameters
+        - class_type: the :Class type to consider (e.g. "EventType,EntityType")
+        - entity_type: the EntityType to filter by (e.g. "Order", "Shipment", etc.)
+        Returns
+        - A list of activity names (strings) that exist for the given class type and entity type, in no particular order.
+        """
+        pass
+
+    @abstractmethod
     def get_class_attributes(self, class_type: str) -> list[str]:
         """ Return a list of attribute names available on Class nodes of the given type.
 

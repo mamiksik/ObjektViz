@@ -89,6 +89,43 @@ class KuzuEKGRepository(AbstractEKGRepository):
     def run_query(self, query, params) -> kuzu.QueryResult:
         return self.connection.execute(query, params)
 
+    def get_entity_type_frequency(self, class_type: str, entity_type: str) -> int:
+        result = self.run_query(f"""
+            MATCH (n:Entity {{Type: "{entity_type}"}})<-[:CORR]-(:Event)-[:OBSERVED]->(:Class {{Type: "{class_type}"}})
+            RETURN count(DISTINCT n) as frequency
+        """, {})
+
+        return result.get_all()[0][0]
+
+    def get_avg_class_order(self, class_type: str, entity_type: str) -> list[str]:
+        warnings.warn("class type is not used in get_avg_class_order for KuzuDB yet")
+        res = self.run_query(f"""
+            MATCH 
+                (startEvent:Event)-[:P_START]->(entity:Entity {{Type: "{entity_type}"}})<-[:P_END]-(endEvent:Event)
+            MATCH path = (startEvent)-[:DF* SHORTEST (r, n | WHERE r.EntityType = "{entity_type}" AND LABEL(n) = "Event" AND (n)-[:CORR]->(entity))]->(endEvent)
+            WITH nodes(path) AS pathNodes
+            UNWIND range(1, size(pathNodes)) AS position
+            WITH pathNodes[position] AS pathNode, position
+            WITH pathNode.Type AS activity, position
+    
+            WITH activity,
+                 avg(position) AS avgPosition,
+                 count(*) AS frequency
+    
+            ORDER BY avgPosition ASC, frequency DESC
+            SKIP 0
+            RETURN collect(activity) AS sorted
+        """, {})
+        return res.get_all()[0][0]
+
+    def get_all_activity_names(self, class_type: str, entity_type: str) -> list[str]:
+        warnings.warn("class type is not used in get_all_activity_names for KuzuDB yet")
+        res = self.run_query(f"""
+            MATCH (e:Event)-[:CORR]->(n:Entity {{Type: "{entity_type}"}})
+            RETURN DISTINCT e.Type AS activity
+        """, {})
+        return [x[0] for x in res.get_all()]
+
     def get_class_attributes(self, class_type: str) -> list[str]:
         qparams = { "ClassType": class_type }
         return (

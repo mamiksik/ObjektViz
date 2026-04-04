@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Dict, Literal
+import streamlit as st
 
+from objektviz.backend.adaptors.shared import AbstractEKGRepository
 from objektviz.frontend import TokenReplayPreferences, Token, ReplayMetadata
 
 # (class_type, sample_size) -> entity IDs
@@ -72,3 +74,28 @@ def assert_attribute_exists(lst: list[dict], attribute_name: str):
             f"Attribute '{attribute_name}' not found in all items. "
             f"This attribute is required for the component to render correctly."
         )
+
+
+@st.cache_data
+def get_class_ordering(_queries: AbstractEKGRepository, class_type: str , entity_types: list[str]):
+    eager_sorting:dict[str, list] = dict()
+    for entity_type in entity_types:
+        eager_sorting[entity_type] = _queries.get_avg_class_order(class_type, entity_type)
+        if not eager_sorting[entity_type]: # if there is no order information, we provide a fallback (no specific order)
+            eager_sorting[entity_type] = _queries.get_all_activity_names(class_type, entity_type)
+
+    return eager_sorting
+
+
+@st.cache_data
+def get_cluster_ordering(_queries: AbstractEKGRepository, class_type: str, sort_groups_by: Literal['Alphabetical', 'Frequency']):
+    if sort_groups_by == "Alphabetical":
+        return sorted(_queries.get_entity_types(class_type))
+    elif sort_groups_by == "Frequency":
+        return sorted(
+            _queries.get_entity_types(class_type),
+            key=lambda item: _queries.get_entity_type_frequency(class_type, item),
+            reverse=True,
+        )
+
+    raise ValueError(f"Invalid value for sort_groups_by: {sort_groups_by}")
