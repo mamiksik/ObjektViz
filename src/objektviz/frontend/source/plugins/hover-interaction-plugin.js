@@ -50,11 +50,11 @@ class HoverInteractionPlugin {
         const id = context.attr('id')
         this.isHovering = true;
 
-        if (context.attr('class') === 'edge') {
+        if (context.attr('class').includes('edge')) {
             this.pathsToAnimate = context;
             this.relatedElementsIds = this.edgeNodeMap[id].concat([id])
             this.excludedElements = d3Helpers.selectElementsOnID(d3.selectAll('.node,.edge'), this.relatedElementsIds, true)
-        } else if (context.attr('class') === 'node') {
+        } else if (context.attr('class').includes('node')) {
             this.pathsToAnimate = d3Helpers.selectElementsOnID(d3.selectAll('.edge'), this.nodeEdgeMap[id])
             this.relatedElementsIds = this.nodeEdgeMap[id].concat(this.nodeNodeMap[id]).concat([id])
             this.excludedElements = d3Helpers.selectElementsOnID(d3.selectAll('.node,.edge'), this.relatedElementsIds, true)

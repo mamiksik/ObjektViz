@@ -14,7 +14,7 @@ class ClickInteractionPlugin {
 
     setPayload(payload) {
         const that = this;
-        const selection = d3.selectAll('.node,.edge,.token-group');
+        const selection = d3.selectAll('.node,.dfc-edge,.token-group');
 
         selection.on("click", function () {
             that.onLeftClick(d3.select(this)) //TODO: replace with SelectAll
@@ -44,10 +44,18 @@ class ClickInteractionPlugin {
             id = null;
         }
 
+        const classes = target.attr('class').split(' ')
+        const type =
+            classes.includes('node') ? 'node'
+                : (classes.includes('dfc-edge') ? 'edge'
+                    : (classes.includes('token-group') ? 'token-group' : null)
+        )
+
         this.setSelectedElement(id)
+        // console.log("Selected element id", this.selectedElementId, target.attr('class'), target.attr('id'))
         notifyHost({ value: {
             'eventType': 'LeftClick',
-            'type': target.attr('class'),
+            'type': type,
             'elementId': id
         }, dataType: 'json'})
         dispatchEvent(new CustomEvent("objektviz:applyStyles"))
