@@ -1,12 +1,17 @@
 <html>
 <head>
 <style type="text/css">
+        /* define --token-replay-spacing */
+        :root {
+            --token-replay-spacing: 1px;
+        }
+
         #graph {
             padding: 1px;
             border: 1px solid #d1d5db;
             border-radius: 0.5rem;
             width: 100%;
-            height: calc(100% - 100px);
+            height: calc(100% - var(--token-replay-spacing) - 1px);
             max-height: 100%;
             max-width: 100%;
             overflow: hidden;

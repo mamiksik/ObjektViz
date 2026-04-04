@@ -42,6 +42,9 @@ class AdvancedTokenReplayPlugin {
 
     setPayload(payload) {
         this.container.html('')
+        // Set the  --token-replay-spacing CSS variable to the value provided by the backend to 0px
+        document.documentElement.style.setProperty('--token-replay-spacing', '1px');
+
         d3.selectAll('#slider-container').selectAll('svg').remove()
 
         this.toCleanup.forEach((clb) => clb())
@@ -57,7 +60,7 @@ class AdvancedTokenReplayPlugin {
         if (payload.tokens === null) return
         this.tokens = payload.tokens
 
-
+        document.documentElement.style.setProperty('--token-replay-spacing', '101px');
         this.toCleanup.concat(this.setupSlider())
         this.setupReplay()
     }
