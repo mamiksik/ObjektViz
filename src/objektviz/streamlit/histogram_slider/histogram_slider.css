@@ -1,0 +1,84 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+.histogram-slider {
+    display: block;
+    font-family: sans-serif;
+    user-select: none;
+    overflow: hidden;
+    width: 100%;
+}
+
+/* ── SVG canvas ─────────────────────────────────────────────────────────── */
+
+.histogram-slider svg {
+    display: block;
+    overflow: visible;
+}
+
+/* ── Bars ───────────────────────────────────────────────────────────────── */
+
+.histogram-slider .bar rect {
+    fill: #c6d8f0;
+    stroke: #fff;
+    stroke-width: 1px;
+    transition: fill 0.15s ease;
+}
+
+.histogram-slider .bar rect.selected {
+    fill: #3a86d4;
+}
+
+/* ── Axes ───────────────────────────────────────────────────────────────── */
+
+.histogram-slider .axis path,
+.histogram-slider .axis line {
+    stroke: #bbb;
+    shape-rendering: crispEdges;
+}
+
+.histogram-slider .axis text {
+    fill: #666;
+    font-size: 11px;
+}
+
+.histogram-slider .axis .domain {
+    stroke: #bbb;
+}
+
+/* ── Brush ───────────────────────────────────────────────────────────────── */
+
+.histogram-slider .brush .selection {
+    fill: #3a86d4;
+    fill-opacity: 0.15;
+    stroke: #3a86d4;
+    stroke-width: 1.5px;
+}
+
+.histogram-slider .brush .handle {
+    fill: #3a86d4;
+    stroke: #fff;
+    stroke-width: 1.5px;
+    rx: 3px;
+    cursor: ew-resize;
+}
+
+.histogram-slider .brush .overlay {
+    cursor: crosshair;
+}
+
+/* ── Range label ─────────────────────────────────────────────────────────── */
+
+.histogram-slider .range-label {
+    font-size: 12px;
+    fill: #444;
+    text-anchor: middle;
+}
+
+.histogram-slider .range-label .range-pct {
+    fill: #999;
+    font-size: 11px;
+}

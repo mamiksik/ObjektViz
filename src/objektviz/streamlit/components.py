@@ -21,6 +21,7 @@ from objektviz.frontend import (
     interactive_proclet_graph,
     wire_graph_event,
 )
+from objektviz.streamlit.histogram_slider import histogram_slider
 from objektviz.streamlit.utils import (
     DefaultConnectionPreferences,
     DefaultEventClassPreferences,
@@ -524,48 +525,6 @@ def token_replay_input(
         )
 
 
-def attribute_range_filter_input(
-    label: str,
-    for_entity_type: str,
-    on_attribute: str,
-    min_value: int | float,
-    max_value: int | float,
-    is_enabled_by_default: bool = False,
-    value: tuple[int | float, int | float] | None = None,
-    key: str = None,
-):
-    is_enabled = st.checkbox(
-        label,
-        value=is_enabled_by_default,
-        key=None if key is None else f"{key}_enabled",
-    )
-    if min_value == max_value:
-        range_filter = ov_filters.DummyFilter.new(is_passing=True)
-    else:
-        range_filter = ov_filters.RangeFilter.new(
-            attribute=on_attribute,
-            is_enabled=is_enabled,
-            rng=st.slider(
-                label=label,
-                disabled=not is_enabled,
-                min_value=max(0, min_value),
-                max_value=max_value,
-                value=value,
-                label_visibility="collapsed",
-                key=key,
-            ),
-        )
-
-    return ov_filters.AndFilter.new(
-        [
-            ov_filters.MatchFilter.new(
-                attribute="EntityType", values=[for_entity_type]
-            ),
-            range_filter,  # if is_enabled else ov_filters.DummyFilter.new(is_passing=True)
-        ]
-    )
-
-
 def animation_segments(token_animation_segments: list[Token]):
     entity_selector = st.selectbox(
         "Select animation entity",
@@ -914,28 +873,30 @@ def frequency_filter_per_entity_type(
         if not elements_of_type:
             continue
 
-        max_freq = max(elements["frequency"] for elements in elements_of_type)
-        min_freq = min(elements["frequency"] for elements in elements_of_type)
+        is_enabled = st.toggle(
+            f"{entity_type}".capitalize(),
+            value=True,
+            key=f"{key_prefix}_{entity_type}_frequency_filter_enabled",
+        )
+
         values = [elements["frequency"] for elements in elements_of_type]
+        range_filter = ov_filters.DummyFilter.new(is_passing=True)
+        if is_enabled and min(values) == max(values):
+            st.write("All frequencies are the same for this entity type, skipping filter")
+        elif is_enabled:
+            range_selection = histogram_slider(values, bins=50, height=100, key=f"{key_prefix}_{entity_type}_frequency_filter")
+            range_filter = ov_filters.RangeFilter.new(
+                attribute="frequency",
+                is_enabled=True,
+                rng=(range_selection['min'], range_selection['max']),
+            )
 
-        fig = plot_frequency_distribution(values)
-        st.plotly_chart(
-            fig, width="content", config={"staticPlot": True, "responsive": True}
-        )
-
-        filter_label = f"{entity_type}"
-        range_filter = attribute_range_filter_input(
-            label=filter_label,
-            for_entity_type=entity_type,
-            on_attribute="frequency",
-            min_value=min_freq,
-            max_value=max_freq,
-            value=(int(np.median(values)), max_freq),
-            is_enabled_by_default=True,
-            key=None
-            if key_prefix is None
-            else f"{key_prefix}_{entity_type}_frequency_filter",
-        )
+        range_filter = ov_filters.AndFilter.new([
+            ov_filters.MatchFilter.new(
+                attribute="EntityType", values=[entity_type]
+            ),
+            range_filter,  # if is_enabled else ov_filters.DummyFilter.new(is_passing=True)
+        ])
 
         filters.append(range_filter)
 
