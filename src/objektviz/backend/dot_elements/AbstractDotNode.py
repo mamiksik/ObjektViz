@@ -36,7 +36,7 @@ class AbstractDotNode[NodeT: Mapping](AbstractDotElement[NodeT], abc.ABC):
 
     @property
     def descriptive_label(self) -> str:
-        color = self.shaders[self.shader_key].shading_color(self.entity)
+        color = self.shaders[self.shader_cluster].shading_color(self.entity)
 
         def get_caption(attr, alignment):
             caption = self.get(attr, -1)

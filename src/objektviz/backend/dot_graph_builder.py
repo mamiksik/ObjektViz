@@ -26,21 +26,21 @@ def generate_dot_source(
     node_rank = {}
 
     cluster_order = config.explicit_cluster_order or sorted(
-        set(n.shader_key for n in nodes)
+        set(n.shader_cluster for n in nodes)
     )
 
     if config.layout_preferences.sort_event_classes_by == "Frequency":
         nodes = sorted(nodes, key=lambda n: (
-            cluster_order.index(n.shader_key),
+            cluster_order.index(n.shader_cluster),
             n.frequency
         ))
     elif config.layout_preferences.sort_event_classes_by == "None":
-        nodes = sorted(nodes, key=lambda n: (cluster_order.index(n.shader_key), n.element_id))
+        nodes = sorted(nodes, key=lambda n: (cluster_order.index(n.shader_cluster), n.element_id))
     else:
         if not config.explicit_event_class_order:
             raise ValueError("manual_class_sorting must be provided when sort_event_classes_by is not Frequency or None")
         nodes = sorted(nodes, key=lambda n: (
-            cluster_order.index(n.shader_key),
+            cluster_order.index(n.shader_cluster),
             config.explicit_event_class_order[n.get('EntityType')].index(n.get('EventType'))
         ))
 
@@ -94,7 +94,7 @@ def generate_dot_source(
             continue
 
         elements_to_render.append(node)
-        node_shaders[node.shader_key].update_bounds(node.entity)
+        node_shaders[node.shader_cluster].update_bounds(node.entity)
         # Store the raw element id for later mapping and synthetic-edge creation
         node_rank.setdefault(node.activity_name, []).append(node.element_id)
 
@@ -104,13 +104,13 @@ def generate_dot_source(
             entity_stub = {
                 config.dfc_preferences.shading_attr: node.process_start_count
             }
-            edge_shaders[node.shader_key].update_bounds(entity_stub)
+            edge_shaders[node.shader_cluster].update_bounds(entity_stub)
 
         if config.show_start_end_nodes and (
             node.process_end_count and node.process_end_count > 0
         ):
             entity_stub = {config.dfc_preferences.shading_attr: node.process_end_count}
-            edge_shaders[node.shader_key].update_bounds(entity_stub)
+            edge_shaders[node.shader_cluster].update_bounds(entity_stub)
 
     edge_node_map = {}
     node_edge_map = {}
@@ -141,7 +141,7 @@ def generate_dot_source(
 
         if not edge.is_sync_edge:
             elements_to_render.append(edge)
-            edge_shaders[edge.shader_key].update_bounds(edge.entity)
+            edge_shaders[edge.shader_cluster].update_bounds(edge.entity)
 
         if edge.is_sync_edge and not config.dfc_preferences.hide_sync_edges:
             elements_to_render.append(edge)
@@ -231,7 +231,7 @@ class DotGraphDescriptorBuilder:
         grouped = defaultdict(list)
         cross_graph = list()
         for dot_elem in items:
-            attr_value = dot_elem.get_nesting_attr(key)
+            attr_value = dot_elem.get_dot_subgraph_id(key)
             if attr_value is CROSS_CLUSTER_SENTINEL:
                 cross_graph.append(dot_elem)
             else:
@@ -313,11 +313,11 @@ class DotGraphDescriptorBuilder:
                 entity_stub = {
                     self.config.event_class_preferences.shading_attr: node.process_start_count
                 }
-                pen_width = self.edge_shaders[node.shader_key].pen_width(entity_stub)
+                pen_width = self.edge_shaders[node.shader_cluster].pen_width(entity_stub)
 
                 shading_color = "#00800050"
                 if self.config.dfc_preferences.use_shading_color_on_start_end_edge:
-                    shading_color = self.edge_shaders[node.shader_key].shading_color(
+                    shading_color = self.edge_shaders[node.shader_cluster].shading_color(
                         entity_stub
                     )
 
@@ -365,11 +365,11 @@ class DotGraphDescriptorBuilder:
                 entity_stub = {
                     self.config.event_class_preferences.shading_attr: node.process_end_count
                 }
-                pen_width = self.edge_shaders[node.shader_key].pen_width(entity_stub)
+                pen_width = self.edge_shaders[node.shader_cluster].pen_width(entity_stub)
 
                 shading_color = "#B31B1B"
                 if self.config.dfc_preferences.use_shading_color_on_start_end_edge:
-                    shading_color = self.edge_shaders[node.shader_key].shading_color(
+                    shading_color = self.edge_shaders[node.shader_cluster].shading_color(
                         entity_stub
                     )
 

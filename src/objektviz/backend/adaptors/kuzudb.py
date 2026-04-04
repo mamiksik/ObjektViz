@@ -46,7 +46,7 @@ class KuzuDotEdge(AbstractDotEdge[KuzuRelationship]):
     def end_element_id(self):
         return kuzu_internal_id_to_str(self.entity["_dst"])
 
-    def get_nesting_attr(self, name, default=None):
+    def get_dot_subgraph_id(self, name, default=None):
         # TODO: Fix this for KUZUDB, now all edges are considered cross cluster,
         # since kuzudb does not return the start and end as part of the same record
 

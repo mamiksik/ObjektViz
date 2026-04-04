@@ -8,18 +8,18 @@ def shader_factory(config: BackendConfig):
         entity: config.shader_factory(
             config,
             config.event_class_preferences.shading_attr,
-            config.shader_groups_color[entity],
+            config.shader_cluster_color[entity],
         )
-        for entity in config.shader_groups_color.keys()
+        for entity in config.shader_cluster_color.keys()
     }
 
     edge_shaders = {
         entity: config.shader_factory(
             config,
             config.dfc_preferences.shading_attr,
-            config.shader_groups_color[entity],
+            config.shader_cluster_color[entity],
         )
-        for entity in config.shader_groups_color.keys()
+        for entity in config.shader_cluster_color.keys()
     }
 
     return node_shaders, edge_shaders

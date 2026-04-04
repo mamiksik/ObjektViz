@@ -91,14 +91,14 @@ class AbstractDotEdge[EntityT: Mapping](AbstractDotElement[EntityT], ABC):
         if self.is_sync_edge:
             return self.sync_edge_color
 
-        return self.shaders[self.shader_key].pen_width(self.entity)
+        return self.shaders[self.shader_cluster].pen_width(self.entity)
 
     @property
     def color(self):
         if self.is_sync_edge:
             return self.sync_edge_color
 
-        return self.shaders[self.shader_key].shading_color(self.entity)
+        return self.shaders[self.shader_cluster].shading_color(self.entity)
 
     @property
     def is_visible(self):

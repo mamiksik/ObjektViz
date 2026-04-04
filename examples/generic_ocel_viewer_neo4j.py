@@ -211,8 +211,8 @@ with objektviz_sidebar:
 objektviz_config = BackendConfig(
     dfc_preferences=dfc_preferences,
     event_class_preferences=event_class_preferences,
-    shader_groping_key=SHADING_PREFERENCES.group_by,
-    shader_groups_color=SHADING_PREFERENCES.color_map,
+    shader_cluster_key=SHADING_PREFERENCES.group_by,
+    shader_cluster_color=SHADING_PREFERENCES.color_map,
     layout_preferences=layout_preferences,
     show_start_end_nodes=is_process_start_end_visualized,
     show_start_end_nodes_per_cluster=start_end_nodes_per_cluster,

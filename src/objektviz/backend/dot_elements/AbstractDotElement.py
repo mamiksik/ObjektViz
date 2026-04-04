@@ -64,8 +64,8 @@ class AbstractDotElement[EntityT: Mapping](abc.ABC):
         pass
 
     @property
-    def shader_key(self) -> str:
-        return self.get(self.config.shader_groping_key)
+    def shader_cluster(self) -> str:
+        return self.get(self.config.shader_cluster_key)
 
     @property
     def frequency(self) -> int:
@@ -75,5 +75,10 @@ class AbstractDotElement[EntityT: Mapping](abc.ABC):
     def get(self, name, default=None):
         return self.entity.get(name, default)
 
-    def get_nesting_attr(self, name, default=None):
+    def get_dot_subgraph_id(self, name, default=None):
+        """
+            This is used to decide to which dot subgraph the element belongs to,
+            if the value is CROSS_CLUSTER_SENTINEL, the element is placed into the top level of the graph,
+            this improves layout of the edges that connect different clusters
+        """
         return self.get(name, default)

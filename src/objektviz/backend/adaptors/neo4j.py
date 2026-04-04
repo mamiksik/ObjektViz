@@ -40,7 +40,7 @@ def from_neo4j_to_dot_elements(
 # IntelliJ has problems with inferring the type if neo4j.graph.Relationship is used
 class Neo4JDotEdge(AbstractDotEdge[Relationship]):
     """Takes care of producing dot descriptor code for edge (see parent class doc)"""
-    def get_nesting_attr(self, name, default=None):
+    def get_dot_subgraph_id(self, name, default=None):
         # This is the best way to handle this since, for kuzu we are now generating suboptimal solution
         start_attr = self.entity.start_node.get(name, default)
         end_attr = self.entity.end_node.get(name, default)
