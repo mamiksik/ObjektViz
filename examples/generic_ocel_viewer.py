@@ -49,6 +49,10 @@ with objektviz_sidebar:
         label="Dataset",
         options=DATASETS.keys(),
         key="kuzu_dataset_selector",
+        # On dataset change, we need to clear the cache to make sure all the data is reloaded from the new database
+        # since e.g. class type is not unique across datasets, also closing the connection to the old database is
+        # good practice to avoid having too many open connections
+        on_change=lambda: st.cache_data.clear() and st.cache_resource.clear()
     )
 
 if "kuzu_dataset_selector" not in st.session_state:
@@ -57,7 +61,7 @@ if "kuzu_dataset_selector" not in st.session_state:
 database_path = DATASETS[st.session_state.kuzu_dataset_selector]
 
 
-@st.cache_resource
+@st.cache_resource(on_release= lambda con: con.close())
 def connection(database_path: pathlib.Path):
     db = kuzu.Database(database_path)
     return kuzu.Connection(db)
