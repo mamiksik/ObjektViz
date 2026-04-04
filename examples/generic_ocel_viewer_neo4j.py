@@ -176,6 +176,7 @@ with objektviz_sidebar:
                     options=ENTITY_TYPES,
                     default=[],
                     selection_mode="multi",
+                    **ov_components.bind_on_key("event_class_entity_type_filter"),
                 ),
             )
         )

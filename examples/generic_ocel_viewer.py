@@ -15,7 +15,8 @@ from objektviz.streamlit.utils import (
     DefaultEventClassPreferences,
     DefaultLayoutPreferences,
     DefaultShadingPreferences,
-    get_class_ordering, get_cluster_ordering,
+    get_class_ordering,
+    get_cluster_ordering,
 )
 
 # ----------------------------------------------------------------------------
@@ -28,8 +29,14 @@ objektviz_sidebar = ov_components.setup_objektviz_page()
 # Trace Variants tab contains trace variants for selected class type (TODO)
 # Debug tab contains raw data for debugging purposes
 # Sidebar contains all possible configuration options for the ObjektViz
-process_model_tab, ekg_stats_tab, trace_variants_tab, debug_tab = st.tabs(
-    ["📦 Process Model", "ℹ️ EKG Inspection", "➡️ Trace Variants", "⚙️ Debug"]
+process_model_tab, ekg_stats_tab, trace_variants_tab, debug_tab, ai_tab = st.tabs(
+    [
+        "📦 Process Model",
+        "ℹ️ EKG Inspection",
+        "➡️ Trace Variants",
+        "⚙️ Debug",
+        "🤖 AI Assistant",
+    ]
 )
 
 
@@ -52,7 +59,7 @@ with objektviz_sidebar:
         # On dataset change, we need to clear the cache to make sure all the data is reloaded from the new database
         # since e.g. class type is not unique across datasets, also closing the connection to the old database is
         # good practice to avoid having too many open connections
-        on_change=lambda: st.cache_data.clear() and st.cache_resource.clear()
+        on_change=lambda: st.cache_data.clear() and st.cache_resource.clear(),
     )
 
 if "kuzu_dataset_selector" not in st.session_state:
@@ -61,7 +68,7 @@ if "kuzu_dataset_selector" not in st.session_state:
 database_path = DATASETS[st.session_state.kuzu_dataset_selector]
 
 
-@st.cache_resource(on_release= lambda con: con.close())
+@st.cache_resource(on_release=lambda con: con.close())
 def connection(database_path: pathlib.Path):
     db = kuzu.Database(database_path)
     return kuzu.Connection(db)
@@ -200,6 +207,7 @@ with objektviz_sidebar:
                     options=ENTITY_TYPES,
                     default=[],
                     selection_mode="multi",
+                    **ov_components.bind_on_key("event_class_entity_type_filter"),
                 ),
             )
         )
@@ -245,10 +253,15 @@ objektviz_config = BackendConfig(
     root_element_filter=element_id_filter,
     shader_factory=shader_factory,
     explicit_event_class_order=(
-        None if layout_preferences.sort_event_classes_by != "Avg. Activity Order"
-        else get_class_ordering(queries, class_type, queries.get_entity_types(class_type))
+        None
+        if layout_preferences.sort_event_classes_by != "Avg. Activity Order"
+        else get_class_ordering(
+            queries, class_type, queries.get_entity_types(class_type)
+        )
     ),
-    explicit_cluster_order=get_cluster_ordering(queries, class_type, layout_preferences.sort_groups_by)
+    explicit_cluster_order=get_cluster_ordering(
+        queries, class_type, layout_preferences.sort_groups_by
+    ),
 )
 
 # Generate the dot source from the proclet data
@@ -302,3 +315,14 @@ with ekg_stats_tab:
 
 with trace_variants_tab:
     ov_components.trace_variants(class_type=class_type)
+
+# Create ProcessGraph for the AI agent
+process_graph = ProcessGraph(
+    class_type=class_type,
+    raw_nodes=event_classes_db,
+    raw_dfc_edges=dfc_db,
+    raw_sync_edges=sync_db,
+)
+
+with ai_tab:
+    ov_components.process_model_chat(process_graph)

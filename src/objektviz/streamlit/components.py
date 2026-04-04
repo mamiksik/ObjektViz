@@ -4,6 +4,7 @@ import numpy as np
 import plotly.express as px
 import streamlit as st
 from matplotlib import pyplot as plt
+from streamlit.runtime.state import BindOption
 
 import objektviz.backend.filters as ov_filters
 import objektviz.backend.shaders as ov_shaders
@@ -30,6 +31,15 @@ from objektviz.streamlit.utils import (
     assert_attribute_exists,
 )
 
+BIND_PARAMETER: BindOption = "query-params"
+def bind_on_key(key: str) -> dict:
+    if BIND_PARAMETER is None:
+        return {}
+
+    return {
+        "key": key,
+        "bind": BIND_PARAMETER,
+    }
 
 def setup_objektviz_page():
     st.markdown(
@@ -89,24 +99,28 @@ def general_preferences(
             "Proclet class type",
             options=proclet_types,
             help="Select the proclet class type to visualize",
+            **bind_on_key("class_type")
         )
 
         is_process_start_end_visualized = st.toggle(
             "Show process start/end nodes",
             value=True,
             help="If enabled, nodes representing process start and end will be shown in the visualization. These are computed based on the 'StartCount' and 'EndCount' attributes of the event classes.",
+            **bind_on_key("is_process_start_end_visualized")
         )
         start_end_nodes_per_cluster = st.toggle(
             "Start and end nodes per cluster",
             value=True,
             disabled=not is_process_start_end_visualized,
             help="If enabled, each cluster will have its own virtual start and end node. This can help in visualizing the flow within clusters more clearly and reduce clutter in the overall graph.",
+            **bind_on_key("start_end_nodes_per_cluster")
         )
 
         enable_path_effects_on_hover = st.toggle(
             "Enable path effects on hover",
             value=True,
             help="If enabled, when hovering over a DFC (edge) in the visualization, a dashed animation effect will be played along the path of the edge. This can help in visually tracing the flow of the process represented by the edge.",
+            **bind_on_key("enable_path_effects_on_hover")
         )
 
         shader_factory = builtin_shader_selector()
@@ -139,6 +153,7 @@ def builtin_shader_selector() -> Callable[
             max_value=100.0,
             value=(5.0, 95.0),
             step=2.5,
+            **bind_on_key("percentile_shader_range")
         )
         shader_factory = ov_shaders.percentile_shader_factory(
             percentile_range=shader_range
@@ -161,37 +176,44 @@ def dfc_appearance_input(
             max_value=30,
             value=defaults.pen_range,
             help="Defines the minimal and maximal line thickness used during rendering based on the shading attribute.",
+            **bind_on_key("pen_width_range")
         ),
         caption=st.selectbox(
             "DFC label",
             options=edge_attributes,
             index=edge_attributes.index(defaults.title),
             help="Attribute used to display value on top of the edge",
+            **bind_on_key("dfc_caption")
         ),
         shading_attr=st.selectbox(
             "DFC shading attribute",
             options=edge_attributes,
             index=edge_attributes.index(defaults.shading),
             help="Numeric attribute used for edge shading (e.g., frequency or average transition duration)",
+            **bind_on_key("dfc_shading_attr")
         ),
         use_shading_color_on_start_end_edge=st.toggle(
             "Use shading color on start/end edges",
             value=True,
             help="If enabled, the edges representing process start and end will be shaded with the same color as the connected nodes, instead of using plain green/red color. This can help in visually associating start/end edges with their respective clusters.",
+            **bind_on_key("use_shading_color_on_start_end_edge")
         ),
         lower_start_end_edge_opacity=st.toggle(
             "Lower opacity of start/end edges",
             value=True,
             help="If enabled, the edges representing process start and end will have lower opacity to not overpower the nodes and other edges in the visualization. This can help in reducing visual clutter and making the overall graph easier to read.",
+            **bind_on_key("lower_start_end_edge_opacity")
         ),
         use_x_labels=st.toggle(
             "Use xlabels",
             help="If true, xlabels are used for caption, this means the labels are not taking into account while computing layout. It might produce more compact and less convoluted routes for edges, but labels might not be visible.",
+            **bind_on_key("use_x_labels")
         ),
         hide_sync_edges=st.toggle(
             "Hide :SYNC edges",
             value=defaults.hide_sync_edges,
             help="If enabled, the :SYNC edges will be hidden, this is useful when there are too many :SYNC edges that make the graph unreadable",
+            **bind_on_key("hide_sync_edges")
         ),
     )
 
@@ -208,24 +230,28 @@ def event_class_appearance_input(
             options=node_attributes,
             index=node_attributes.index(defaults.title),
             help="Attribute to be displayed as the node title",
+            **bind_on_key("event_class_title")
         ),
         caption_left=col1.selectbox(
             "Caption left",
             options=node_attributes,
             index=node_attributes.index(defaults.small_caption_left),
             help="Which attribute is used to display value on the left of the node",
+            **bind_on_key("event_class_caption_left")
         ),
         caption_right=col2.selectbox(
             "Caption right",
             options=node_attributes,
             index=node_attributes.index(defaults.small_caption_right),
             help="Which attribute is used to display value on the right of the node",
+            **bind_on_key("event_class_caption_right")
         ),
         shading_attr=container_bottom.selectbox(
             "Event class shading attribute",
             options=node_attributes,
             index=node_attributes.index(defaults.shading_attr),
             help="Numeric attribute used for node shading (e.g., frequency or number of associated entities)",
+            **bind_on_key("event_class_shading_attr")
         ),
         icon_map=defaults.icon_map,
     )
@@ -238,123 +264,134 @@ def layout_preferences_input(
     rank_direction_options = ["TB", "LR"]
 
     # ===== GRAPH DIRECTION & SPACING =====
-    st.caption("Graph Layout")
-    col1, col2, col3 = st.columns(3)
+    with st.container(gap="xsmall"):
+        st.caption("Graph Layout")
+        col1, col2, col3 = st.columns(3)
 
-    with col1:
-        rank_direction = st.selectbox(
+        rank_direction = col1.selectbox(
             "Direction",
             options=rank_direction_options,
             index=rank_direction_options.index(defaults.rank_direction),
             help="TB: Top to Bottom | LR: Left to Right",
+            **bind_on_key("rank_dir")
         )
 
-    with col2:
-        node_separation = st.number_input(
+        node_separation = col2.number_input(
             "H-spacing",
             min_value=0.1,
             max_value=5.0,
             step=0.1,
             value=0.5,
             help="Horizontal spacing between nodes",
-            key="node_sep"
+            **bind_on_key("node_sep")
         )
 
-    with col3:
-        rank_separation = st.number_input(
+        rank_separation = col3.number_input(
             "V-spacing",
             min_value=0.1,
             max_value=5.0,
             step=0.1,
             value=0.5,
             help="Vertical spacing between ranks",
-            key="rank_sep"
+            **bind_on_key("rank_sep")
         )
 
     # ===== RANK ALIGNMENT =====
-    st.caption("Rank Alignment")
+    with st.container(gap="xsmall"):
+        st.caption("Rank Alignment")
 
-    same_rank_activity = st.checkbox(
-        "Same rank per activity",
-        value=defaults.force_same_rank_for_event_class,
-        help="Align nodes of same activity type on same rank",
-    )
-
-    if same_rank_activity:
-        exclusive_event_class_ranks_experimental = st.checkbox(
-            "Exclusive ranks",
-            value=True,
-            help="Reserve each rank for single activity (experimental)",
+        same_rank_activity = st.checkbox(
+            "Same rank per activity",
+            value=defaults.force_same_rank_for_event_class,
+            help="Align nodes of same activity type on same rank",
+            **bind_on_key("same_rank_activity")
         )
-    else:
-        exclusive_event_class_ranks_experimental = False
 
-    same_rank_start_end_nodes = st.checkbox(
-        "Same rank start/end",
-        value=False,
-        help="Align all start and end nodes on their respective ranks",
-    )
+        if same_rank_activity:
+            exclusive_event_class_ranks_experimental = st.checkbox(
+                "Exclusive ranks",
+                value=True,
+                help="Reserve each rank for single activity (experimental)",
+                **bind_on_key("exclusive_event_class_ranks_experimental")
+            )
+        else:
+            exclusive_event_class_ranks_experimental = False
+
+        same_rank_start_end_nodes = st.checkbox(
+            "Same rank start/end",
+            value=False,
+            help="Align all start and end nodes on their respective ranks",
+            **bind_on_key("same_rank_start_end_nodes")
+        )
 
     # ===== SORTING & ORDERING =====
-    st.caption("Sorting & Ordering")
-    col1, col2 = st.columns(2)
-    with col1:
-        cluster_sorting = st.selectbox(
+    with st.container(gap="xsmall"):
+        st.caption("Sorting & Ordering")
+        col1, col2 = st.columns(2)
+        cluster_sorting = col1.selectbox(
             "Clusters",
             options=["Frequency", "Alphabetical"],
             index=0,
             help="Sort clusters by frequency or name",
+            **bind_on_key("cluster_sorting")
         )
 
-    with col2:
-        activity_sorting = st.selectbox(
+        activity_sorting = col2.selectbox(
             "Activities",
             options=["Frequency", "Avg. Activity Order", "None"],
             index=0,
             help="Sort activities for layout optimization",
+            **bind_on_key("activity_sorting")
         )
 
-    edge_sorting = st.checkbox(
-        "Sort edges by frequency",
-        value=True,
-        help="Optimize edge routing by frequency",
-    )
+        edge_sorting = st.checkbox(
+            "Sort edges by frequency",
+            value=True,
+            help="Optimize edge routing by frequency",
+            **bind_on_key("edge_sorting")
+        )
 
     # ===== EDGE WEIGHTING =====
-    st.caption("Edge Weighting")
-    enable_weight = st.toggle(
-        "Use edge weights",
-        value=(defaults.weight_attribute is not None),
-        help="Higher weights = shorter edges",
-    )
-
-    if enable_weight and dfc_attributes:
-        weight_attribute = st.selectbox(
-            "Weight attribute",
-            options=dfc_attributes,
-            index=dfc_attributes.index(defaults.weight_attribute) if defaults.weight_attribute in dfc_attributes else 0,
-            help="Numeric attribute for edge weights",
+    with st.container(gap="xsmall"):
+        st.caption("Edge Weighting")
+        enable_weight = st.toggle(
+            "Use edge weights",
+            value=(defaults.weight_attribute is not None),
+            help="Higher weights = shorter edges",
+            **bind_on_key("enable_weighting"),
         )
-    else:
-        weight_attribute = None
+
+        if enable_weight and dfc_attributes:
+            weight_attribute = st.selectbox(
+                "Weight attribute",
+                options=dfc_attributes,
+                index=dfc_attributes.index(defaults.weight_attribute) if defaults.weight_attribute in dfc_attributes else 0,
+                help="Numeric attribute for edge weights",
+                **bind_on_key("weight_attr")
+            )
+        else:
+            weight_attribute = None
 
     # ===== SUBGRAPH CLUSTERING =====
-    st.caption("Subgraph Clustering")
-    enable_clustering = st.toggle(
-        "Enable clustering",
-        value=True,
-        help="Create clusters based on attributes",
-    )
-
-    if enable_clustering:
-        clustering_keys = st.multiselect(
-            "Clustering attributes",
-            options=defaults.allowed_clustering_attributes,
-            default=defaults.clustering_attribute,
-            help="Order matters: ['Type', 'Location'] creates type clusters with location sub-clusters",
+    with st.container(gap="xsmall"):
+        st.caption("Subgraph Clustering")
+        enable_clustering = st.toggle(
+            "Enable clustering",
+            value=True,
+            help="Create clusters based on attributes",
+            **bind_on_key("enable_clustering"),
         )
-    else:
-        clustering_keys = []
+
+        if enable_clustering:
+            clustering_keys = st.multiselect(
+                "Clustering attributes",
+                options=defaults.allowed_clustering_attributes,
+                default=defaults.clustering_attribute,
+                help="Order matters: ['Type', 'Location'] creates type clusters with location sub-clusters",
+                **bind_on_key("clustering_keys")
+            )
+        else:
+            clustering_keys = []
 
     return LayoutPreferences(
         force_same_rank_for_event_class=same_rank_activity,
@@ -879,23 +916,25 @@ def frequency_filter_per_entity_type(
         if not elements_of_type:
             continue
 
-        is_enabled = st.toggle(
-            f"{entity_type}".capitalize(),
-            value=True,
-            key=f"{key_prefix}_{entity_type}_frequency_filter_enabled",
-        )
-
-        values = [elements["frequency"] for elements in elements_of_type]
-        range_filter = ov_filters.DummyFilter.new(is_passing=True)
-        if is_enabled and min(values) == max(values):
-            st.write("All frequencies are the same for this entity type, skipping filter")
-        elif is_enabled:
-            range_selection = histogram_slider(values, bins=50, height=100, key=f"{key_prefix}_{entity_type}_frequency_filter")
-            range_filter = ov_filters.RangeFilter.new(
-                attribute="frequency",
-                is_enabled=True,
-                rng=(range_selection['min'], range_selection['max']),
+        with st.container(gap="xxsmall"):
+            is_enabled = st.toggle(
+                f"{entity_type}".capitalize(),
+                value=True,
+                key=f"{key_prefix}_{entity_type}_frequency_filter_enabled",
+                bind=BIND_PARAMETER,
             )
+
+            values = [elements["frequency"] for elements in elements_of_type]
+            range_filter = ov_filters.DummyFilter.new(is_passing=True)
+            if is_enabled and min(values) == max(values):
+                st.write("All frequencies are the same for this entity type, skipping filter")
+            elif is_enabled:
+                range_selection = histogram_slider(values, bins=50, height=100, key=f"{key_prefix}_{entity_type}_frequency_filter", bind=BIND_PARAMETER)
+                range_filter = ov_filters.RangeFilter.new(
+                    attribute="frequency",
+                    is_enabled=True,
+                    rng=(range_selection['min'], range_selection['max']),
+                )
 
         range_filter = ov_filters.AndFilter.new([
             ov_filters.MatchFilter.new(

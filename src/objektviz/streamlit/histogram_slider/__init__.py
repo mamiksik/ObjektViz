@@ -12,16 +12,17 @@ Typical usage
         print(selection["min"], selection["max"])
 """
 
-from __future__ import annotations
-
 from pathlib import Path
 from typing import List, Optional
 
+import math
 import streamlit.components.v2 as components
 
 import streamlit as st
 
 __version__ = "0.2.0"
+
+from streamlit.runtime.state import BindOption
 
 
 # ---------------------------------------------------------------------------
@@ -87,6 +88,7 @@ def histogram_slider(
     bins: Optional[int] = None,
     default_percentile: Optional[tuple] = (5, 100),
     on_change=None,
+    bind: BindOption=None,
 ) -> Optional[dict]:
     """Render a D3 histogram range slider and return the selected range.
 
@@ -122,6 +124,9 @@ def histogram_slider(
            changes.  Equivalent to the ``on_<state>_change`` pattern used by
            native Streamlit widgets.
 
+       bind:
+           Optional binding for the slider's selection to external state (e.g. query params).
+
        Returns
        -------
        dict or None
@@ -149,7 +154,12 @@ def histogram_slider(
     # Compute the initial selection from the requested percentile range.
     # This is recalculated every render so it stays in sync when `values`
     # changes (e.g. the user picks a different dataset).
-    if default_percentile is not None and len(values) > 0:
+    import urllib
+    query_key_min = f"{urllib.parse.quote(key)}_min" if key else None
+    query_key_max = f"{urllib.parse.quote(key)}_max" if key else None
+    if (_min := st.query_params.get_all(query_key_min)) and (_max := st.query_params.get_all(query_key_max)):
+        initial_selection = {"min": float(_min[0]), "max": float(_max[0])}
+    elif default_percentile is not None and len(values) > 0:
         lo_pct, hi_pct = default_percentile
         sv = sorted(values)
         initial_selection: Optional[dict] = {
@@ -180,6 +190,14 @@ def histogram_slider(
         on_selection_change=on_change or (lambda: None),
         key=key,
     )
+
+    # Update query params if bind is set to "query_params"
+    if bind == "query-params" and result and result.selection:
+        if not math.isclose(result.selection["min"], initial_selection['min']):
+            st.query_params[query_key_min] = round(result.selection["min"], 2)
+
+        if not math.isclose(result.selection["max"], initial_selection['max']):
+            st.query_params[query_key_max] = round(result.selection["max"], 2)
 
     # result is a BidiComponentResult; .selection holds the current range.
     return result.selection if result is not None else None
