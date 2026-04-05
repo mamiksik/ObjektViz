@@ -27,7 +27,9 @@ class LayoutPreferences:
     # sort_event_classes_by_frequency: bool = True
 
     # How to sort groups before adding them into the dot source code, this influences the layout heuristics
-    sort_groups_by: Literal["Frequency", "Alphabetical"] = "Frequency"
+    # Alternatively, it can be a tuple of (attribute name, list of attribute values in desired order),
+    # this will sort the groups based on the order of the attribute values in the list
+    sort_groups_by: Literal["Frequency", "Alphabetical"] | tuple[str, list[str]] = "Frequency"
 
     # Sort edges based on frequency, this influences the order in which they are
     # declared in the dot source code (this then influences the layout heuristics)

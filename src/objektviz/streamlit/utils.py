@@ -97,5 +97,18 @@ def get_cluster_ordering(_queries: AbstractEKGRepository, class_type: str, sort_
             key=lambda item: _queries.get_entity_type_frequency(class_type, item),
             reverse=True,
         )
+    elif isinstance(sort_groups_by, tuple) and len(sort_groups_by) == 2:
+        attribute_name, desired_order = sort_groups_by
+        if attribute_name != "EntityType":
+            raise ValueError("Currently only sorting by EntityType is supported.")
+
+        entity_types = _queries.get_entity_types(class_type)
+
+        # Ensure all entity types are included in the desired order list
+        if not all(et in desired_order for et in entity_types):
+            raise ValueError("All entity types must be included in the desired order list.")
+
+        # Sort based on the index in the desired order list
+        return sorted(entity_types, key=lambda et: desired_order.index(et))
 
     raise ValueError(f"Invalid value for sort_groups_by: {sort_groups_by}")

@@ -909,7 +909,7 @@ wheels = [
 
 [[package]]
 name = "objektviz"
-version = "0.2.4"
+version = "0.2.8"
 source = { editable = "." }
 dependencies = [
     { name = "graphviz" },
@@ -918,6 +918,7 @@ dependencies = [
     { name = "scikit-learn" },
     { name = "streamlit", extra = ["charts"] },
     { name = "streamlit-adjustable-columns" },
+    { name = "streamlit-sortables" },
     { name = "watchdog" },
 ]
 
@@ -957,6 +958,7 @@ requires-dist = [
     { name = "scikit-learn", specifier = ">=1.7.2" },
     { name = "streamlit", extras = ["charts"], specifier = ">=1.55.0" },
     { name = "streamlit-adjustable-columns", specifier = ">=0.2.1" },
+    { name = "streamlit-sortables", specifier = ">=0.3.1" },
     { name = "twine", marker = "extra == 'publish'" },
     { name = "watchdog", specifier = ">=6.0.0" },
 ]
@@ -1673,6 +1675,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/20/aa/9dd7cb7e8ebd61b45e4a51cbaee4387922793ef94ff43a20493fb3ae5590/streamlit-adjustable-columns-0.2.1.tar.gz", hash = "sha256:b01f79c0f455d75a56d5cd03a7d769faf1ed31fcc98a1661df7583d021afb438", size = 154435, upload-time = "2025-06-23T12:52:44.247Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e3/46/75d9b33a65e6fffb1e780376ecc68c5c737bae16172d16c07950e68cc19c/streamlit_adjustable_columns-0.2.1-py3-none-any.whl", hash = "sha256:2986d4cdef4422ac5da0a7fd1d52faefbf6ccf04bebdd44cf31686ee3c296eb2", size = 157020, upload-time = "2025-06-23T12:52:42.643Z" },
+]
+
+[[package]]
+name = "streamlit-sortables"
+version = "0.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "streamlit" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/11/10/00c3ae0f183d41bb3608157283a2c92e4f4db87cb21a73e96b3c2c2ca58f/streamlit_sortables-0.3.1.tar.gz", hash = "sha256:9bed78f4407f2b9b1ddead8b6459d1af839aab427b7b5fe4c091e6870630acfe", size = 564139, upload-time = "2025-01-13T07:37:44.533Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3d/b4/edbef9fa8e49f5df2745a178c44b23553d8472c22fb23f44f6949d544410/streamlit_sortables-0.3.1-py3-none-any.whl", hash = "sha256:1847b2fa2041762b6442e21224bd8c0316c5412e4eb3a38fa748cf7ced834d49", size = 570356, upload-time = "2025-01-13T07:37:42.852Z" },
 ]
 
 [[package]]

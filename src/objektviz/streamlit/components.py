@@ -1,8 +1,8 @@
 from typing import Callable
 
-import numpy as np
 import plotly.express as px
 import streamlit as st
+import streamlit_sortables
 from matplotlib import pyplot as plt
 from streamlit.runtime.state import BindOption
 
@@ -260,6 +260,7 @@ def event_class_appearance_input(
 def layout_preferences_input(
     defaults: DefaultLayoutPreferences,
     dfc_attributes: list[str],
+    entity_types: list[str]
 ) -> LayoutPreferences:
     rank_direction_options = ["TB", "LR"]
 
@@ -330,11 +331,17 @@ def layout_preferences_input(
         col1, col2 = st.columns(2)
         cluster_sorting = col1.selectbox(
             "Clusters",
-            options=["Frequency", "Alphabetical"],
+            options=["Frequency", "Alphabetical", "Manual (EntityType)"],
             index=0,
             help="Sort clusters by frequency or name",
             **bind_on_key("cluster_sorting")
         )
+
+        if cluster_sorting == "Manual (EntityType)":
+            cluster_sorting = (
+                "EntityType",
+                streamlit_sortables.sort_items(entity_types, key="cluster_sorting_drag")
+            )
 
         activity_sorting = col2.selectbox(
             "Activities",
@@ -424,8 +431,9 @@ def preferences_group(
 ]:
     with st.expander("Layout preferences", expanded=False):
         dfc_attributes = queries.get_dfc_attributes(class_type)
+        entity_types = queries.get_entity_types(class_type)
         layout_preferences = layout_preferences_input(
-            default_layout_preferences_input, dfc_attributes
+            default_layout_preferences_input, dfc_attributes, entity_types
         )
 
     with st.expander("DFC Appearance", expanded=False):
