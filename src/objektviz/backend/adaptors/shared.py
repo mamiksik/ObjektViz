@@ -49,6 +49,8 @@ class CypherQueries:
         return """
             MATCH (c: Class)
             WITH DISTINCT c.EntityType as entityType
+            ORDER BY entityType
+            SKIP 0
             RETURN entityType
         """
 
@@ -57,6 +59,8 @@ class CypherQueries:
         return """
             MATCH (c: Class {Type: $ClassType})
             WITH DISTINCT c.EntityType as entityType
+            ORDER BY entityType
+            SKIP 0
             RETURN entityType
         """
 
