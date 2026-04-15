@@ -317,12 +317,12 @@ with trace_variants_tab:
     ov_components.trace_variants(class_type=class_type)
 
 # Create ProcessGraph for the AI agent
-process_graph = ProcessGraph(
-    class_type=class_type,
-    raw_nodes=event_classes_db,
-    raw_dfc_edges=dfc_db,
-    raw_sync_edges=sync_db,
-)
+# process_graph = ProcessGraph(
+#     class_type=class_type,
+#     raw_nodes=event_classes_db,
+#     raw_dfc_edges=dfc_db,
+#     raw_sync_edges=sync_db,
+# )
 
-with ai_tab:
-    ov_components.process_model_chat(process_graph)
+# with ai_tab:
+#     ov_components.process_model_chat(process_graph)
