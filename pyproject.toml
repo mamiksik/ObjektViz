@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "objektviz"
-version = "0.3.0"
+version = "0.3.1"
 description = "ObjektViz is a visualizer for object-centric process models that enables users to explore and analyze even _very complex_ processes involving multiple interacting objects"
 readme = "README.md"
 license = "AGPL-3.0-only"
@@ -44,7 +44,10 @@ include = ['objektviz*']
 objektviz = [
     "frontend/**/*.html",
     "frontend/**/*.js",
-    "frontend/source/*"
+    "frontend/source/*",
+    "streamlit/histogram_slider/**/*.html",
+    "streamlit/histogram_slider/**/*.js",
+    "streamlit/histogram_slider/**/*.css",
 ]
 
 [tool.uv.sources]
