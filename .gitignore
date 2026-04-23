@@ -32,3 +32,6 @@ wheels/
 #MAC OS generated files
 .DS_Store
 **/.DS_Store
+
+.streamlit/secrets.toml
+**/.streamlit/secrets.toml
