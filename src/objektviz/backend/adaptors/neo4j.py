@@ -86,6 +86,14 @@ class Neo4JEKGRepository[Node, Relationship](AbstractEKGRepository):
             result = session.run(query, parameters=params)
             return result.data() if to_dict else result.to_eager_result()
 
+    def get_entity_type_frequency(self, class_type: str, entity_type: str) -> int:
+        result = self.run_query(f"""
+            MATCH (n:Entity {{Type: "{entity_type}"}})<-[:CORR]-(:Event)-[:OBSERVED]->(:Class {{Type: "{class_type}"}})
+            RETURN count(DISTINCT n) as frequency
+        """, {})
+
+        return result.records[0].get("frequency")
+
     def get_avg_class_order(self, class_type: str, entity_type: str) -> list[str]:
         warnings.warn("class type is not used in get_avg_class_order for Neo4j yet")
         res = self.run_query(f"""
