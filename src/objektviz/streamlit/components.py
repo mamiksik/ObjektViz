@@ -27,7 +27,6 @@ from objektviz.streamlit.utils import (
     DefaultConnectionPreferences,
     DefaultEventClassPreferences,
     DefaultLayoutPreferences,
-    TokenReplayManager,
     assert_attribute_exists,
 )
 
@@ -507,67 +506,25 @@ def animation_preferences_input() -> TokenReplayPreferences:
     return result
 
 
-def token_replay_input(
-    queries: AbstractEKGRepository,
-    class_type,
-    ui_preferences: TokenReplayManager,
-    token_replay_preferences: TokenReplayPreferences,
-) -> tuple[
-    ov_filters.AbstractFilter,
-    list[Token] | None,
-    ReplayMetadata | None,
-    list[str] | None,
-]:
-    with st.expander("Entities to animate", expanded=True):
-        sampled_entity_ids = []
-        st.text("Sample properties")
-        for name, callback in ui_preferences.samplers.items():
-            (
-                col1,
-                col2,
-            ) = st.columns([0.5, 0.5], vertical_alignment="center")
-            enabled = col1.checkbox(f"{name}", value=False)
-            sample_size = col2.number_input(
-                "No. Samples",
-                value=10,
-                min_value=1,
-                max_value=2500,
-                key=f"{name}_sample",
-                label_visibility="collapsed",
-            )
-            if enabled:
-                samples = callback(class_type, sample_size)
-                st.write(f"Found samples: {len(samples)}")
-                sampled_entity_ids.extend(samples)
 
-        if sampled_entity_ids:
-            st.write(f"Found samples total: {len(sampled_entity_ids)}")
+def entity_sampler(
+    queries: AbstractEKGRepository, class_type: str
+) -> list[str]:
+    enabled = st.checkbox(f"Sample entities?", value=False, key=f"entity_sample_enabled")
+    sample_size = st.number_input(
+        f"Number of samples",
+        value=10,
+        min_value=1,
+        max_value=25000,
+        key=f"entity_sample_size_{class_type}",
+        disabled=not enabled,
+        help="Number of entities to sample for animation. Sampling is done randomly from the set of all entities of the selected class type.",
+    )
 
-        if len(sampled_entity_ids) == 0:
-            return ov_filters.DummyFilter.new(is_passing=False), None, None, None
+    if not enabled:
+        return []
 
-        sampled_traces = queries.get_process_executions(class_type, sampled_entity_ids)
-        active_element_ids, token_animation_segments, replay_metadata = (
-            ui_preferences.token_animation_generator(
-                sampled_traces[0],
-                sampled_traces[1],
-                sampled_traces[2],
-                token_replay_preferences,
-            )
-        )
-        element_filter = ov_filters.MatchFilter.new(
-            attribute="element_id",
-            is_enabled=True,
-            skip_on_empty=True,
-            values=active_element_ids,
-        )
-
-        return (
-            element_filter,
-            token_animation_segments,
-            replay_metadata,
-            active_element_ids,
-        )
+    return queries.get_entity_sample(class_type, sample_size)
 
 
 def animation_segments(token_animation_segments: list[Token]):

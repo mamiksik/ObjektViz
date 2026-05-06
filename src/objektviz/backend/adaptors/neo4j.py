@@ -117,7 +117,7 @@ class Neo4JEKGRepository[Node, Relationship](AbstractEKGRepository):
         warnings.warn("class type is not used in get_all_activity_names for Neo4j yet")
         res = self.run_query(f"""
             MATCH (e:Event)-[:CORR]->(n:Entity {{Type: "{entity_type}"}})
-            RETURN DISTINCT e.Type AS activity
+            RETURN DISTINCT e.type AS activity
         """, {})
         return [record["activity"] for record in res]
 

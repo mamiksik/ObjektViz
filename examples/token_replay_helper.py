@@ -1,3 +1,4 @@
+from objektviz.backend.utils import get_dominant_color
 from objektviz.frontend import (
     ReplayMetadata,
     Token,
@@ -5,39 +6,22 @@ from objektviz.frontend import (
     TokenReplayPreferences,
 )
 
-color_map = {
-    "Invoice": "Blues",
-    "Item": "Greens",
-    "Order": "Purples",
-    "Payment": "Oranges",
-    "SupplierOrder": "Reds",
-}
-
-ATTR_VAL_TO_COLOR = {
-    "Invoice": "#1f77b4",
-    "Item": "#2ca02c",
-    "Order": "#9467bd",
-    "Payment": "#ff7f0e",
-    "SupplierOrder": "#d62728",
-}
-
-
 def generate_token_animation_segments(
-    data: list[dict],
+    process_traces: list[dict],
     start_date,
     end_date,
-    animation_preferences: TokenReplayPreferences,
+    color_map: dict[str, tuple[str, str]],
+    token_replay_preferences: TokenReplayPreferences,
 ) -> tuple[list[str], list[Token], ReplayMetadata]:
     """Generates token animation segments from process execution data. This is default implementation, each project will probably needs its own version."""
     active_element_ids = []
     tokens = []
     max_duration_sec = 0
 
-    for trace in data:
-        print(trace)
+    for trace in process_traces:
         active_element_ids.extend(trace.get("ActiveElementIds"))
 
-        if animation_preferences.fixed_animation_duration:
+        if token_replay_preferences.fixed_animation_duration:
             segments = [
                 ReplaySegment(
                     dfc_element_id=x.get("DFCElementId"),
@@ -50,7 +34,7 @@ def generate_token_animation_segments(
                 for i, x in enumerate(trace.get("TraceSegments"))
             ]
 
-        elif animation_preferences.token_animation_alignment == "At-once":
+        elif token_replay_preferences.token_animation_alignment == "At-once":
             startOffset = trace.get("TraceSegments")[0].get("StartOffsetSec")
             segments = [
                 ReplaySegment(
@@ -72,7 +56,7 @@ def generate_token_animation_segments(
                     activity_duration_sec=x.get("DurationSec")
                     * 0,  # TODO: activity_animation
                     # color="#3e9b0a ",
-                    color=ATTR_VAL_TO_COLOR.get(trace.get("Entity").get("EntityType")),
+                    color=get_dominant_color(color_map[trace.get("Entity").get("type")]),
                 )
                 for x in trace.get("TraceSegments")
             ]
@@ -88,8 +72,8 @@ def generate_token_animation_segments(
         tokens.append(
             Token(
                 element_id=trace.get("EntityElementId"),
-                entity_id=trace.get("Entity").get("ID"),
-                entity_type=trace.get("Entity").get("EntityType"),
+                entity_id=trace.get("Entity").get("id"),
+                entity_type=trace.get("Entity").get("type"),
                 segments=segments,
                 replay_duration_sec=replay_duration,
             )

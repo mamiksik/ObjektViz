@@ -82,7 +82,14 @@ class AdvancedTokenReplayPlugin {
 
     pollCurrentTime() {
         if (this.replayMetadata !== null){
-            this.slider.silentValue(this.playBackProgress())
+            const now = performance.now();
+            // Throttle slider text updates to ~10fps — every silentValue() call mutates
+            // the DOM via D3's .text(), which triggers d3-graphviz's MutationObserver
+            // and schedules a full shadow DOM scan on every frame if left unthrottled.
+            if (!this._lastSliderUpdate || now - this._lastSliderUpdate >= 100) {
+                this.slider.silentValue(this.playBackProgress())
+                this._lastSliderUpdate = now;
+            }
             // Loop back to start, if we reached end of the playback
             if (this.svgNode.getCurrentTime() > this.scaleDuration(this.replayMetadata.total_duration_sec)) {
                 this.svgNode.setCurrentTime(0)
@@ -199,13 +206,19 @@ class AdvancedTokenReplayPlugin {
     }
 
     setupReplay() {
+        // Must run on the live DOM to query existing edge elements
         this.svgSelection
             .selectAll("g.edge")
             .each(function (parent) {
                 d3.select(this).selectAll("path").attr("id", `${parent.attributes.id}-path` )
             })
 
-        const tokens = this.container
+        // Build all token elements in a detached SVG group so that the hundreds/thousands
+        // of individual appends don't each fire a live DOM mutation (which would trigger
+        // MutationObserver-based scanners on every insertion). One appendChild at the end
+        // produces a single mutation instead.
+        const scratch = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        const tokens = d3.select(scratch)
             .selectAll('g.token-group')
             .data(this.tokens)
             .enter()
@@ -259,8 +272,8 @@ class AdvancedTokenReplayPlugin {
             .attr('fill', "freeze")
 
         circles
-                .append("title")
-                .text((d) => d['entity_id'])
+            .append("title")
+            .text((d) => d['entity_id'])
 
         // Add path tracking
         tokens
@@ -275,6 +288,8 @@ class AdvancedTokenReplayPlugin {
             .append("mpath")
             .attr("href", (d) => "#" + d.dfc_element_id + "-path");
 
+        // Single live DOM mutation — attach everything at once
+        this.container.node().appendChild(scratch);
     }
 
 

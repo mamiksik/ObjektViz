@@ -16,7 +16,6 @@ from objektviz.streamlit.utils import (
     DefaultEventClassPreferences,
     DefaultShadingPreferences,
     DefaultLayoutPreferences,
-    TokenReplayManager,
     get_class_ordering, get_cluster_ordering,
 )
 from objektviz.backend.dot_graph_builder import generate_dot_source
@@ -51,7 +50,7 @@ PROCLET_TYPES = ["EventType,EntityType"]
 # To generalize to all entity types, we load the entity types from database
 # and assign a color to each of them dynamically
 # In real project, you might want to have more control over this mapping / manually define entity types
-ENTITY_TYPES = ["Invoice", "Item", "Order", "Payment", "SupplierOrder"]
+ENTITY_TYPES = sorted(queries.get_entity_types(None), key=lambda s: s.lower())
 
 # The instances provide sensible defaults for the visualizer preferences in the sidebar
 # but they may not fit your project needs, or they might not even work on your data at all
@@ -60,25 +59,23 @@ DEFAULT_LAYOUT_PREFERENCES = DefaultLayoutPreferences()
 DEFAULT_CONNECTION_PREFERENCES = DefaultConnectionPreferences()
 DEFAULT_EVENT_CLASS_PREFERENCES = DefaultEventClassPreferences()
 
+
+available_colors = [
+    ("cmap", "Blues"),
+    ("cmap", "Oranges"),
+    ("cmap", "Greens"),
+    ("hex", "#d62728"),  # brick red
+    ("hex", "#9467bd"),  # muted purple
+    ("hex", "#8c564b"),  # chestnut brown
+    ("hex", "#e377c2"),  # raspberry yogurt pink
+]
+
 color_map = {
-    "Invoice": ("cmap", "Blues"),
-    "Item": ("cmap", "Greens"),
-    "Order": ("cmap", "Purples"),
-    "Payment": ("cmap", "Oranges"),
-    "SupplierOrder": ("cmap", "Reds"),
+    et: available_colors[i % len(available_colors)] for i, et in enumerate(ENTITY_TYPES)
 }
 
 SHADING_PREFERENCES = DefaultShadingPreferences(
     group_by="EntityType", color_map=color_map
-)
-
-TOKEN_UI_ANIMATION_PREFERENCES = TokenReplayManager(
-    samplers={
-        "All": lambda class_type, sample_size: queries.get_entity_sample(
-            class_type, sample_size
-        ),
-    },
-    token_animation_generator=generate_token_animation_segments,
 )
 
 
@@ -123,17 +120,23 @@ with objektviz_sidebar:
         default_event_class_visuals=DEFAULT_EVENT_CLASS_PREFERENCES,
     )
 
-    (
-        active_element_trace_filter,
-        token_animation_segments,
-        replay_metadata,
-        active_element_ids,
-    ) = ov_components.token_replay_input(
-        queries=queries,
-        class_type=class_type,
-        ui_preferences=TOKEN_UI_ANIMATION_PREFERENCES,
-        token_replay_preferences=token_replay_preferences,
-    )
+    with st.expander("Token Replay", expanded=True):
+        entity_sample = ov_components.entity_sampler(
+            queries=queries,
+            class_type=class_type
+        )
+
+        # Get process traces
+        active_element_ids, token_replay_segments, token_replay_metadata = None, None, None
+        if entity_sample:
+            process_traces, start_date, end_date = queries.get_process_executions(class_type, entity_sample)
+            active_element_ids, token_replay_segments, token_replay_metadata = generate_token_animation_segments(
+                process_traces=process_traces,
+                start_date=start_date,
+                end_date=end_date,
+                color_map=color_map,
+                token_replay_preferences=token_replay_preferences,
+            )
 
     # This filter will be used to ensure that DFC_C and EventClass of the sampled traces are always visible
     token_replay_element_filter = ov_filters.AndFilter.new(
@@ -148,8 +151,8 @@ with objektviz_sidebar:
     )
 
     with debug_tab:
-        st.write("Replay metadata:", replay_metadata)
-        st.write("Process instances:", token_animation_segments)
+        st.write("Replay metadata:", token_replay_metadata)
+        st.write("Process instances:", token_replay_segments)
 
     # Filters are quite project specific, so you will likely need to modify them
     # Below is just an example of how to add filters to the sidebar for frequency
@@ -248,8 +251,8 @@ graphviz_payload = GraphFrontendPayload(
     active_element_ids=active_element_ids,
     enable_path_effects_on_hover=enable_path_effects_on_hover,
     animation_preferences=token_replay_preferences,
-    tokens=token_animation_segments,
-    replay_metadata=replay_metadata,
+    tokens=token_replay_segments,
+    replay_metadata=token_replay_metadata,
     edge_node_map=edge_node_map,
     node_edge_map=node_edge_map,
     node_node_map=node_node_map,
@@ -267,7 +270,7 @@ with process_model_tab:
         graph_payload=graphviz_payload,
         queries=queries,
         class_type=class_type,
-        token_animation_segments=token_animation_segments,
+        token_animation_segments=token_replay_segments,
     )
 
 with ekg_stats_tab:

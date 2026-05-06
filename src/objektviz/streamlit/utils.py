@@ -3,26 +3,6 @@ from typing import Dict, Literal
 import streamlit as st
 
 from objektviz.backend.adaptors.shared import AbstractEKGRepository
-from objektviz.frontend import TokenReplayPreferences, Token, ReplayMetadata
-
-# (class_type, sample_size) -> entity IDs
-type TokenAnimationSamplerT = callable[[str, str], list[str]]
-
-# (token traces, start_date, end_date, animation_preferences) -> active element IDs, tokens, replay metadata
-# active element IDs -> what ActivityClasses and DFCs are involved in the token flows
-# TODO define traces format
-type TokenAnimationGeneratorT = callable[
-    [list[dict], str, str, TokenReplayPreferences],
-    tuple[list[str], list[Token], ReplayMetadata],
-]
-
-
-@dataclass
-class TokenReplayManager:
-    # We can define different samplers for different subpopulations of cases
-    # E.g. base on EntityType or case outcome
-    samplers: Dict[str, TokenAnimationSamplerT]
-    token_animation_generator: TokenAnimationGeneratorT
 
 
 @dataclass
