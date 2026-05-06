@@ -173,7 +173,7 @@ class Neo4JEKGRepository[Node, Relationship](AbstractEKGRepository):
             WITH DISTINCT n
             WITH n, rand() as r
             ORDER BY r
-            RETURN DISTINCT n.ID as ID
+            RETURN DISTINCT n.id as id
             LIMIT $Limit
         """,
             {
@@ -182,7 +182,7 @@ class Neo4JEKGRepository[Node, Relationship](AbstractEKGRepository):
             },
         )
 
-        return [n.get("ID") for n in result.records]
+        return [n.get("id") for n in result.records]
 
     def get_dfc_count(self, class_type: str) -> int:
         qparams = { "ClassType": class_type }
@@ -360,9 +360,9 @@ class Neo4JEKGRepository[Node, Relationship](AbstractEKGRepository):
                 """
             CYPHER runtime=parallel
             MATCH (n: Entity)<-[:CORR]-(e1: Event)
-            WHERE n.ID in $EntityIDs
-            ORDER BY e1.timestamp ASC
-            RETURN e1.timestamp as datetime
+            WHERE n.id in $EntityIDs
+            ORDER BY e1.time ASC
+            RETURN e1.time as datetime
             LIMIT 1
         """,
                 params={
@@ -377,10 +377,10 @@ class Neo4JEKGRepository[Node, Relationship](AbstractEKGRepository):
             self.run_query(
                 """
             CYPHER runtime=parallel
-            MATCH (n: Entity)<-[:END]-(e1: Event)
-            WHERE n.ID in $EntityIDs
-            ORDER BY e1.timestamp DESC
-            RETURN e1.timestamp as datetime
+            MATCH (n: Entity)<-[:P_END]-(e1: Event)
+            WHERE n.id in $EntityIDs
+            ORDER BY e1.time DESC
+            RETURN e1.time as datetime
             LIMIT 1
         """,
                 params={
@@ -395,7 +395,7 @@ class Neo4JEKGRepository[Node, Relationship](AbstractEKGRepository):
                 """
                 CYPHER runtime=parallel
                 MATCH (n: Entity)
-                WHERE n.ID in $EntityIDs
+                WHERE n.id in $EntityIDs
                 CALL(n) {
                     MATCH
                         (n)<-[:CORR]-(e1: Event)-[df:DF]->(e2: Event)-[:CORR]->(n),
@@ -404,10 +404,10 @@ class Neo4JEKGRepository[Node, Relationship](AbstractEKGRepository):
                         (e2)-[:OBSERVED]->(c2)
                     WHERE
                         c1.Type = c2.Type
-                        AND n.EntityType  = df.EntityType
-                        AND c1.EntityType = n.EntityType
-                        AND c2.EntityType = n.EntityType
-                    ORDER BY e1.timestamp
+                        AND n.type  = df.EntityType
+                        AND c1.EntityType = n.type
+                        AND c2.EntityType = n.type
+                    ORDER BY e1.time
                     WITH
                         n,
                         apoc.coll.union(
@@ -419,8 +419,8 @@ class Neo4JEKGRepository[Node, Relationship](AbstractEKGRepository):
                         ) as ActiveElementIds,
                         collect({
                             DFCElementId: elementId(df_c),
-                            DurationSec: duration.inSeconds(e1.timestamp, e2.timestamp).seconds,
-                            StartOffsetSec: duration.inSeconds($StartDate, e1.timestamp).seconds
+                            DurationSec: duration.inSeconds(e1.time, e2.time).seconds,
+                            StartOffsetSec: duration.inSeconds($StartDate, e1.time).seconds
                         }) as TraceSegments
         
                     RETURN ActiveElementIds, TraceSegments
@@ -449,7 +449,7 @@ class Neo4JEKGRepository[Node, Relationship](AbstractEKGRepository):
             MATCH (n: Entity)
             WHERE elementId(n) = $EntityElementId
             MATCH (e1: Event)-[:CORR]->(n)
-            ORDER BY e1.timestamp ASC
+            ORDER BY e1.time ASC
             WITH n, e1
             RETURN n as Entity, collect(e1) as Events
         """,
