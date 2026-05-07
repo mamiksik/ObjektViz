@@ -119,7 +119,7 @@ class Neo4JEKGRepository[Node, Relationship](AbstractEKGRepository):
             MATCH (e:Event)-[:CORR]->(n:Entity {{Type: "{entity_type}"}})
             RETURN DISTINCT e.type AS activity
         """, {})
-        return [record["activity"] for record in res]
+        return [record["activity"] for record in res.records]
 
     def get_class_attributes(self, class_type: str) -> list[str]:
         qparams = { "ClassType": class_type }

@@ -41,7 +41,7 @@ def generate_dot_source(
             raise ValueError("manual_class_sorting must be provided when sort_event_classes_by is not Frequency or None")
         nodes = sorted(nodes, key=lambda n: (
             cluster_order.index(n.shader_cluster),
-            config.explicit_event_class_order[n.get('EntityType')].index(n.get('EventType'))
+            order.index(ev) if (ev := n.get('EventType')) in (order := config.explicit_event_class_order[n.get('EntityType')]) else len(order)
         ))
 
     if config.layout_preferences.sort_connections_by_frequency:
