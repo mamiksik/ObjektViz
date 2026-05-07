@@ -38,8 +38,8 @@ class HistogramSlider {
     this._margin = { top: 24, right: 24, bottom: 24, left: 24 };
     this._totalW = options.width ?? 500;
     this._totalH = options.height ?? 120;
-    this._w = this._totalW - this._margin.left - this._margin.right;
-    this._h = this._totalH - this._margin.top - this._margin.bottom;
+    this._w = Math.max(0, this._totalW - this._margin.left - this._margin.right);
+    this._h = Math.max(0, this._totalH - this._margin.top - this._margin.bottom);
 
     this._selection = null;
     this._brush = null;
@@ -66,7 +66,9 @@ class HistogramSlider {
     const x = this._xScale;
     if (!x) return;
     this._silentBrushMove = silent;
-    this._brushG.call(this._brush.move, [x(range.min), x(range.max)]);
+    const px0 = Math.max(0, Math.min(this._w, x(range.min)));
+    const px1 = Math.max(0, Math.min(this._w, x(range.max)));
+    this._brushG.call(this._brush.move, [px0, px1]);
     this._silentBrushMove = false;
   }
 
@@ -197,10 +199,9 @@ class HistogramSlider {
     this._brushG.call(this._brush);
 
     if (this._selection) {
-      this._brushG.call(this._brush.move, [
-        this._xScale(this._selection.min),
-        this._xScale(this._selection.max),
-      ]);
+      const rx0 = Math.max(0, Math.min(this._w, this._xScale(this._selection.min)));
+      const rx1 = Math.max(0, Math.min(this._w, this._xScale(this._selection.max)));
+      this._brushG.call(this._brush.move, [rx0, rx1]);
     }
   }
 
