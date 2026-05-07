@@ -82,16 +82,22 @@ class AdvancedTokenReplayPlugin {
 
     pollCurrentTime() {
         if (this.replayMetadata !== null){
+            // Read SVG time once — getCurrentTime() can force a synchronous SVG reflow,
+            // so reading it twice per frame (here and inside playBackProgress) doubles the cost.
+            const currentTime = this.svgNode.getCurrentTime();
             const now = performance.now();
+
             // Throttle slider text updates to ~10fps — every silentValue() call mutates
-            // the DOM via D3's .text(), which triggers d3-graphviz's MutationObserver
-            // and schedules a full shadow DOM scan on every frame if left unthrottled.
-            if (!this._lastSliderUpdate || now - this._lastSliderUpdate >= 100) {
-                this.slider.silentValue(this.playBackProgress())
+            // the DOM via D3's .text(), which triggers MutationObserver-based scanners.
+            // Skip entirely while the user is scrubbing so the auto-update doesn't fight
+            // the drag and cause the handle to jump.
+            if (!this._isScrubbing && (!this._lastSliderUpdate || now - this._lastSliderUpdate >= 100)) {
+                this.slider.silentValue(this.playBackProgress(currentTime))
                 this._lastSliderUpdate = now;
             }
+
             // Loop back to start, if we reached end of the playback
-            if (this.svgNode.getCurrentTime() > this.scaleDuration(this.replayMetadata.total_duration_sec)) {
+            if (currentTime > this.scaleDuration(this.replayMetadata.total_duration_sec)) {
                 this.svgNode.setCurrentTime(0)
             }
         }
@@ -99,10 +105,8 @@ class AdvancedTokenReplayPlugin {
         requestAnimationFrame(() => this.pollCurrentTime());
     }
 
-    playBackProgress() {
-        const currentTime = this.svgNode.getCurrentTime();
+    playBackProgress(currentTime) {
         if (!this.isRealtimeAlignment()) {
-            // return currentTime / this.scaleDuration(this.replayMetadata.total_duration_sec) * 100;
             return currentTime / this.scaleDuration(this.replayMetadata.total_duration_sec) * 100;
         }
 
@@ -132,13 +136,28 @@ class AdvancedTokenReplayPlugin {
                 .displayFormat(d => `${d3.format(".0f")(d)}%`)
         }
 
-        // On user interaction, set the svg setCurrentTime to the selected value
-        this.slider.on('onchange', (val) => {
+        const toElapsedSec = (val) => {
             const startDate = new Date(this.replayMetadata.start_date)
-            const elapsedSec = this.isRealtimeAlignment()
+            return this.isRealtimeAlignment()
                 ? this.scaleDuration((val - startDate) / 1000)
                 : (val / 100) * (this.PLAYBACK_DURATION_SEC * this.settings.token_animation_speed);
-            this.svgNode.setCurrentTime(elapsedSec)
+        }
+
+        // While the user scrubs, pollCurrentTime() must not call slider.silentValue()
+        // or it fights the drag and causes the handle to jump back every 100ms.
+        this.slider.on('start', () => { this._isScrubbing = true; })
+        this.slider.on('end',   () => { this._isScrubbing = false; })
+
+        // Deduplicate rapid mousemove events via rAF — only the last position within
+        // each frame is applied. setCurrentTime() is still called (giving visual
+        // feedback as tokens follow the scrub) but at most once per frame.
+        this.slider.on('onchange', (val) => {
+            const elapsedSec = toElapsedSec(val);
+            if (this._scrubRaf) cancelAnimationFrame(this._scrubRaf);
+            this._scrubRaf = requestAnimationFrame(() => {
+                this.svgNode.setCurrentTime(elapsedSec);
+                this._scrubRaf = null;
+            });
         })
 
         const sliderContainer = d3.selectAll("#slider-container")
